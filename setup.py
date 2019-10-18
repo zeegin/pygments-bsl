@@ -19,7 +19,7 @@ setup(
     install_requires=['pygments'],
     entry_points={
         'pygments.lexers': [
-            'bsl=pygments-bsl:BSLLexer'
+            'bsl=pygments_bsl:BSLLexer'
         ]
     },
     package_data={

@@ -1,4 +1,4 @@
-pygments-json
+pygments-bsl
 =============
 
 Pygments_ is a syntax highlighting tool that supports a wide range of

@@ -1,5 +1,5 @@
 from pygments.lexer import RegexLexer
-from pygments.token import *
+from pygments.token import Token
 
 import re
 
@@ -9,7 +9,9 @@ class BSLLexer(RegexLexer):
     aliases = ['bsl']
     filenames = ['*.bsl']
 
-    KEYWORDS = r'(?<=[^\wа-яё]|^)(?:                                         \
+    flags = re.MULTILINE | re.VERBOSE
+
+    KEYWORDS = r'(?:                                         \
           КонецПроцедуры  | EndProcedure  | КонецФункции | EndFunction       \
         | Прервать        | Break         | Продолжить   | Continue          \
         | Возврат         | Return        | Если         | If                \
@@ -25,9 +27,9 @@ class BSLLexer(RegexLexer):
         | Новый           | New           | Процедура    | Procedure         \
         | Функция         | Function      | Перем        | Var               \
         | Экспорт         | Export        | Знач         | Val               \
-        )(?=[^\wа-яё]|$)/ix'
+        )'
 
-    BUILTINS = r'(?<=[^\wа-яё]|^)(?:\
+    BUILTINS = r'(?:\
           СтрДлина|StrLen|СокрЛ|TrimL|СокрП|TrimR|СокрЛП|TrimAll|Лев|Left|Прав|Right|Сред|Mid|СтрНайти|StrFind|ВРег|Upper|НРег|Lower|ТРег|Title|Символ|Char|КодСимвола|CharCode|ПустаяСтрока|IsBlankString|СтрЗаменить|StrReplace|СтрЧислоСтрок|StrLineCount|СтрПолучитьСтроку|StrGetLine|СтрЧислоВхождений|StrOccurrenceCount|СтрСравнить|StrCompare|СтрНачинаетсяС|StrStartWith|СтрЗаканчиваетсяНа|StrEndsWith|СтрРазделить|StrSplit|СтрСоединить|StrConcat\
         | Цел|Int|Окр|Round|ACos|ACos|ASin|ASin|ATan|ATan|Cos|Cos|Exp|Exp|Log|Log|Log10|Log10|Pow|Pow|Sin|Sin|Sqrt|Sqrt|Tan|Tan\
         | Год|Year|Месяц|Month|День|Day|Час|Hour|Минута|Minute|Секунда|Second|НачалоГода|BegOfYear|НачалоДня|BegOfDay|НачалоКвартала|BegOfQuarter|НачалоМесяца|BegOfMonth|НачалоМинуты|BegOfMinute|НачалоНедели|BegOfWeek|НачалоЧаса|BegOfHour|КонецГода|EndOfYear|КонецДня|EndOfDay|КонецКвартала|EndOfQuarter|КонецМесяца|EndOfMonth|КонецМинуты|EndOfMinute|КонецНедели|EndOfWeek|КонецЧаса|EndOfHour|НеделяГода|WeekOfYear|ДеньГода|DayOfYear|ДеньНедели|WeekDay|ТекущаяДата|CurrentDate|ДобавитьМесяц|AddMonth\
@@ -56,29 +58,30 @@ class BSLLexer(RegexLexer):
         | WSСсылки|WSReferences|БиблиотекаКартинок|PictureLib|БиблиотекаМакетовОформленияКомпоновкиДанных|DataCompositionAppearanceTemplateLib|БиблиотекаСтилей|StyleLib|БизнесПроцессы|BusinessProcesses|ВнешниеИсточникиДанных|ExternalDataSources|ВнешниеОбработки|ExternalDataProcessors|ВнешниеОтчеты|ExternalReports|Документы|Documents|ДоставляемыеУведомления|DeliverableNotifications|ЖурналыДокументов|DocumentJournals|Задачи|Tasks|ИспользованиеРабочейДаты|WorkingDateUse|ИсторияРаботыПользователя|UserWorkHistory|Константы|Constants|КритерииОтбора|FilterCriteria|Метаданные|Metadata|Обработки|DataProcessors|ОтправкаДоставляемыхУведомлений|DeliverableNotificationSend|Отчеты|Reports|ПараметрыСеанса|SessionParameters|Перечисления|Enums|ПланыВидовРасчета|ChartsOfCalculationTypes|ПланыВидовХарактеристик|ChartsOfCharacteristicTypes|ПланыОбмена|ExchangePlans|ПланыСчетов|ChartsOfAccounts|ПолнотекстовыйПоиск|FullTextSearch|ПользователиИнформационнойБазы|InfoBaseUsers|Последовательности|Sequences|РасширенияКонфигурации|ConfigurationExtensions|РегистрыБухгалтерии|AccountingRegisters|РегистрыНакопления|AccumulationRegisters|РегистрыРасчета|CalculationRegisters|РегистрыСведений|InformationRegisters|РегламентныеЗадания|ScheduledJobs|СериализаторXDTO|XDTOSerializer|Справочники|Catalogs|СредстваГеопозиционирования|LocationTools|СредстваКриптографии|CryptoToolsManager|СредстваМультимедиа|MultimediaTools|СредстваПочты|MailTools|СредстваТелефонии|TelephonyTools|ФабрикаXDTO|XDTOFactory|ФоновыеЗадания|BackgroundJobs|ХранилищаНастроек\
         | ГлавныйИнтерфейс|MainInterface|ГлавныйСтиль|MainStyle|ПараметрЗапуска|LaunchParameter|РабочаяДата|WorkingDate|SettingsStorages|ХранилищеВариантовОтчетов|ReportsVariantsStorage|ХранилищеНастроекДанныхФорм|FormDataSettingsStorage|ХранилищеОбщихНастроек|CommonSettingsStorage|ХранилищеПользовательскихНастроекДинамическихСписков|DynamicListsUserSettingsStorage|ХранилищеПользовательскихНастроекОтчетов|ReportsUserSettingsStorage|ХранилищеСистемныхНастроек|SystemSettingsStorage\
         | Если|If|ИначеЕсли|ElsIf|Иначе|Else|КонецЕсли|EndIf|Тогда|Then\
-        )\s*(?=\()/ix'
+        )'
 
-    CONSTANTS = r'(?<=[^\wа-яё]|^)(?:\
+    CONSTANTS = r'(?:\
         Неопределено|Undefined|Истина|True|Ложь|False|NULL\
-        )\s*(?=\()/ix'
+        )'
 
     tokens = {
         'root': [
-            (r'[^\S\n]+', Text),
-            (r'//.*?\n', Comment.Singleline),
-            (r'[\[\]:(),;]', Punctuation),
-            (r'(?<=[^\wа-яё]|^)\&.*$', Keyword.Declaration),
-            (r'[-+\/=<>*%=<>.?&]', Operator),
-            (r'(?<=[^\wа-яё]|^)\#.*$', Keyword.Declaration),
-            (KEYWORDS, Keyword),
-            (BUILTINS, Name.Builtin),
-            (CONSTANTS, Keyword.Constant),
-            (r'[\wа-яё_][\wа-яё0-9_]*/i', Name.Variable),
+            (r'\n', Token.Text),
+            (r'[^\S\n]+', Token.Text),
+            (r'//.*?\n', Token.Comment.Singleline),
+            (r'[\[\]:(),;]', Token.Punctuation),
+            (r'\&.*$', Token.Keyword.Declaration),
+            (r'[-+\/=<>*%=<>.?&]', Token.Operator),
+            (r'\#.*$', Token.Keyword.Declaration),
+            (KEYWORDS, Token.Keyword),
+            (BUILTINS, Token.Name.Builtin),
+            (CONSTANTS, Token.Keyword.Constant),
+            (r'[\wа-яё_][\wа-яё0-9_]*', Token.Name.Variable),
 
             # #literals
-            (r'\b((\h{8}-(\h{4}-){3}\h{12})|\d+\.?\d*)\b/', Number),
-            (r'.*\'', Literal.Date),
-            (r'.*?("|$)', Literal.String.Single),
-            (r'(?<=[^\wа-яё]|^)\|((?!\"\").)*?(\"|$))', Literal.String)
+            # (r'\b((\h{8}-(\h{4}-){3}\h{12})|\d+\.?\d*)\b', Token.Number),
+            # (r'.*\'', Token.Literal.Date),
+            # (r'.*?("|$)', Token.Literal.String.Single),
+            # (r'*?(\"|$))', Token.Literal.String)
         ]
     }

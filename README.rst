@@ -11,6 +11,10 @@ Install
 
   $ pip install pygments-bsl
 
+Build
+------
+  $ python setup.py sdist
+
 Usage
 -------
 

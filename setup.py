@@ -1,13 +1,14 @@
 from setuptools import setup, find_packages
 
 setup(
-    name = "pygments-bsl",
-    version = "0.1",
-    packages = find_packages(),
-    author = "Ingvar Vilkman",
-    author_email = "zeegin@zeegin.com",
-    license='MIT',
-    description = "Pygments 1C (BSL) lexer",
+    name='pygments-bsl',
+    version='0.1',
+    packages=find_packages(),
+    author='Ingvar Vilkman',
+    author_email='zeegin@zeegin.com',
+    url='https://github.com/zeegin/pygments-bsl',
+    license='MIT License',
+    description='Pygments 1C (BSL) lexer',
     classifiers=[
         'Environment :: Plugins',
         'Intended Audience :: Developers',
@@ -18,8 +19,10 @@ setup(
     install_requires=['pygments'],
     entry_points={
         'pygments.lexers': [
-            'bsl=pygments-bsl:BSLLexer',
+            'bsl=pygments-bsl:BSLLexer'
         ]
     },
-    
+    package_data={
+        '': ['LICENSE', '*.rst'],
+    }
 )

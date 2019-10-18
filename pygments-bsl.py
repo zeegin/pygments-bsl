@@ -73,7 +73,7 @@ class BSLLexer(RegexLexer):
             (KEYWORDS, Keyword),
             (BUILTINS, Name.Builtin),
             (CONSTANTS, Keyword.Constant),
-            (r'[\wа-яё_][\wа-яё0-9_]*/i', Name.Variable)
+            (r'[\wа-яё_][\wа-яё0-9_]*/i', Name.Variable),
 
             # #literals
             (r'\b((\h{8}-(\h{4}-){3}\h{12})|\d+\.?\d*)\b/', Number),

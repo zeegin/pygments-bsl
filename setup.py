@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pygments-bsl',
-    version='0.3',
+    version='0.4',
     packages=find_packages(),
     author='Ingvar Vilkman',
     author_email='zeegin@zeegin.com',

@@ -79,6 +79,6 @@ class BSLLexer(RegexLexer):
             # (r'\b((\h{8}-(\h{4}-){3}\h{12})|\d+\.?\d*)\b', Token.Number),
             # (r'.*\'', Token.Literal.Date),
             (r'".*?("|$)', Token.Literal.String.Single),
-            # (r'\|.*?("|$))', Token.Literal.String)
+            (r'\|.*?("|\n)', Token.Literal.String)
         ]
     }

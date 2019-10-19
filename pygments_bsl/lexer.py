@@ -73,12 +73,10 @@ class BSLLexer(RegexLexer):
             (KEYWORDS, Token.Keyword),
             (BUILTINS, Token.Name.Builtin),
             (CONSTANTS, Token.Keyword.Constant),
+            (r'\b\d+\.?\d*\b', Token.Number),
             (r'[\wа-яё_][\wа-яё0-9_]*', Token.Name.Variable),
-
-            # #literals
-            # (r'\b((\h{8}-(\h{4}-){3}\h{12})|\d+\.?\d*)\b', Token.Number),
-            # (r'.*\'', Token.Literal.Date),
             (r'".*?("|$)', Token.Literal.String.Single),
-            (r'\|.*?("|\n)', Token.Literal.String)
+            (r'\|.*?("|$)', Token.Literal.String),
+            (r'\'.*?\'', Token.Literal.Date),
         ]
     }

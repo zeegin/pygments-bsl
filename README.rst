@@ -23,7 +23,7 @@ as from the pygementize command:
 
    $ pygmentize your-file.bsl
 
-   ... beautifully formatted json will flow here
+   ... beautifully formatted bsl will flow here
 
 
 .. _Pygments: http://pygments.org/

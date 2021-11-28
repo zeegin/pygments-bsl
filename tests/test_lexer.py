@@ -306,11 +306,11 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'Б'),
                 (Token.Operator, '='),
-                (Token.Literal.String.Single, '"текст с экраннированной "'),
-                (Token.Literal.String.Single, '" кавычкой"'), # <- Error?
+                (Token.Literal.String, '"текст с экраннированной "'),
+                (Token.Literal.String, '" кавычкой"'), # <- Error?
                 (Token.Operator, '+'),
-                (Token.Literal.String.Single, '"и конкатенаций"'),
-                (Token.Literal.String.Single, '""'), # <- Error?
+                (Token.Literal.String, '"и конкатенаций"'),
+                (Token.Literal.String, '""'), # <- Error?
                 (Token.Punctuation, ';'),
             ],
         )
@@ -332,7 +332,7 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'В'),
                 (Token.Operator, '='),
-                (Token.Literal.String.Single, '"многострочная'),
+                (Token.Literal.String, '"многострочная'),
                 (Token.Literal.String, '|строка'),
                 (Token.Comment.Singleline, '//|это комментарий\n'),
                 (Token.Literal.String, '|// а это нет'),
@@ -354,7 +354,7 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'СтрокаСоСловомВыбрать'),
                 (Token.Operator, '='),
-                (Token.Literal.String.Single, '"Some selected text"'),
+                (Token.Literal.String, '"Some selected text"'),
                 (Token.Punctuation, ';'),
             ],
         )
@@ -467,7 +467,7 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'СтрокаСДатойВнутри'),
                 (Token.Operator, '='),
-                (Token.Literal.String.Single, '''"Литерал типа Дата: '00010101'"'''),
+                (Token.Literal.String, '''"Литерал типа Дата: '00010101'"'''),
                 (Token.Punctuation, ';'),
             ],
         )
@@ -589,7 +589,7 @@ class BslLexerTestCase(TestCase):
                 (Token.Operator, '='),
                 (Token.Keyword, 'Новый'), # <- Error? Token.Function
                 (Token.Punctuation, '('),
-                (Token.Literal.String.Single, '"ТаблицаЗначений"'),
+                (Token.Literal.String, '"ТаблицаЗначений"'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
             ],
@@ -608,7 +608,7 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'ПрефиксЗначениеЗаполненоПостфикс'),
                 (Token.Operator, '='),
-                (Token.Literal.String.Single, '""'),
+                (Token.Literal.String, '""'),
                 (Token.Punctuation, ';'),
             ],
         )

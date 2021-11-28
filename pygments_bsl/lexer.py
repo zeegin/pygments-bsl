@@ -75,7 +75,7 @@ class BSLLexer(RegexLexer):
             (CONSTANTS, Token.Keyword.Constant),
             (r'\b\d+\.?\d*\b', Token.Number),
             (r'[\wа-яё_][\wа-яё0-9_]*', Token.Name.Variable),
-            (r'".*?("|$)', Token.Literal.String.Single),
+            (r'".*?("|$)', Token.Literal.String),
             (r'\|.*?("|$)', Token.Literal.String),
             (r'\'.*?\'', Token.Literal.Date),
         ]

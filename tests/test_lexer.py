@@ -511,6 +511,42 @@ class BslLexerTestCase(TestCase):
             ],
         )
 
+    def test_lexing_if_else_english(self):
+        lexer = lexers.get_lexer_by_name("bsl")
+        tokens = lexer.get_tokens(
+            '''
+            If True Then
+                Value = 0;
+            ElsIf TypeOf(Parameter) Then
+                Value = NULL
+            EndIf;
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Keyword, 'If'),
+                (Token.Keyword.Constant, 'True'),
+                (Token.Keyword, 'Then'),
+                (Token.Name.Variable, 'Value'),
+                (Token.Operator, '='),
+                (Token.Literal.Number, '0'),
+                (Token.Punctuation, ';'),
+                (Token.Keyword, 'ElsIf'),
+                (Token.Name.Builtin, 'TypeOf'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Parameter'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword, 'Then'),
+                (Token.Name.Variable, 'Value'),
+                (Token.Operator, '='),
+                (Token.Keyword.Constant, 'NULL'),
+                (Token.Keyword, 'EndIf'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
     def test_lexing_while_do(self):
         lexer = lexers.get_lexer_by_name("bsl")
         tokens = lexer.get_tokens(

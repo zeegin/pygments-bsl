@@ -173,6 +173,24 @@ class BslLexerTestCase(TestCase):
             ],
         )
 
+    def test_lexing_inline_comment(self):
+        lexer = lexers.get_lexer_by_name("bsl")
+        tokens = lexer.get_tokens(
+            '''
+            Перем ДиалогРаботыСКаталогом;     // Диалог работы с каталогом
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Keyword, "Перем"),
+                (Token.Name.Variable, "ДиалогРаботыСКаталогом"),
+                (Token.Punctuation, ";"),
+                (Token.Comment.Singleline, '// Диалог работы с каталогом\n'),
+            ],
+        )
+
     def test_lexing_preprocessor(self):
         lexer = lexers.get_lexer_by_name("bsl")
         tokens = lexer.get_tokens(

@@ -592,11 +592,12 @@ class BslLexerTestCase(TestCase):
             ],
         )
 
-    def test_lexing_call_not_support_function(self):
+    def test_lexing_call_function(self):
         lexer = lexers.get_lexer_by_name("bsl")
         tokens = lexer.get_tokens(
             '''
             НевстроеннаяПроцедура();
+            НевстроеннаяПроцедураСПробелом ();
             '''
         )
 
@@ -604,6 +605,33 @@ class BslLexerTestCase(TestCase):
             self.__filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'НевстроеннаяПроцедура'), # <- Error? Token.Function
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+                (Token.Name.Variable, 'НевстроеннаяПроцедураСПробелом'), # <- Error? Token.Function
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_call_builtin_function(self):
+        lexer = lexers.get_lexer_by_name("bsl")
+        tokens = lexer.get_tokens(
+            '''
+            СтрДлина();
+            СтрДлина ();
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'СтрДлина'), # <- Error? Token.Function
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+                (Token.Name.Builtin, 'СтрДлина'), # <- Error? Token.Function
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),

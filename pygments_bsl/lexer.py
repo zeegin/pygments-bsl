@@ -78,5 +78,6 @@ class BSLLexer(RegexLexer):
             (r'".*?("|$)', Token.Literal.String),
             (r'\|.*?("|$)', Token.Literal.String),
             (r'\'.*?\'', Token.Literal.Date),
+            (r'~.*?$', Token.Label),
         ]
     }

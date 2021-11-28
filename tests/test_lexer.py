@@ -711,14 +711,13 @@ class BslLexerTestCase(TestCase):
         lexer = lexers.get_lexer_by_name("bsl")
         tokens = lexer.get_tokens(
             '''
-            ~Метка
+            ~Метка:
             '''
         )
 
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Error, '~'), # <- Error? Token.Label
-                (Token.Name.Variable, 'Метка'), # <- Error? Token.Label
+                (Token.Token.Label, '~Метка:'),
             ],
         )

@@ -6,8 +6,8 @@ import re
 
 class BSLLexer(RegexLexer):
     name = '1C (BSL) Lexer'
-    aliases = ['bsl']
-    filenames = ['*.bsl']
+    aliases = ['bsl', 'os']
+    filenames = ['*.bsl', '*.os']
 
     flags = re.MULTILINE | re.IGNORECASE | re.VERBOSE
 

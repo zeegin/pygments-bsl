@@ -1,6 +1,6 @@
 install:
-	pip install --upgrade setuptools wheel twine    
+	pip install --upgrade setuptools wheel twine
 
 build:
 	python setup.py sdist bdist_wheel
-	twine upload dist/*    
+	twine upload dist/*

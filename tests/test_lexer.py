@@ -44,6 +44,7 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(lexer.name, BSLLexer.name)
 
     # TODO Global test for samples
+    # disabled because too difficult to support
     
     # def test_get_tokens_one(self):
     #     lexer = lexers.get_lexer_by_name("bsl")
@@ -370,7 +371,7 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Name.Builtin, 'Число'), # <- Error? Token.Name.Variable
+                (Token.Name.Variable, 'Число'),
                 (Token.Operator, '='),
                 (Token.Literal.Number, '0.0'), # <- Error? Token.Name.Float
                 (Token.Operator, '*'),
@@ -391,7 +392,7 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Name.Builtin, 'Дата'), # <- Error? Token.Name.Variable
+                (Token.Name.Variable, 'Дата'),
                 (Token.Operator, '='),
                 (Token.Literal.Date, "'00010101000000'"),
                 (Token.Punctuation, ';'),
@@ -493,7 +494,7 @@ class BslLexerTestCase(TestCase):
                 (Token.Literal.Number, '0'),
                 (Token.Keyword, 'И'), # <- Error? Token.Operator.Word
                 (Token.Keyword, 'НЕ'), # <- Error? Token.Operator.Word
-                (Token.Name.Builtin, 'Число'), # <- Error? Token.Name.Variable
+                (Token.Name.Variable, 'Число'),
                 (Token.Operator, '<'), # <- Error! Should be '<='
                 (Token.Operator, '='), # <- But don`t metter for highliting
                 (Token.Literal.Number, '0'),
@@ -653,7 +654,7 @@ class BslLexerTestCase(TestCase):
         lexer = lexers.get_lexer_by_name("bsl")
         tokens = lexer.get_tokens(
             '''
-            Объект.Сообщить().Если().Цикл().Новый;
+            Объект.Истина.Сообщить().Если().Цикл().Новый;
             '''
         )
 
@@ -662,19 +663,21 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'Объект'),
                 (Token.Operator, '.'),
-                (Token.Name.Builtin, 'Сообщить'), # <- Error? Token.Function
+                (Token.Name.Variable, 'Истина'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Сообщить'), # <- Error? Token.Function
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Operator, '.'),
-                (Token.Keyword, 'Если'), # <- Error? Token.Function
+                (Token.Name.Variable, 'Если'), # <- Error? Token.Function
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Operator, '.'),
-                (Token.Keyword, 'Цикл'), # <- Error? Token.Function
+                (Token.Name.Variable, 'Цикл'), # <- Error? Token.Function
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Operator, '.'),
-                (Token.Keyword, 'Новый'), # <- Error? Token.Name.Variable
+                (Token.Name.Variable, 'Новый'),
                 (Token.Punctuation, ';')
             ],
         )
@@ -690,7 +693,7 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Name.Builtin, 'Справочники'), # <- Error? Token.Class
+                (Token.Class, 'Справочники'),
                 (Token.Operator, '.'),
                 (Token.Name.Variable, 'ИмяСправочника'),
                 (Token.Operator, '.'),
@@ -714,7 +717,7 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'А'),
                 (Token.Operator, '='),
-                (Token.Name.Builtin, 'ХранилищеПользовательскихНастроекДинамическихСписков'), # <- Error? Token.Class
+                (Token.Class, 'ХранилищеПользовательскихНастроекДинамическихСписков'),
                 (Token.Operator, '.'),
                 (Token.Name.Variable, 'Сохранить'), # <- Error? Token.Function
                 (Token.Punctuation, '('),

@@ -239,7 +239,7 @@ class BslLexerTestCase(TestCase):
             self.__filter_tokens(tokens),
             [
                 (Token.Keyword, "Процедура"),
-                (Token.Name.Variable, "НевстроеннаяПроцедура"),
+                (Token.Name.Function, "НевстроеннаяПроцедура"),
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Keyword, "Возврат"),
@@ -264,7 +264,7 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Keyword.Declaration, '&Перед("ПередЗаписью")'),
                 (Token.Keyword, "Процедура"),
-                (Token.Name.Variable, "Расш1_ПередЗаписью"),
+                (Token.Name.Function, "Расш1_ПередЗаписью"),
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Keyword, "КонецПроцедуры"),
@@ -289,7 +289,7 @@ class BslLexerTestCase(TestCase):
             self.__filter_tokens(tokens),
             [
                 (Token.Keyword, "Процедура"),
-                (Token.Name.Variable, "ИмяПроцедуры"), # <- Error? Token.Function
+                (Token.Name.Function, "ИмяПроцедуры"),
                 (Token.Punctuation, '('),
                 (Token.Keyword, 'Знач'),
                 (Token.Name.Variable, 'ПараметрСКонстантой'), # <- Error? Token.Name.Variable.Instance
@@ -580,7 +580,7 @@ class BslLexerTestCase(TestCase):
             self.__filter_tokens(tokens),
             [
                 (Token.Keyword, 'Пока'),
-                (Token.Name.Builtin, 'ЗначениеЗаполнено'), # <- Error? Token.Function
+                (Token.Name.Builtin, 'ЗначениеЗаполнено'),
                 (Token.Punctuation, '('),
                 (Token.Name.Variable, 'Б'),
                 (Token.Punctuation, ')'),
@@ -604,11 +604,11 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Name.Variable, 'НевстроеннаяПроцедура'), # <- Error? Token.Function
+                (Token.Name.Function, 'НевстроеннаяПроцедура'),
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
-                (Token.Name.Variable, 'НевстроеннаяПроцедураСПробелом'), # <- Error? Token.Function
+                (Token.Name.Function, 'НевстроеннаяПроцедураСПробелом'),
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
@@ -627,11 +627,11 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Name.Builtin, 'СтрДлина'), # <- Error? Token.Function
+                (Token.Name.Builtin, 'СтрДлина'),
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
-                (Token.Name.Builtin, 'СтрДлина'), # <- Error? Token.Function
+                (Token.Name.Builtin, 'СтрДлина'),
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
@@ -652,7 +652,7 @@ class BslLexerTestCase(TestCase):
                 (Token.Name.Variable, 'НовыйОбъект'),
                 (Token.Operator, '='),
                 (Token.Keyword, 'Новый'),
-                (Token.Name.Variable, 'ТаблицаЗначений'), # <- Error? Token.Type
+                (Token.Name.Variable, 'ТаблицаЗначений'), # <- Error? Token.Keyword.Type
                 (Token.Punctuation, ';'),
             ],
         )
@@ -670,7 +670,7 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'НовыйОбъект'),
                 (Token.Operator, '='),
-                (Token.Keyword, 'Новый'), # <- Error? Token.Function
+                (Token.Name.Builtin, 'Новый'),
                 (Token.Punctuation, '('),
                 (Token.Literal.String, '"ТаблицаЗначений"'),
                 (Token.Punctuation, ')'),
@@ -711,15 +711,15 @@ class BslLexerTestCase(TestCase):
                 (Token.Operator, '.'),
                 (Token.Name.Variable, 'Истина'),
                 (Token.Operator, '.'),
-                (Token.Name.Variable, 'Сообщить'), # <- Error? Token.Function
+                (Token.Name.Function, 'Сообщить'),
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Operator, '.'),
-                (Token.Name.Variable, 'Если'), # <- Error? Token.Function
+                (Token.Name.Function, 'Если'),
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Operator, '.'),
-                (Token.Name.Variable, 'Цикл'), # <- Error? Token.Function
+                (Token.Name.Function, 'Цикл'),
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Operator, '.'),
@@ -743,7 +743,7 @@ class BslLexerTestCase(TestCase):
                 (Token.Operator, '.'),
                 (Token.Name.Variable, 'ИмяСправочника'),
                 (Token.Operator, '.'),
-                (Token.Name.Variable, 'СоздатьЭлемент'), # <- Error? Token.Function
+                (Token.Name.Function, 'СоздатьЭлемент'),
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';')
@@ -765,14 +765,14 @@ class BslLexerTestCase(TestCase):
                 (Token.Operator, '='),
                 (Token.Class, 'ХранилищеПользовательскихНастроекДинамическихСписков'),
                 (Token.Operator, '.'),
-                (Token.Name.Variable, 'Сохранить'), # <- Error? Token.Function
+                (Token.Name.Function, 'Сохранить'),
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';')
             ],
         )
 
-    def test_lexing_variable_assignment_with_comparation(self):
+    def test_lexing_variable_assignment_with_compare(self):
         lexer = lexers.get_lexer_by_name("bsl")
         tokens = lexer.get_tokens(
             '''
@@ -797,6 +797,7 @@ class BslLexerTestCase(TestCase):
         tokens = lexer.get_tokens(
             '''
             ~Метка:
+            Перейти ~Метка;
             '''
         )
 
@@ -804,10 +805,12 @@ class BslLexerTestCase(TestCase):
             self.__filter_tokens(tokens),
             [
                 (Token.Token.Label, '~Метка:'),
+                (Token.Keyword, 'Перейти'),
+                (Token.Label, '~Метка;')
             ],
         )
 
-    def test_lexing_single_word_hilighting(self):
+    def test_lexing_single_word_highlighting(self):
         lexer = lexers.get_lexer_by_name("bsl")
         tokens = lexer.get_tokens(
             '''

@@ -27,10 +27,11 @@ class BSLLexer(RegexLexer):
         | Новый           | New           | Процедура    | Procedure         |\
         | Функция         | Function      | Перем        | Var               |\
         | Экспорт         | Export        | Знач         | Val               |\
+        | Перейти         | Goto          |\
     )(?=[^\wа-яё]|$)'
 
     BUILTINS = r'(?<!\.)(?:\
-        |СтрДлина|StrLen|СокрЛ|TrimL|СокрП|TrimR|СокрЛП|TrimAll|Лев|Left|Прав|Right|Сред|Mid|СтрНайти|StrFind|ВРег|Upper|НРег|Lower|ТРег|Title|Символ|Char|КодСимвола|CharCode|ПустаяСтрока|IsBlankString|СтрЗаменить|StrReplace|СтрЧислоСтрок|StrLineCount|СтрПолучитьСтроку|StrGetLine|СтрЧислоВхождений|StrOccurrenceCount|СтрСравнить|StrCompare|СтрНачинаетсяС|StrStartWith|СтрЗаканчиваетсяНа|StrEndsWith|СтрРазделить|StrSplit|СтрСоединить|StrConcat|\
+        |Новый|New|СтрДлина|StrLen|СокрЛ|TrimL|СокрП|TrimR|СокрЛП|TrimAll|Лев|Left|Прав|Right|Сред|Mid|СтрНайти|StrFind|ВРег|Upper|НРег|Lower|ТРег|Title|Символ|Char|КодСимвола|CharCode|ПустаяСтрока|IsBlankString|СтрЗаменить|StrReplace|СтрЧислоСтрок|StrLineCount|СтрПолучитьСтроку|StrGetLine|СтрЧислоВхождений|StrOccurrenceCount|СтрСравнить|StrCompare|СтрНачинаетсяС|StrStartWith|СтрЗаканчиваетсяНа|StrEndsWith|СтрРазделить|StrSplit|СтрСоединить|StrConcat|\
         |Цел|Int|Окр|Round|ACos|ACos|ASin|ASin|ATan|ATan|Cos|Cos|Exp|Exp|Log|Log|Log10|Log10|Pow|Pow|Sin|Sin|Sqrt|Sqrt|Tan|Tan|\
         |Год|Year|Месяц|Month|День|Day|Час|Hour|Минута|Minute|Секунда|Second|НачалоГода|BegOfYear|НачалоДня|BegOfDay|НачалоКвартала|BegOfQuarter|НачалоМесяца|BegOfMonth|НачалоМинуты|BegOfMinute|НачалоНедели|BegOfWeek|НачалоЧаса|BegOfHour|КонецГода|EndOfYear|КонецДня|EndOfDay|КонецКвартала|EndOfQuarter|КонецМесяца|EndOfMonth|КонецМинуты|EndOfMinute|КонецНедели|EndOfWeek|КонецЧаса|EndOfHour|НеделяГода|WeekOfYear|ДеньГода|DayOfYear|ДеньНедели|WeekDay|ТекущаяДата|CurrentDate|ДобавитьМесяц|AddMonth|\
         |Тип|Type|ТипЗнч|TypeOf|\
@@ -64,6 +65,7 @@ class BSLLexer(RegexLexer):
 
     CONSTANTS = r'(?<!\.)(?:Неопределено|Undefined|Истина|True|Ложь|False|NULL)(?=[^\wа-яё]|$)'
 
+    # see https://pygments.org/docs/tokens
     tokens = {
         'root': [
             (r'\n', Token.Text),
@@ -73,8 +75,9 @@ class BSLLexer(RegexLexer):
             (r'\&.*$', Token.Keyword.Declaration),
             (r'[-+\/=<>*%=<>.?&]', Token.Operator),
             (r'\#.*$', Token.Keyword.Declaration),
-            (KEYWORDS, Token.Keyword),
             (BUILTINS, Token.Name.Builtin),
+            (r'[\wа-яё_][\wа-яё0-9_]*(?=(\s?[\(]))', Token.Name.Function),
+            (KEYWORDS, Token.Keyword),
             (CLASSES, Token.Class),
             (CONSTANTS, Token.Keyword.Constant),
             (r'\b\d+\.?\d*\b', Token.Number),

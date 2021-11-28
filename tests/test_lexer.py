@@ -778,3 +778,18 @@ class BslLexerTestCase(TestCase):
                 (Token.Token.Label, '~Метка:'),
             ],
         )
+
+    def test_lexing_single_word_hilighting(self):
+        lexer = lexers.get_lexer_by_name("bsl")
+        tokens = lexer.get_tokens(
+            '''
+            НачатьТранзакцию
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'НачатьТранзакцию'),
+            ],
+        )

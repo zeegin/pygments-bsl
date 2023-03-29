@@ -35,8 +35,11 @@ class BSLLexer(RegexLexer):
         | И | AND | ИЛИ | OR |\
         | Новый | New | Процедура | Procedure |\
         | Функция | Function |\
-        | Экспорт | Export | Знач | Val               |\
+        | Экспорт | Export |\
+        | Знач | Val |\
         | Перейти | Goto |\
+        | Асинх | Async |\
+        | Ждать | Await |\
     )(?=[^\wа-яё]|$)'
 
     NAME_BUILTIN = r'(?<!\.)(?:\

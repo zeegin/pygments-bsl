@@ -832,3 +832,32 @@ class BslLexerTestCase(TestCase):
                 (Token.Punctuation, ',')
             ],
         )
+
+
+    def test_lexing_async_await(self):
+        lexer = lexers.get_lexer_by_name("bsl")
+        tokens = lexer.get_tokens(
+            '''
+            Асинх Процедура П()
+                Ждать НеNull(Null);
+            КонецПроцедуры 
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Keyword, 'Асинх'),
+                (Token.Keyword, "Процедура"),
+                (Token.Name.Function, "П"),
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+                (Token.Keyword, 'Ждать'),
+                (Token.Name.Function, 'НеNull'),
+                (Token.Punctuation, '('),
+                (Token.Keyword.Constant, 'Null'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+                (Token.Keyword, "КонецПроцедуры")
+            ],
+        )

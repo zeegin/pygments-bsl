@@ -241,3 +241,6 @@
 #КонецОбласти
 // <- keyword.other.section.bsl
 // ^ keyword.other.section.bsl
+
+~Метка:
+Перейти ~Метка;

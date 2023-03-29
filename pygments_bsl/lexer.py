@@ -1,4 +1,4 @@
-from pygments.lexer import RegexLexer
+from pygments.lexer import RegexLexer, bygroups
 from pygments.token import Token
 
 import re
@@ -11,26 +11,35 @@ class BSLLexer(RegexLexer):
 
     flags = re.MULTILINE | re.IGNORECASE | re.VERBOSE
 
-    KEYWORDS = r'(?<!\.)(?:\
-        | КонецПроцедуры  | EndProcedure  | КонецФункции | EndFunction       |\
-        | Прервать        | Break         | Продолжить   | Continue          |\
-        | Возврат         | Return        | Если         | If                |\
-        | Иначе           | Else          | ИначеЕсли    | ElsIf             |\
-        | Тогда           | Then          | КонецЕсли    | EndIf             |\
-        | Попытка         | Try           | Исключение   | Except            |\
-        | КонецПопытки    | EndTry        | Raise        | ВызватьИсключение |\
-        | Пока            | While         | Для          | For               |\
-        | Каждого         | Each          | Из           | In                |\
-        | По              | To            | Цикл         | Do                |\
-        | КонецЦикла      | EndDo         | НЕ           | NOT               |\
-        | И               | AND           | ИЛИ          | OR                |\
-        | Новый           | New           | Процедура    | Procedure         |\
-        | Функция         | Function      | Перем        | Var               |\
-        | Экспорт         | Export        | Знач         | Val               |\
-        | Перейти         | Goto          |\
+    KEYWORD_DECLARATION = r'(?<!\.)(?:\
+        | Перем | Var |\
+    )(?=[^\wа-яё]|$)'    
+
+    KEYWORD = r'(?<!\.)(?:\
+        | КонецПроцедуры  | EndProcedure  |\
+        | КонецФункции | EndFunction |\
+        | Прервать | Break |\
+        | Продолжить | Continue |\
+        | Возврат | Return |\
+        | Если | If |\
+        | Иначе | Else |\
+        | ИначеЕсли | ElsIf |\
+        | Тогда | Then |\
+        | КонецЕсли | EndIf |\
+        | Попытка | Try | Исключение | Except |\
+        | КонецПопытки | EndTry | Raise | ВызватьИсключение |\
+        | Пока | While | Для | For |\
+        | Каждого | Each | Из | In |\
+        | По | To | Цикл | Do |\
+        | КонецЦикла | EndDo | НЕ | NOT |\
+        | И | AND | ИЛИ | OR |\
+        | Новый | New | Процедура | Procedure |\
+        | Функция | Function |\
+        | Экспорт | Export | Знач | Val               |\
+        | Перейти | Goto |\
     )(?=[^\wа-яё]|$)'
 
-    BUILTINS = r'(?<!\.)(?:\
+    NAME_BUILTIN = r'(?<!\.)(?:\
         |Новый|New|СтрДлина|StrLen|СокрЛ|TrimL|СокрП|TrimR|СокрЛП|TrimAll|Лев|Left|Прав|Right|Сред|Mid|СтрНайти|StrFind|ВРег|Upper|НРег|Lower|ТРег|Title|Символ|Char|КодСимвола|CharCode|ПустаяСтрока|IsBlankString|СтрЗаменить|StrReplace|СтрЧислоСтрок|StrLineCount|СтрПолучитьСтроку|StrGetLine|СтрЧислоВхождений|StrOccurrenceCount|СтрСравнить|StrCompare|СтрНачинаетсяС|StrStartWith|СтрЗаканчиваетсяНа|StrEndsWith|СтрРазделить|StrSplit|СтрСоединить|StrConcat|\
         |Цел|Int|Окр|Round|ACos|ACos|ASin|ASin|ATan|ATan|Cos|Cos|Exp|Exp|Log|Log|Log10|Log10|Pow|Pow|Sin|Sin|Sqrt|Sqrt|Tan|Tan|\
         |Год|Year|Месяц|Month|День|Day|Час|Hour|Минута|Minute|Секунда|Second|НачалоГода|BegOfYear|НачалоДня|BegOfDay|НачалоКвартала|BegOfQuarter|НачалоМесяца|BegOfMonth|НачалоМинуты|BegOfMinute|НачалоНедели|BegOfWeek|НачалоЧаса|BegOfHour|КонецГода|EndOfYear|КонецДня|EndOfDay|КонецКвартала|EndOfQuarter|КонецМесяца|EndOfMonth|КонецМинуты|EndOfMinute|КонецНедели|EndOfWeek|КонецЧаса|EndOfHour|НеделяГода|WeekOfYear|ДеньГода|DayOfYear|ДеньНедели|WeekDay|ТекущаяДата|CurrentDate|ДобавитьМесяц|AddMonth|\
@@ -58,33 +67,34 @@ class BSLLexer(RegexLexer):
         |ПередНачаломРаботыСистемы|BeforeStart|ПриНачалеРаботыСистемы|OnStart|ПередЗавершениемРаботыСистемы|BeforeExit|ПриЗавершенииРаботыСистемы|OnExit|ОбработкаВнешнегоСобытия|ExternEventProcessing|УстановкаПараметровСеанса|SessionParametersSetting|ПриИзмененииПараметровЭкрана|OnChangeDisplaySettings|\
     )(?=(\s?[\(])|$)(?=[^\wа-яё]|$)'
 
-    CLASSES = r'(?<!\.)(?:\
+    NAME_CLASS = r'(?<!\.)(?:\
         |WSСсылки|WSReferences|БиблиотекаКартинок|PictureLib|БиблиотекаМакетовОформленияКомпоновкиДанных|DataCompositionAppearanceTemplateLib|БиблиотекаСтилей|StyleLib|БизнесПроцессы|BusinessProcesses|ВнешниеИсточникиДанных|ExternalDataSources|ВнешниеОбработки|ExternalDataProcessors|ВнешниеОтчеты|ExternalReports|Документы|Documents|ДоставляемыеУведомления|DeliverableNotifications|ЖурналыДокументов|DocumentJournals|Задачи|Tasks|ИспользованиеРабочейДаты|WorkingDateUse|ИсторияРаботыПользователя|UserWorkHistory|Константы|Constants|КритерииОтбора|FilterCriteria|Метаданные|Metadata|Обработки|DataProcessors|ОтправкаДоставляемыхУведомлений|DeliverableNotificationSend|Отчеты|Reports|ПараметрыСеанса|SessionParameters|Перечисления|Enums|ПланыВидовРасчета|ChartsOfCalculationTypes|ПланыВидовХарактеристик|ChartsOfCharacteristicTypes|ПланыОбмена|ExchangePlans|ПланыСчетов|ChartsOfAccounts|ПолнотекстовыйПоиск|FullTextSearch|ПользователиИнформационнойБазы|InfoBaseUsers|Последовательности|Sequences|РасширенияКонфигурации|ConfigurationExtensions|РегистрыБухгалтерии|AccountingRegisters|РегистрыНакопления|AccumulationRegisters|РегистрыРасчета|CalculationRegisters|РегистрыСведений|InformationRegisters|РегламентныеЗадания|ScheduledJobs|СериализаторXDTO|XDTOSerializer|Справочники|Catalogs|СредстваГеопозиционирования|LocationTools|СредстваКриптографии|CryptoToolsManager|СредстваМультимедиа|MultimediaTools|СредстваПочты|MailTools|СредстваТелефонии|TelephonyTools|ФабрикаXDTO|XDTOFactory|ФоновыеЗадания|BackgroundJobs|ХранилищаНастроек|\
         |ГлавныйИнтерфейс|MainInterface|ГлавныйСтиль|MainStyle|ПараметрЗапуска|LaunchParameter|РабочаяДата|WorkingDate|SettingsStorages|ХранилищеВариантовОтчетов|ReportsVariantsStorage|ХранилищеНастроекДанныхФорм|FormDataSettingsStorage|ХранилищеОбщихНастроек|CommonSettingsStorage|ХранилищеПользовательскихНастроекДинамическихСписков|DynamicListsUserSettingsStorage|ХранилищеПользовательскихНастроекОтчетов|ReportsUserSettingsStorage|ХранилищеСистемныхНастроек|SystemSettingsStorage|\
     )(?=[^\wа-яё]|$)'
 
-    CONSTANTS = r'(?<!\.)(?:Неопределено|Undefined|Истина|True|Ложь|False|NULL)(?=[^\wа-яё]|$)'
+    KEYWORD_CONSTANT = r'(?<!\.)(?:Неопределено|Undefined|Истина|True|Ложь|False|NULL)(?=[^\wа-яё]|$)'
 
     # see https://pygments.org/docs/tokens
     tokens = {
         'root': [
             (r'\n', Token.Text),
             (r'[^\S\n]+', Token.Text),
-            (r'//.*?\n', Token.Comment.Singleline),
+            (r'//.*?(?=\n)', Token.Comment.Single),
             (r'[\[\]:(),;]', Token.Punctuation),
-            (r'\&.*$', Token.Keyword.Declaration),
+            (r'\&.*$', Token.Name.Decorator),
             (r'[-+\/=<>*%=<>.?&]', Token.Operator),
-            (r'\#.*$', Token.Keyword.Declaration),
-            (BUILTINS, Token.Name.Builtin),
+            (r'\#.*$', Token.Comment.Preproc),
+            (NAME_BUILTIN, Token.Name.Builtin),
             (r'[\wа-яё_][\wа-яё0-9_]*(?=(\s?[\(]))', Token.Name.Function),
-            (KEYWORDS, Token.Keyword),
-            (CLASSES, Token.Class),
-            (CONSTANTS, Token.Keyword.Constant),
+            (KEYWORD_DECLARATION, Token.Keyword.Declaration),
+            (KEYWORD, Token.Keyword),
+            (NAME_CLASS, Token.Name.Class),
+            (KEYWORD_CONSTANT, Token.Keyword.Constant),
             (r'\b\d+\.?\d*\b', Token.Number),
             (r'[\wа-яё_][\wа-яё0-9_]*', Token.Name.Variable),
-            (r'".*?("|$)', Token.Literal.String),
-            (r'\|.*?("|$)', Token.Literal.String),
+            (r'".*?("|$)', Token.String),
+            (r'\|.*?("|$)', Token.String),
             (r'\'.*?\'', Token.Literal.Date),
-            (r'~.*?$', Token.Label),
-        ]
+            (r'~.*?(?=[:;])', Token.Name.Label),
+        ],
     }

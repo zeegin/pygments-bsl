@@ -8,18 +8,9 @@ from pygments.token import Token
 from pygments_bsl import lexer as lexer_mod
 from pygments_bsl.lexer import BSLLexer
 
-# from tokens_bsl import TOKENS as expected_tokens_bsl
-# from tokens_os import TOKENS as expected_tokens_os
-
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 lexer = lexers.load_lexer_from_file(lexer_mod.__file__, "BSLLexer")
-
-with open(os.path.join(CURRENT_DIR, "samples.bsl"), "r") as fh:
-    text_bsl = fh.read()
-
-with open(os.path.join(CURRENT_DIR, "samples.os"), "r") as fh:
-    text_os = fh.read()
 
 class BslLexerTestCase(TestCase):
 
@@ -30,11 +21,15 @@ class BslLexerTestCase(TestCase):
         return [i for i in tokens if not space.match(i[1]) and not i[1] == ""]
 
     def test_guess_lexer_for_filename(self):
-        guessed_lexer = lexers.guess_lexer_for_filename("samples.bsl", text_bsl)
-        self.assertEqual(guessed_lexer.name, BSLLexer.name)
+        with open(os.path.join(CURRENT_DIR, "samples.bsl"), "r", encoding="utf-8") as fh:
+            text_bsl = fh.read()
+            guessed_lexer = lexers.guess_lexer_for_filename("samples.bsl", text_bsl)
+            self.assertEqual(guessed_lexer.name, BSLLexer.name)
 
-        guessed_lexer = lexers.guess_lexer_for_filename("samples.os", text_os)
-        self.assertEqual(guessed_lexer.name, BSLLexer.name)
+        with open(os.path.join(CURRENT_DIR, "samples.os"), "r", encoding="utf-8") as fh:
+            text_os = fh.read()
+            guessed_lexer = lexers.guess_lexer_for_filename("samples.os", text_os)
+            self.assertEqual(guessed_lexer.name, BSLLexer.name)
 
     def test_get_lexer_by_name(self):
         lexer = lexers.get_lexer_by_name("bsl")
@@ -43,19 +38,6 @@ class BslLexerTestCase(TestCase):
         lexer = lexers.get_lexer_by_name("os")
         self.assertEqual(lexer.name, BSLLexer.name)
 
-    # TODO Global test for samples
-    # disabled because too difficult to support
-    
-    # def test_get_tokens_one(self):
-    #     lexer = lexers.get_lexer_by_name("bsl")
-    #     tokens = lexer.get_tokens(text_bsl)
-    #     self.assertEqual([i for i in tokens], expected_tokens_bsl)
-    
-    # def test_get_tokens_one(self):
-    #     lexer = lexers.get_lexer_by_name("os")
-    #     tokens = lexer.get_tokens(text_os)
-    #     self.assertEqual([i for i in tokens], expected_tokens_os)
-    
     def test_lexing_region(self):
         lexer = lexers.get_lexer_by_name("bsl")
         tokens = lexer.get_tokens(
@@ -69,9 +51,9 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Keyword.Declaration, "#Область ИмяОбласти"),
-                (Token.Comment.Singleline, '// это комментарий\n'),
-                (Token.Keyword.Declaration, "#КонецОбласти"),
+                (Token.Comment.Preproc, "#Область ИмяОбласти"),
+                (Token.Comment.Single, '// это комментарий'),
+                (Token.Comment.Preproc, "#КонецОбласти"),
             ],
         )
     
@@ -86,7 +68,7 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Keyword, "Перем"),
+                (Token.Keyword.Declaration, "Перем"),
                 (Token.Name.Variable, "А"),
                 (Token.Keyword, "Экспорт"),
                 (Token.Punctuation, ";"),
@@ -104,7 +86,7 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Keyword, "Перем"),
+                (Token.Keyword.Declaration, "Перем"),
                 (Token.Name.Variable, "А"),
                 (Token.Punctuation, ','),
                 (Token.Name.Variable, 'Б'),
@@ -123,7 +105,7 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Keyword, "Перем"),
+                (Token.Keyword.Declaration, "Перем"),
                 (Token.Name.Variable, "А"),
                 (Token.Keyword, "Экспорт"),
                 (Token.Punctuation, ','),
@@ -143,7 +125,7 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Keyword, "Перем"),
+                (Token.Keyword.Declaration, "Перем"),
                 (Token.Name.Variable, "А"),
                 (Token.Punctuation, ','),
                 (Token.Name.Variable, 'Б'),
@@ -163,7 +145,7 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Keyword, "Перем"),
+                (Token.Keyword.Declaration, "Перем"),
                 (Token.Name.Variable, "А"),
                 (Token.Keyword, "Экспорт"),
                 (Token.Punctuation, ','),
@@ -184,10 +166,10 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Keyword, "Перем"),
+                (Token.Keyword.Declaration, "Перем"),
                 (Token.Name.Variable, "ДиалогРаботыСКаталогом"),
                 (Token.Punctuation, ";"),
-                (Token.Comment.Singleline, '// Диалог работы с каталогом\n'),
+                (Token.Comment.Single, '// Диалог работы с каталогом'),
             ],
         )
 
@@ -204,9 +186,9 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Keyword.Declaration, "#Если Сервер Тогда;"),
-                (Token.Comment.Singleline, '// это комментарий\n'),
-                (Token.Keyword.Declaration, "#КонецЕсли"),
+                (Token.Comment.Preproc, "#Если Сервер Тогда;"),
+                (Token.Comment.Single, '// это комментарий'),
+                (Token.Comment.Preproc, "#КонецЕсли"),
             ],
         )
 
@@ -221,7 +203,7 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Keyword.Declaration, "&НаСервере;"),
+                (Token.Name.Decorator, "&НаСервере;"),
             ],
         )
 
@@ -262,7 +244,7 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Keyword.Declaration, '&Перед("ПередЗаписью")'),
+                (Token.Name.Decorator, '&Перед("ПередЗаписью")'),
                 (Token.Keyword, "Процедура"),
                 (Token.Name.Function, "Расш1_ПередЗаписью"),
                 (Token.Punctuation, '('),
@@ -292,19 +274,19 @@ class BslLexerTestCase(TestCase):
                 (Token.Name.Function, "ИмяПроцедуры"),
                 (Token.Punctuation, '('),
                 (Token.Keyword, 'Знач'),
-                (Token.Name.Variable, 'ПараметрСКонстантой'), # <- Error? Token.Name.Variable.Instance
+                (Token.Name.Variable, 'ПараметрСКонстантой'),
                 (Token.Punctuation, ','),
-                (Token.Name.Variable, 'ОбычныйПараметр'), # <- Error? Token.Name.Variable.Instance
+                (Token.Name.Variable, 'ОбычныйПараметр'),
                 (Token.Punctuation, ','),
-                (Token.Name.Variable, 'ПараметрСНекорректнымЗначением'), # <- Error? Token.Name.Variable.Instance
+                (Token.Name.Variable, 'ПараметрСНекорректнымЗначением'),
                 (Token.Operator, '='),
-                (Token.Name.Variable, 'Нелегальщина'), # <- Error? Token.Error
+                (Token.Name.Variable, 'Нелегальщина'), # Token.Generic.Error
                 (Token.Punctuation, ','),
-                (Token.Name.Variable, 'ПараметрСНекорректнымЗначением'), # <- Error? Token.Name.Variable.Instance
+                (Token.Name.Variable, 'ПараметрСНекорректнымЗначением'),
                 (Token.Operator, '='),
-                (Token.Name.Variable, 'НелегальщинаБезПробела'), # <- Error? Token.Error
+                (Token.Name.Variable, 'НелегальщинаБезПробела'), # Token.Generic.Error
                 (Token.Punctuation, ','),
-                (Token.Name.Variable, 'ПараметрСДефолтнымЧисловымЗначением'), # <- Error? Token.Name.Variable.Instance
+                (Token.Name.Variable, 'ПараметрСДефолтнымЧисловымЗначением'),
                 (Token.Operator, '='),
                 (Token.Literal.Number, '0'),
                 (Token.Punctuation, ')'),
@@ -353,7 +335,7 @@ class BslLexerTestCase(TestCase):
                 (Token.Operator, '='),
                 (Token.Literal.String, '"многострочная'),
                 (Token.Literal.String, '|строка'),
-                (Token.Comment.Singleline, '//|это комментарий\n'),
+                (Token.Comment.Single, '//|это комментарий'),
                 (Token.Literal.String, '|// а это нет'),
                 (Token.Literal.String, '|"'),
                 (Token.Punctuation, ';'),
@@ -391,9 +373,9 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'Число'),
                 (Token.Operator, '='),
-                (Token.Literal.Number, '0.0'), # <- Error? Token.Name.Float
+                (Token.Number, '0.0'),
                 (Token.Operator, '*'),
-                (Token.Literal.Number, '100'), # <- Error? Token.Name.Integer
+                (Token.Number, '100'),
                 (Token.Punctuation, ';'),
             ],
         )
@@ -739,7 +721,7 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Class, 'Справочники'),
+                (Token.Name.Class, 'Справочники'),
                 (Token.Operator, '.'),
                 (Token.Name.Variable, 'ИмяСправочника'),
                 (Token.Operator, '.'),
@@ -763,7 +745,7 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'А'),
                 (Token.Operator, '='),
-                (Token.Class, 'ХранилищеПользовательскихНастроекДинамическихСписков'),
+                (Token.Name.Class, 'ХранилищеПользовательскихНастроекДинамическихСписков'),
                 (Token.Operator, '.'),
                 (Token.Name.Function, 'Сохранить'),
                 (Token.Punctuation, '('),
@@ -804,9 +786,11 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Token.Label, '~Метка:'),
+                (Token.Name.Label, '~Метка'),
+                (Token.Punctuation, ':'),
                 (Token.Keyword, 'Перейти'),
-                (Token.Label, '~Метка;')
+                (Token.Name.Label, '~Метка'),
+                (Token.Punctuation, ';')
             ],
         )
 
@@ -822,5 +806,29 @@ class BslLexerTestCase(TestCase):
             self.__filter_tokens(tokens),
             [
                 (Token.Name.Builtin, 'НачатьТранзакцию'),
+            ],
+        )
+
+
+    def test_lexing_invalid_illegal(self):
+        lexer = lexers.get_lexer_by_name("bsl")
+        tokens = lexer.get_tokens(
+            '''
+            ПараметрСНекорректнымЗначением = Нелегальщина,
+            ПараметрСНекорректнымЗначением =НелегальщинаБезПробела,
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'ПараметрСНекорректнымЗначением'),
+                (Token.Operator, '='),
+                (Token.Name.Variable, 'Нелегальщина'), # Token.Generic.Error
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'ПараметрСНекорректнымЗначением'),
+                (Token.Operator, '='),
+                (Token.Name.Variable, 'НелегальщинаБезПробела'), # Token.Generic.Error
+                (Token.Punctuation, ',')
             ],
         )

@@ -5,3 +5,4 @@ build
 *.egg-info
 *.eggs
 .tox
+.pytest_cache

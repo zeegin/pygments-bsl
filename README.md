@@ -20,22 +20,21 @@ $ pip install pygments-bsl
 Install local
 --------
 ```
-$ python setup.py install
+$ pip install .
 ```
-
 
 Build
 ------
 
 ```
-$ python setup.py sdist
+$ python -m build
 ```
 
 Test
 ------
 
 ```
-$ python setup.py test
+$ pytest
 ```
 
 Usage

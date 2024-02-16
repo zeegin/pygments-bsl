@@ -8,7 +8,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 setup(
     name='pygments-bsl',
     version='0.11.0',
-    packages=find_packages(exclude=[".vscode/*", "tests/*"]),
+    packages=find_packages(exclude=[".github/*", ".vscode/*", "tests/*"]),
     author='Ingvar Vilkman',
     author_email='zeegin@zeegin.com',
     url='https://github.com/zeegin/pygments-bsl',

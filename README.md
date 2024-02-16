@@ -53,3 +53,7 @@ as from the pygementize command:
 - _pygments-bsl: https://github.com/zeegin/pygments-bsl
 - _PyPI: http://pypi.python.org/pypi
 - _pip: http://www.pip-installer.org/
+
+Used:
+- https://1c-syntax.github.io/bsl-language-server/
+- https://pr-mex.github.io/vanessa-automation/

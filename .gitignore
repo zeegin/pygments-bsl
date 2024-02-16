@@ -6,3 +6,4 @@ build
 *.eggs
 .tox
 .pytest_cache
+.venv

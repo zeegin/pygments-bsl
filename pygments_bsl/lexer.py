@@ -39,7 +39,7 @@ class BSLLexer(RegexLexer):
         'Новый','New',
         # storage.modifier.bsl
         'Знач', 'Val',
-        # ???
+        # 
         'Перейти', 'Goto',
         'Асинх', 'Async',
         'Ждать', 'Await',
@@ -462,15 +462,19 @@ class BSLLexer(RegexLexer):
         'Неопределено','Undefined','Истина','True','Ложь','False','NULL'
     ), prefix='(?<!\.)', suffix=r'\b')
 
+    OPERATORS = words((
+        '=','<=','>=','<>','<','>','+','-','*','/','%','.'
+    ))
+
     # see https://pygments.org/docs/tokens
     tokens = {
         'root': [
             (r'\n', Token.Text),
             (r'[^\S\n]+', Token.Text),
-            (r'//.*?(?=\n)', Token.Comment.Single),
+            (r'\/\/.*?(?=\n)', Token.Comment.Single),
             (r'[\[\]:(),;]', Token.Punctuation),
             (r'\&.*$', Token.Name.Decorator),
-            (r'[-+\/=<>*%=<>.?&]', Token.Operator),
+            (OPERATORS, Token.Operator),
             (r'\#.*$', Token.Comment.Preproc),
             (NAME_BUILTIN, Token.Name.Builtin),
             (r'[\wа-яё_][\wа-яё0-9_]*(?=(\s?[\(]))', Token.Name.Function),
@@ -480,9 +484,20 @@ class BSLLexer(RegexLexer):
             (KEYWORD_CONSTANT, Token.Keyword.Constant),
             (r'\b\d+\.?\d*\b', Token.Number),
             (r'[\wа-яё_][\wа-яё0-9_]*', Token.Name.Variable),
-            (r'".*?("|$)', Token.String),
-            (r'\|.*?("|$)', Token.String),
+            ('\"', Token.String, 'string'),
             (r'\'.*?\'', Token.Literal.Date),
             (r'~.*?(?=[:;])', Token.Name.Label),
         ],
+        'string': [
+            ('\"(?![\"])', Token.String, '#pop'),            
+            (r'\n', Token.Text),
+            (r'(?<=\n)[^\S\n]+', Token.Text),
+            (r'(?<=[^\S\n])\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'(?<=^)\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'[^\"\|\n]+', Token.String),
+            (r'\"\"', Token.String.Escape),
+            (r'\|', Token.String),
+            # String.Interpol %1 %2
+        ],
+        # String.Regex
     }

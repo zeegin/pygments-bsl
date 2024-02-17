@@ -17,7 +17,7 @@ class BslLexerTestCase(TestCase):
     maxDiff = None # if characters too more at assertEqual
 
     def __filter_tokens(self, tokens):
-        space = re.compile("[ \n]+")
+        space = re.compile("^[ \n]+$")
         return [i for i in tokens if not space.match(i[1]) and not i[1] == ""]
 
     def test_guess_lexer_for_filename(self):
@@ -307,11 +307,16 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'Б'),
                 (Token.Operator, '='),
-                (Token.Literal.String, '"текст с экраннированной "'),
-                (Token.Literal.String, '" кавычкой"'), # <- Error?
+                (Token.String, '"'),
+                (Token.String, 'текст с экраннированной '),
+                (Token.String.Escape, '""'),
+                (Token.String, ' кавычкой'),
+                (Token.String, '"'),
                 (Token.Operator, '+'),
-                (Token.Literal.String, '"и конкатенаций"'),
-                (Token.Literal.String, '""'), # <- Error?
+                (Token.String, '"'),
+                (Token.String, 'и конкатенаций'),
+                (Token.String.Escape, '""'),
+                (Token.String, '"'),
                 (Token.Punctuation, ';'),
             ],
         )
@@ -320,11 +325,12 @@ class BslLexerTestCase(TestCase):
         lexer = lexers.get_lexer_by_name("bsl")
         tokens = lexer.get_tokens(
             '''
-            В = "многострочная
-            |строка
-            //|это комментарий
-            |// а это нет
-            |";
+    В = "многострочная
+// комментарий начинающийся с начала строки
+    |строка
+    //|это комментарий
+    |// а это нет
+    |";
             '''
         )
 
@@ -333,11 +339,16 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'В'),
                 (Token.Operator, '='),
-                (Token.Literal.String, '"многострочная'),
-                (Token.Literal.String, '|строка'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'многострочная'),
+                (Token.Comment.Single, '// комментарий начинающийся с начала строки'),
+                (Token.Literal.String, '|'),
+                (Token.Literal.String, 'строка'),
                 (Token.Comment.Single, '//|это комментарий'),
-                (Token.Literal.String, '|// а это нет'),
-                (Token.Literal.String, '|"'),
+                (Token.Literal.String, '|'),
+                (Token.Literal.String, '// а это нет'),
+                (Token.Literal.String, '|'),
+                (Token.Literal.String, '"'),
                 (Token.Punctuation, ';'),
             ],
         )
@@ -355,7 +366,9 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'СтрокаСоСловомВыбрать'),
                 (Token.Operator, '='),
-                (Token.Literal.String, '"Some selected text"'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Some selected text'),
+                (Token.Literal.String, '"'),
                 (Token.Punctuation, ';'),
             ],
         )
@@ -468,7 +481,9 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'СтрокаСДатойВнутри'),
                 (Token.Operator, '='),
-                (Token.Literal.String, '''"Литерал типа Дата: '00010101'"'''),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, "Литерал типа Дата: '00010101'"),
+                (Token.Literal.String, '"'),
                 (Token.Punctuation, ';'),
             ],
         )
@@ -495,8 +510,7 @@ class BslLexerTestCase(TestCase):
                 (Token.Keyword, 'И'), # <- Error? Token.Operator.Word
                 (Token.Keyword, 'НЕ'), # <- Error? Token.Operator.Word
                 (Token.Name.Variable, 'Число'),
-                (Token.Operator, '<'), # <- Error! Should be '<='
-                (Token.Operator, '='), # <- But don`t metter for highliting
+                (Token.Operator, '<='),
                 (Token.Literal.Number, '0'),
                 (Token.Keyword, 'Тогда'),
                 (Token.Name.Variable, 'ОбычныйПараметр'),
@@ -654,7 +668,9 @@ class BslLexerTestCase(TestCase):
                 (Token.Operator, '='),
                 (Token.Name.Builtin, 'Новый'),
                 (Token.Punctuation, '('),
-                (Token.Literal.String, '"ТаблицаЗначений"'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'ТаблицаЗначений'),
+                (Token.Literal.String, '"'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
             ],
@@ -673,7 +689,8 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'ПрефиксЗначениеЗаполненоПостфикс'),
                 (Token.Operator, '='),
-                (Token.Literal.String, '""'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, '"'),
                 (Token.Punctuation, ';'),
             ],
         )

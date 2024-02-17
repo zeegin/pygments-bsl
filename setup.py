@@ -7,13 +7,13 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='pygments-bsl',
-    version='0.11.2',
+    version='0.12.0',
     packages=find_packages(exclude=[".github/*", ".vscode/*", "tests/*"]),
     author='Ingvar Vilkman',
     author_email='zeegin@zeegin.com',
     url='https://github.com/zeegin/pygments-bsl',
     license='MIT License',
-    description='Pygments 1C (BSL) lexer',
+    description='Pygments 1C (BSL, SDBL) lexer',
     long_description=long_description,
     long_description_content_type="text/markdown",
     classifiers=[
@@ -28,7 +28,8 @@ setup(
     ],
     entry_points={
         'pygments.lexers': [
-            'bsl=pygments_bsl:BSLLexer'
+            'bsl=pygments_bsl:BslLexer',
+            'sdbl=pygments_bsl:SdblLexer',
         ]
     },
     package_data={

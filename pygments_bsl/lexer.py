@@ -3,7 +3,7 @@ from pygments.token import Token
 
 import re
 
-class BSLLexer(RegexLexer):
+class BslLexer(RegexLexer):
     name = '1C (BSL) Lexer'
     aliases = ['bsl', 'os']
     filenames = ['*.bsl', '*.os']
@@ -501,4 +501,51 @@ class BSLLexer(RegexLexer):
             (r'%%', Token.String.Escape),
         ],
         # String.Regex
+    }
+
+
+
+
+class SdblLexer(RegexLexer):
+    name = '1C (SDBL) Lexer'
+    aliases = ['sdbl']
+    filenames = ['*.sdbl']
+
+    flags = re.MULTILINE | re.IGNORECASE | re.VERBOSE
+
+    KEYWORD_DECLARATION = words((
+        # keyword.control.sdbl
+        'Выбрать','Select','Разрешенные','Allowed','Различные','Distinct',
+        'Первые','Top','Как','As','ПустаяТаблица','EpmtyTable',
+        'Поместить','Into','Уничтожить','Drop','Из','From',
+
+
+        # ((Левое|Left|Правое|Right|Полное|Full)\s+(Внешнее\s+|Outer\s+)?Соединение|Join)
+        # ((Внутреннее|Inner)\s+Соединение|Join)
+        # Где|Where|(Сгруппировать\s+По)|(Group\s+By)
+        # Имеющие|Having|Объединить(\s+Все)?|Union(\s+All)?
+        # (Упорядочить\s+По)|(Order\s+By)
+        # Автоупорядочивание|Autoorder|Итоги|Totals
+        # По(\s+Общие)?|By(\s+Overall)?|(Только\s+)?Иерархия|(Only\s+)?Hierarchy
+        # Периодами|Periods|Индексировать|Index|Выразить|Cast
+        # |Возр|Asc|Убыв|Desc
+        # Для\s+Изменения|(For\s+Update(\s+Of)?)
+        # Спецсимвол|Escape
+    ), prefix='(?<!\.)', suffix=r'\b')
+    
+    KEYWORD_CONSTANT = words((
+        # constant.language.sdbl
+        'Неопределено','Undefined','Истина','True','Ложь','False','NULL'
+    ), prefix='(?<!\.)', suffix=r'\b')
+
+    tokens = {
+        'root': [
+            (r'\n', Token.Text),
+            (r'[^\S\n]+', Token.Text),
+            (r'\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'[\[\]:(),;]', Token.Punctuation),
+            (KEYWORD_DECLARATION, Token.Keyword.Declaration),
+            (KEYWORD_CONSTANT, Token.Keyword.Constant),
+            (r'[\wа-яё_][\wа-яё0-9_]*', Token.Name.Variable),
+        ]
     }

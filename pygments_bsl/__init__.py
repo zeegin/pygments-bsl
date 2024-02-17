@@ -1,4 +1,4 @@
-from .lexer import BSLLexer  # noqa
+from .lexer import BslLexer, SdblLexer  # noqa
 
 
-__all__ = ["BSLLexer"]
+__all__ = ["BslLexer", "SdblLexer"]

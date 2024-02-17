@@ -35,6 +35,7 @@ Test
 
 ```
 $ pytest
+
 ```
 
 Usage
@@ -44,7 +45,7 @@ Pygment json highlighting is available without any further customization from co
 as from the pygementize command:
 
 ```
-  $ pygmentize "C:\git\pygments-bsl\tests\samples.bsl"
+  $ pygmentize "C:\git\pygments-bsl\tests\examplefiles\bsl\samples.bsl"
 
    ... beautifully formatted bsl will flow here
 ```

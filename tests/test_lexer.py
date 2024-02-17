@@ -19,12 +19,12 @@ class BslLexerTestCase(TestCase):
         return [i for i in tokens if not space.match(i[1]) and not i[1] == '']
 
     def test_guess_lexer_for_filename(self):
-        with open(os.path.join(CURRENT_DIR, 'samples.bsl'), 'r', encoding='utf-8') as fh:
+        with open(os.path.join(CURRENT_DIR, 'examplefiles', 'bsl', 'samples.bsl'), 'r', encoding='utf-8') as fh:
             text_bsl = fh.read()
             guessed_lexer = lexers.guess_lexer_for_filename('samples.bsl', text_bsl)
             self.assertEqual(guessed_lexer.name, BslLexer.name)
 
-        with open(os.path.join(CURRENT_DIR, 'samples.os'), 'r', encoding='utf-8') as fh:
+        with open(os.path.join(CURRENT_DIR, 'examplefiles', 'bsl', 'samples.os'), 'r', encoding='utf-8') as fh:
             text_os = fh.read()
             guessed_lexer = lexers.guess_lexer_for_filename('samples.os', text_os)
             self.assertEqual(guessed_lexer.name, BslLexer.name)
@@ -929,7 +929,7 @@ class SdblLexerTestCase(TestCase):
 
 
     def test_guess_lexer_for_filename(self):
-        with open(os.path.join(CURRENT_DIR, 'samples.sdbl'), 'r', encoding='utf-8') as fh:
+        with open(os.path.join(CURRENT_DIR, 'examplefiles', 'sdbl', 'samples.sdbl'), 'r', encoding='utf-8') as fh:
             text_sdbl = fh.read()
             guessed_lexer = lexers.guess_lexer_for_filename('samples.sdbl', text_sdbl)
             self.assertEqual(guessed_lexer.name, SdblLexer.name)

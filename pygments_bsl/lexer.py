@@ -494,10 +494,11 @@ class BSLLexer(RegexLexer):
             (r'(?<=\n)[^\S\n]+', Token.Text),
             (r'(?<=[^\S\n])\/\/.*?(?=\n)', Token.Comment.Single),
             (r'(?<=^)\/\/.*?(?=\n)', Token.Comment.Single),
-            (r'[^\"\|\n]+', Token.String),
+            (r'[^\"\|\n%]+', Token.String),
             (r'\"\"', Token.String.Escape),
             (r'\|', Token.String),
-            # String.Interpol %1 %2
+            (r'%\d', Token.String.Interpol),
+            (r'%%', Token.String.Escape),
         ],
         # String.Regex
     }

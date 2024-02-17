@@ -353,6 +353,47 @@ class BslLexerTestCase(TestCase):
             ],
         )
 
+    def test_lexing_text_interpol(self):
+        lexer = lexers.get_lexer_by_name("bsl")
+        tokens = lexer.get_tokens(
+            '''
+    СтрШаблон("Товар: %1, %2 не найден!", Номенклатура, Характеристика);
+    СтрШаблон("Скидка составила %1%%", 10);
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'СтрШаблон'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Товар: '),
+                (Token.Literal.String.Interpol, '%1'),
+                (Token.Literal.String, ', '),
+                (Token.Literal.String.Interpol, '%2'),
+                (Token.Literal.String, ' не найден!'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'Номенклатура'),
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'Характеристика'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+                (Token.Name.Builtin, 'СтрШаблон'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Скидка составила '),
+                (Token.Literal.String.Interpol, '%1'),
+                (Token.Literal.String.Escape, '%%'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ','),
+                (Token.Literal.Number, '10'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';')
+            ],
+        )
+
     def test_lexing_text_with_keyword(self):
         lexer = lexers.get_lexer_by_name("bsl")
         tokens = lexer.get_tokens(

@@ -7,6 +7,7 @@ Pygments_ is a syntax highlighting tool that supports a wide range of
 languages and data formats.
 
 Made for MkDocs https://www.mkdocs.org.
+Online example https://zeegin.github.io/pygments-bsl/
 
 Syntax rools from https://github.com/1c-syntax.
 

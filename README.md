@@ -19,22 +19,22 @@ $ pip install pygments-bsl
 
 Install local
 --------
-```
-$ pip install .
+```bash
+pip install .
 ```
 
 Build
 ------
 
-```
-$ python -m build
+```bash
+python -m build
 ```
 
 Test
 ------
 
-```
-$ pytest
+```bash
+pytest
 
 ```
 
@@ -44,10 +44,10 @@ Usage
 Pygment json highlighting is available without any further customization from code as well
 as from the pygementize command:
 
-```
-  $ pygmentize "C:\git\pygments-bsl\tests\examplefiles\bsl\samples.bsl"
-
-   ... beautifully formatted bsl will flow here
+```bash
+pygmentize "C:\git\pygments-bsl\tests\examplefiles\bsl\samples.bsl"
+pygmentize "C:\git\pygments-bsl\tests\examplefiles\bsl\samples.os"
+pygmentize "C:\git\pygments-bsl\tests\examplefiles\sdbl\samples.sdbl"
 ```
 
 - _Pygments: http://pygments.org/

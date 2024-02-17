@@ -1,0 +1,85 @@
+# Project information
+site_name: pygments-bsl
+site_url: 'https://zeegin.github.io/pygments-bsl'
+site_author: Ingvar Vilkman
+site_description: >-
+  Подсветка синтаксиса 1С:Предприятие для pygments.
+  Чтобы созданная документация в mkdocs выглядела потрясающе.
+
+# Repository
+repo_name: 'zeegin/pygments-bsl'
+repo_url: 'https://github.com/zeegin/pygments-bsl'
+edit_uri: 'edit/master/docs'
+
+# Copyright
+copyright: Copyright &copy; 2019 - 2024 Ingvar Vilkman
+
+theme: 
+  name: material
+  language: ru
+  logo: 'assets/images/logo.png'
+  favicon: 'assets/images/logo.png'
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    # - content.code.select
+    # - content.footnote.tooltips
+    # - content.tabs.link
+    - content.tooltips
+    # - header.autohide
+    # - navigation.expand
+    # - navigation.footer
+    # - navigation.indexes
+    # - navigation.instant
+    # - navigation.instant.prefetch
+    # - navigation.instant.progress
+    # - navigation.prune
+    - navigation.sections
+    # - navigation.tabs
+    # - navigation.tabs.sticky
+    # - navigation.top
+    # - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    # - toc.integrate
+  palette:
+    # Light mode
+    - teal: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      accent: indigo
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to dark mode
+
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: light blue
+      toggle:
+        icon: material/lightbulb
+        name: Switch to light mode
+
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: 'https://github.com/zeegin/pygments-bsl'
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/pygments-bsl/
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.superfences
+  
+extra_css:
+  - stylesheets/extra.css

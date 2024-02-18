@@ -1,4 +1,4 @@
-[![PyPI version](https://badge.fury.io/py/pygments-bsl.svg)](https://badge.fury.io/py/pygments-bsl)
+[![PyPI - Version](https://img.shields.io/pypi/v/pygments-bsl?style=flat-square&logo=pypi&label=pypi%20package&color=green)](https://pypi.org/project/pygments-bsl/)
 
 pygments-bsl
 =============

@@ -3,13 +3,17 @@
 pygments-bsl
 =============
 
-Pygments_ is a syntax highlighting tool that supports a wide range of
-languages and data formats.
+[Pygments](http://pygments.org/) is a syntax highlighting tool.
 
-Made for MkDocs https://www.mkdocs.org.
-Online example https://zeegin.github.io/pygments-bsl/
+[Who uses Pygments?](https://pygments.org/faq/#who-uses-pygments)
 
-Syntax rools from https://github.com/1c-syntax.
+Online example [MkDocs](https://www.mkdocs.org) with `pygments-bsl` support https://zeegin.github.io/pygments-bsl/
+
+`pygments-bsl` used in:
+- https://1c-syntax.github.io/bsl-language-server/
+- https://pr-mex.github.io/vanessa-automation/
+
+Syntax rules adopted from https://github.com/1c-syntax.
 
 Install
 --------
@@ -42,20 +46,8 @@ pytest
 Usage
 -------
 
-Pygment json highlighting is available without any further customization from code as well
-as from the pygementize command:
-
 ```bash
 pygmentize "C:\git\pygments-bsl\tests\examplefiles\bsl\samples.bsl"
 pygmentize "C:\git\pygments-bsl\tests\examplefiles\bsl\samples.os"
 pygmentize "C:\git\pygments-bsl\tests\examplefiles\sdbl\samples.sdbl"
 ```
-
-- _Pygments: http://pygments.org/
-- _pygments-bsl: https://github.com/zeegin/pygments-bsl
-- _PyPI: http://pypi.python.org/pypi
-- _pip: http://www.pip-installer.org/
-
-Used:
-- https://1c-syntax.github.io/bsl-language-server/
-- https://pr-mex.github.io/vanessa-automation/

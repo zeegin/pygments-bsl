@@ -489,7 +489,7 @@ class BslLexer(RegexLexer):
             (r'~.*?(?=[:;])', Token.Name.Label),
         ],
         'string': [
-            ('\"(?![\"])', Token.String, '#pop'),            
+            ('\"(?![\"])', Token.String, '#pop'),
             (r'\n', Token.Text),
             (r'(?<=\n)[^\S\n]+', Token.Text),
             (r'(?<=[^\S\n])\/\/.*?(?=\n)', Token.Comment.Single),
@@ -518,19 +518,21 @@ class SdblLexer(RegexLexer):
         'Выбрать','Select','Разрешенные','Allowed','Различные','Distinct',
         'Первые','Top','Как','As','ПустаяТаблица','EpmtyTable',
         'Поместить','Into','Уничтожить','Drop','Из','From',
-
-
-        # ((Левое|Left|Правое|Right|Полное|Full)\s+(Внешнее\s+|Outer\s+)?Соединение|Join)
-        # ((Внутреннее|Inner)\s+Соединение|Join)
-        # Где|Where|(Сгруппировать\s+По)|(Group\s+By)
-        # Имеющие|Having|Объединить(\s+Все)?|Union(\s+All)?
-        # (Упорядочить\s+По)|(Order\s+By)
-        # Автоупорядочивание|Autoorder|Итоги|Totals
-        # По(\s+Общие)?|By(\s+Overall)?|(Только\s+)?Иерархия|(Only\s+)?Hierarchy
-        # Периодами|Periods|Индексировать|Index|Выразить|Cast
-        # |Возр|Asc|Убыв|Desc
-        # Для\s+Изменения|(For\s+Update(\s+Of)?)
-        # Спецсимвол|Escape
+        'ЛевоеСоединение', 'LeftJoin', 'ПравоеСоединение', 'RightJoin',
+        'ПолноеСоединение', 'FullJoin', 'ВнешнееСоединение', 'OuterJoin',
+        'ВнутреннееСоединение', 'InnerJoin',
+        'Где', 'Where', 'Сгруппировать По', 'Group By',
+        'Имеющие', 'Having', 'Объединить', 'Union'
+        'Объединить Все', 'Union All', 'Упорядочить По', 'Order By',
+        'Автоупорядочивание', 'Autoorder', 'Итоги', 'Totals',
+        'По', 'By', 'По Общие', 'By Overall',
+        'Только', 'Only', 'Только Иерархия', 'Only Hierarchy',
+        'Периодами', 'Periods', 'Индексировать', 'Index',
+        'Выразить', 'Cast', 'Возр', 'Asc', 'Убыв', 'Desc',
+        'Для Изменения', 'For Update Of', 'Спецсимвол', 'Escape',
+        'Подобно', 'Like', 'Есть', 'Is', 'Не', 'Not',
+        'Выбор', 'Когда', 'Тогда',
+        'Ссылка'
     ), prefix='(?<!\.)', suffix=r'\b')
     
     KEYWORD_CONSTANT = words((
@@ -547,5 +549,18 @@ class SdblLexer(RegexLexer):
             (KEYWORD_DECLARATION, Token.Keyword.Declaration),
             (KEYWORD_CONSTANT, Token.Keyword.Constant),
             (r'[\wа-яё_][\wа-яё0-9_]*', Token.Name.Variable),
+            ('\"', Token.String, 'string'),
+        ],
+        'string': [
+            ('\"(?![\"])', Token.String, '#pop'),
+            (r'\n', Token.Text),
+            (r'(?<=\n)[^\S\n]+', Token.Text),
+            (r'(?<=[^\S\n])\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'(?<=^)\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'[^\"\|\n]+', Token.String),
+            (r'\"\"', Token.String.Escape),
+            (r'\|', Token.String),
+            (r'[/[/]/~/_/^/%]', Token.String.Interpol),
+            (r'~[/[/]/~/_/^/%]', Token.String.Escape),
         ]
     }

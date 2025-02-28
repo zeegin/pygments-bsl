@@ -392,6 +392,28 @@ class BslLexerTestCase(TestCase):
             ],
         )
 
+    def test_lexing_text_interpol_fake(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+    Строка = "Кефир 15% жирности";
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'Строка'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Кефир 15'),
+                (Token.Literal.String, '%'),
+                (Token.Literal.String, ' жирности'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ';')
+            ],
+        )
+
     def test_lexing_text_with_keyword(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(

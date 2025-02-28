@@ -499,6 +499,7 @@ class BslLexer(RegexLexer):
             (r'\|', Token.String),
             (r'%\d', Token.String.Interpol),
             (r'%%', Token.String.Escape),
+            (r'%', Token.Literal.String),
         ],
         # String.Regex
     }
@@ -531,7 +532,7 @@ class SdblLexer(RegexLexer):
         'Выразить', 'Cast', 'Возр', 'Asc', 'Убыв', 'Desc',
         'Для Изменения', 'For Update Of', 'Спецсимвол', 'Escape',
         'Подобно', 'Like', 'Есть', 'Is', 'Не', 'Not',
-        'Выбор', 'Когда', 'Тогда',
+        'Выбор', 'Когда', 'Тогда', 'Конец'
         'Ссылка'
     ), prefix='(?<!\.)', suffix=r'\b')
     

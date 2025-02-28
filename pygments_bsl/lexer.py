@@ -515,30 +515,53 @@ class SdblLexer(RegexLexer):
     flags = re.MULTILINE | re.IGNORECASE | re.VERBOSE
 
     KEYWORD_DECLARATION = words((
-        # keyword.control.sdbl
-        'Выбрать','Select','Разрешенные','Allowed','Различные','Distinct',
-        'Первые','Top','Как','As','ПустаяТаблица','EpmtyTable',
-        'Поместить','Into','Уничтожить','Drop','Из','From',
-        'ЛевоеСоединение', 'LeftJoin', 'ПравоеСоединение', 'RightJoin',
-        'ПолноеСоединение', 'FullJoin', 'ВнешнееСоединение', 'OuterJoin',
-        'ВнутреннееСоединение', 'InnerJoin',
-        'Где', 'Where', 'Сгруппировать По', 'Group By',
-        'Имеющие', 'Having', 'Объединить', 'Union'
-        'Объединить Все', 'Union All', 'Упорядочить По', 'Order By',
-        'Автоупорядочивание', 'Autoorder', 'Итоги', 'Totals',
-        'По', 'By', 'По Общие', 'By Overall',
-        'Только', 'Only', 'Только Иерархия', 'Only Hierarchy',
-        'Периодами', 'Periods', 'Индексировать', 'Index',
-        'Выразить', 'Cast', 'Возр', 'Asc', 'Убыв', 'Desc',
-        'Для Изменения', 'For Update Of', 'Спецсимвол', 'Escape',
-        'Подобно', 'Like', 'Есть', 'Is', 'Не', 'Not',
-        'Выбор', 'Когда', 'Тогда', 'Конец'
-        'Ссылка'
+        'АВТОУПОРЯДОЧИВАНИЕ','AUTOORDER','БУЛЕВО','BOOLEAN',
+        'В','IN','ВНЕШНЕЕ','OUTER','ВНУТРЕННЕЕ','INNER',
+        'ВОЗР','ASC','ВСЕ','ALL','ВЫБОР','CASE',
+        'ВЫБРАТЬ','SELECT','ВЫРАЗИТЬ','CAST',
+        'ГДЕ','WHERE','ГОД','YEAR',
+        'ГРУППИРУЮЩИМ','GROUPING','ДАТА','DATE',
+        'ДАТАВРЕМЯ','DATETIME','ДЕКАДА','TENDAYS',
+        'ДЕНЬ','DAY','ДЕНЬГОДА','DAYOFYEAR',
+        'ДЕНЬНЕДЕЛИ','WEEKDAY','ДЛЯ','FOR',
+        'ДОБАВИТЬ','ADD','ДОБАВИТЬКДАТЕ','DATEADD',
+        'ЕСТЬ','IS','ЕСТЬNULL','ISNULL',
+        'Значение','VALUE','И','AND',
+        'ИЕРАРХИЯ','HIERARCHY','ИЗ','FROM',
+        'ИЗМЕНЕНИЯ','UPDATE','ИЛИ','OR',
+        'ИМЕЮЩИЕ','HAVING','ИНАЧЕ','ELSE',
+        'ИНДЕКСИРОВАТЬ','INDEX',
+        'ИТОГИ','TOTALS','КАК','AS',
+        'КВАРТАЛ','QUARTER','КОГДА','WHEN',
+        'КОЛИЧЕСТВО','COUNT','КОНЕЦ','END',
+        'КОНЕЦПЕРИОДА','ENDOFPERIOD','ЛЕВОЕ','LEFT',
+        'МАКСИМУМ','MAX',
+        'МЕЖДУ','BETWEEN','МЕСЯЦ','MONTH',
+        'МИНИМУМ','MIN','МИНУТА','MINUTE',
+        'НАБОРАМ','SETS','НАЧАЛОПЕРИОДА','BEGINOFPERIOD',
+        'НЕ','NOT','НЕДЕЛЯ','WEEK',
+        'ОБЩИЕ','OVERALL','ОБЪЕДИНИТЬ','UNION',
+        'ПЕРВЫЕ','TOP','ПЕРИОДАМИ','PERIODS',
+        'ПО','BY','ON','ПОДОБНО','LIKE',
+        'ПОДСТРОКА','SUBSTRING','ПОЛНОЕ','FULL',
+        'ПОЛУГОДИЕ','HALFYEAR','ПОМЕСТИТЬ','INTO',
+        'ПРАВОЕ','RIGHT','ПРЕДСТАВЛЕНИЕ','PRESENTATION',
+        'ПУСТАЯТАБЛИЦА','EMPTYTABLE','РАЗЛИЧНЫЕ','DISTINCT',
+        'РАЗРЕШЕННЫЕ','ALLOWED','СГРУППИРОВАТЬ','GROUP',
+        'СЕКУНДА','SECOND','СЕКУНДА','SECOND',
+        'СОЕДИНЕНИЕ','JOIN','СПЕЦСИМВОЛ','ESCAPE',
+        'СРЕДНЕЕ','AVG','ССЫЛКА','REFS',
+        'СТРОКА','STRING','СУММА','SUM',
+        'ТИП','TYPE','ТИПЗНАЧЕНИЯ','VALUETYPE',
+        'ТОГДА','THEN','ТОЛЬКО','ONLY',
+        'УБЫВ','DESC','УНИКАЛЬНО','UNIQUE',
+        'УНИЧТОЖИТЬ','DROP','УПОРЯДОЧИТЬ','ORDER',
+        'ЧАС','HOUR','ЧИСЛО','NUMBER',
     ), prefix='(?<!\.)', suffix=r'\b')
     
     KEYWORD_CONSTANT = words((
         # constant.language.sdbl
-        'Неопределено','Undefined','Истина','True','Ложь','False','NULL'
+        'НЕОПРЕДЕЛЕНО','UNDEFINED','Истина','True','Ложь','False','NULL'
     ), prefix='(?<!\.)', suffix=r'\b')
 
     tokens = {

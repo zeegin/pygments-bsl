@@ -43,6 +43,13 @@ pytest
 
 ```
 
+Generate lexer data from JSON (after updating files in `3rd_party/`)
+------
+
+```bash
+python tools/generate_data.py
+```
+
 Usage
 -------
 

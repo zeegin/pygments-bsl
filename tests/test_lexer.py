@@ -1205,6 +1205,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
             '''
+            Запрос = Новый Запрос();
             Результат = Запрос.Выполнить();
             '''
         )
@@ -1212,6 +1213,13 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
+                (Token.Name.Variable, 'Запрос'),
+                (Token.Operator, '='),
+                (Token.Keyword, 'Новый'),
+                (Token.Name.Class, 'Запрос'),
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
                 (Token.Name.Variable, 'Результат'),
                 (Token.Operator, '='),
                 (Token.Name.Variable, 'Запрос'),
@@ -1234,7 +1242,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Keyword, 'Выполнить'),
+                (Token.Name.Builtin, 'Выполнить'),
                 (Token.Punctuation, '('),
                 (Token.Literal.String, '"'),
                 (Token.Literal.String, 'ВыполнитьЗапрос()'),
@@ -1260,6 +1268,53 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
                 (Token.Literal.String, '"'),
                 (Token.Literal.String, 'ВыбратьЗначения()'),
                 (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_types_from_json_are_builtins(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            ГруппаФормы = Новый ГруппаФормы;
+            ДанныеФормыДерево = Неопределено;
+            НастройкиКлиентскогоПриложения();
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'ГруппаФормы'),
+                (Token.Operator, '='),
+                (Token.Keyword, 'Новый'),
+                (Token.Name.Class, 'ГруппаФормы'),
+                (Token.Punctuation, ';'),
+                (Token.Name.Variable, 'ДанныеФормыДерево'),
+                (Token.Operator, '='),
+                (Token.Keyword.Constant, 'Неопределено'),
+                (Token.Punctuation, ';'),
+                (Token.Name.Function, 'НастройкиКлиентскогоПриложения'),
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_global_method_from_assets_is_builtin(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            ВопросАсинх();
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'ВопросАсинх'),
+                (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
             ],

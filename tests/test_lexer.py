@@ -54,7 +54,89 @@ class BslLexerTestCase(TestCase):
                 (Token.Comment.Preproc, '#КонецОбласти'),
             ],
         )
-    
+
+    def test_lexing_preproc_if_chain(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+#Если Сервер Тогда
+#ИначеЕсли Клиент Тогда
+#Иначе
+#КонецЕсли
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Comment.Preproc, '#Если'),
+                (Token.Keyword.Constant, 'Сервер'),
+                (Token.Comment.Preproc, 'Тогда'),
+                (Token.Comment.Preproc, '#ИначеЕсли'),
+                (Token.Keyword.Constant, 'Клиент'),
+                (Token.Comment.Preproc, 'Тогда'),
+                (Token.Comment.Preproc, '#Иначе'),
+                (Token.Comment.Preproc, '#КонецЕсли'),
+            ],
+        )
+
+    def test_lexing_preproc_if_complex_expression(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+#Если Сервер Или ТолстыйКлиентОбычноеПриложение И НЕ ВнешнееСоединение Тогда
+#КонецЕсли
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Comment.Preproc, '#Если'),
+                (Token.Keyword.Constant, 'Сервер'),
+                (Token.Comment.Preproc, 'Или'),
+                (Token.Keyword.Constant, 'ТолстыйКлиентОбычноеПриложение'),
+                (Token.Comment.Preproc, 'И'),
+                (Token.Comment.Preproc, 'НЕ'),
+                (Token.Keyword.Constant, 'ВнешнееСоединение'),
+                (Token.Comment.Preproc, 'Тогда'),
+                (Token.Comment.Preproc, '#КонецЕсли'),
+            ],
+        )
+
+    def test_lexing_preproc_insert_and_delete_blocks(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+#Вставка
+Процедура ДобавитьКод() КонецПроцедуры
+#КонецВставки
+#Удаление
+Функция Устаревшая() КонецФункции
+#КонецУдаления
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Comment.Preproc, '#Вставка'),
+                (Token.Keyword, 'Процедура'),
+                (Token.Name.Function, 'ДобавитьКод'),
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+                (Token.Keyword, 'КонецПроцедуры'),
+                (Token.Comment.Preproc, '#КонецВставки'),
+                (Token.Comment.Preproc, '#Удаление'),
+                (Token.Keyword, 'Функция'),
+                (Token.Name.Function, 'Устаревшая'),
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+                (Token.Keyword, 'КонецФункции'),
+                (Token.Comment.Preproc, '#КонецУдаления'),
+            ],
+        )
+
     def test_lexing_variable_declaration(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
@@ -175,7 +257,7 @@ class BslLexerTestCase(TestCase):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
             '''
-            #Если Сервер Тогда;
+            #Если Сервер Тогда
             // это комментарий
             #КонецЕсли
             '''
@@ -184,12 +266,14 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Comment.Preproc, '#Если Сервер Тогда;'),
+                (Token.Comment.Preproc, '#Если'),
+                (Token.Keyword.Constant, 'Сервер'),
+                (Token.Comment.Preproc, 'Тогда'),
                 (Token.Comment.Single, '// это комментарий'),
                 (Token.Comment.Preproc, '#КонецЕсли'),
             ],
         )
-
+    
     def test_lexing_annotation(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
@@ -1090,6 +1174,24 @@ class BslLexerTestCase(TestCase):
             ],
         )
 
+    def test_calling_null_is_error(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            X = Null(123);
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'X'),
+                (Token.Operator, '='),
+                (Token.Generic.Error, 'Null(123)'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
     def test_lexing_raise_exception_in_if(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
@@ -1185,5 +1287,35 @@ class SdblLexerTestCase(TestCase):
                 (Token.Keyword.Constant, 'Неопределено'),
                 (Token.Keyword.Declaration, 'КАК'),
                 (Token.Name.Variable, 'Поле2'),
+            ],
+        )
+
+    def test_lexing_multiline_string_with_comment(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+ВЫБРАТЬ
+    "Многострочная
+    // это Комментарий
+    с экранированной "" кавычкой
+    строка" КАК Поле,
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Многострочная'),
+                (Token.Comment.Single, '// это Комментарий'),
+                (Token.Literal.String, 'с экранированной '),
+                (Token.Literal.String.Escape, '""'),
+                (Token.Literal.String, ' кавычкой'),
+                (Token.Literal.String, 'строка'),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Punctuation, ','),
             ],
         )

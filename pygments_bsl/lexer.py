@@ -467,7 +467,7 @@ class BslLexer(RegexLexer):
 
     # constants that must NOT be called as functions; mark as error when followed by '('
     KEYWORD_CONST_CALL = words((
-        'Неопределено','Undefined',
+        'Неопределено','Undefined','Null',
     ), prefix='(?<!\.)', suffix=r'\b(?=\s*\()')
 
     # keywords that also used as function-like calls (treat as function when followed by '(')
@@ -486,6 +486,9 @@ class BslLexer(RegexLexer):
             (r'\n', Token.Text),
             (r'[^\S\n]+', Token.Text),
             (r'\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'\#(Если|If)\b', Token.Comment.Preproc, 'preproc_if'),
+            (r'\#(ИначеЕсли|ElsIf)\b', Token.Comment.Preproc, 'preproc_if'),
+            (r'\#(Иначе|Else|КонецЕсли|EndIf|Область|Region|КонецОбласти|EndRegion|Вставка|Insert|КонецВставки|EndInsert|Удаление|Delete|КонецУдаления|EndDelete)\b.*', Token.Comment.Preproc),
             # decorator with quoted name: split into decorator, punctuation and inner name
             (r'(&[\wа-яё_][\wа-яё0-9_]*)\s*(\()\s*"([^"]*)"\s*(\))',
              bygroups(Token.Name.Decorator, Token.Punctuation, Token.Name.Function, Token.Punctuation)),
@@ -496,7 +499,7 @@ class BslLexer(RegexLexer):
             (OPERATORS, Token.Operator),
             (r'\#.*$', Token.Comment.Preproc),
             # match forbidden-constant calls like Неопределено(....) as a single error token
-            (r'\b(Неопределено|Undefined)\b\s*\([^\)]*\)', Token.Generic.Error),
+            (r'\b(Неопределено|Undefined|Null)\b\s*\([^\)]*\)', Token.Generic.Error),
             (NAME_BUILTIN, Token.Name.Builtin),
             (KEYWORD_CONST_CALL, Token.Generic.Error),
             (KEYWORD_DECLARATION, Token.Keyword.Declaration),
@@ -510,6 +513,14 @@ class BslLexer(RegexLexer):
             ('\"', Token.String, 'string'),
             (r'\'.*?\'', Token.Literal.Date),
             (r'~.*?(?=[:;])', Token.Name.Label),
+        ],
+        'preproc_if': [
+            (r'\n', Token.Text, '#pop'),
+            (r'\b(Сервер|НаСервере|Клиент|НаКлиенте|ТонкийКлиент|МобильныйКлиент|ВебКлиент|ВнешнееСоединение|ТолстыйКлиентУправляемоеПриложение|ТолстыйКлиентОбычноеПриложение|МобильныйАвтономныйСервер|МобильноеПриложениеКлиент|МобильноеПриложениеСервер)\b', Token.Keyword.Constant),
+            (r'\b(И|Или|НЕ|Then|Тогда|And|Or|Not)\b', Token.Comment.Preproc),
+            (r'\#', Token.Comment.Preproc),
+            (r'[^\S\n]+', Token.Text),
+            (r'[^\s#]+', Token.Comment.Preproc),
         ],
         'string': [
             ('\"(?![\"])', Token.String, '#pop'),

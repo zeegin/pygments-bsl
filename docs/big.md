@@ -5,96 +5,93 @@
 ```bsl
 // SYNTAX TEST "source.bsl"
 #Область ИмяОбласти
-// <- keyword.other.section.bsl
-// ^ keyword.other.section.bsl
-//       ^ entity.name.section.bsl
+// <- Token.Comment.Preproc
+// ^ Token.Comment.Preproc
+//       ^ Token.Comment.Preproc
 
 Перем А Экспорт;
-// <- storage.type.var.bsl
-//    ^ variable.bsl
-//      ^ storage.modifier.bsl
+// <- Token.Keyword.Declaration
+//    ^ Token.Name.Variable
+//      ^ Token.Keyword
 
 Перем А, Б;
-//     ^ keyword.operator.bsl
-//       ^ variable.bsl
+//     ^ Token.Operator
+//       ^ Token.Name.Variable
 
 Перем А Экспорт, Б;
-//    ^ variable.bsl
-//       ^ storage.modifier.bsl
-//             ^ keyword.operator.bsl
-//               ^ variable.bsl
+//    ^ Token.Name.Variable
+//       ^ Token.Keyword
+//             ^ Token.Operator
+//               ^ Token.Name.Variable
 
 Перем А, Б Экспорт;
-//    ^ variable.bsl
-//     ^ keyword.operator.bsl
-//       ^ variable.bsl
-//         ^ storage.modifier.bsl
+//    ^ Token.Name.Variable
+//     ^ Token.Operator
+//       ^ Token.Name.Variable
+//         ^ Token.Keyword
 
 Перем А Экспорт, Б Экспорт;
-//    ^ variable.bsl
-//       ^ storage.modifier.bsl
-//             ^ keyword.operator.bsl
-//               ^ variable.bsl
-//                 ^ storage.modifier.bsl
+//    ^ Token.Name.Variable
+//       ^ Token.Keyword
+//             ^ Token.Operator
+//               ^ Token.Name.Variable
+//                 ^ Token.Keyword
 
 #Если Сервер Тогда
-// <- keyword.other.preprocessor.bsl
-//    ^^^^^^ keyword.other.preprocessor.bsl
+// <- Token.Comment.Preproc
+//    ^^^^^^ Token.Comment.Preproc
 
 // Комментарий процедуры
-// <- comment.line.double-slash.bsl
+// <- Token.Comment.Single
 &НаСервере
-// <- storage.modifier.directive.bsl
-// ^ storage.modifier.directive.bsl
+// <- Token.Name.Decorator
+// ^ Token.Name.Decorator
 Процедура ИмяПроцедуры(
-// <- storage.type.bsl
-//        ^ entity.name.function.bsl
-//                    ^ punctuation.bracket.begin.bsl
+// <- Token.Keyword
+//        ^ Token.Name.Function
+//                    ^ Token.Punctuation
     Знач ПараметрСКонстантой,
-//  ^ storage.modifier.bsl
-//       ^ variable.parameter.bsl
-//                          ^ keyword.operator.bsl
+//  ^ Token.Keyword
+//       ^ Token.Name.Variable
+//                          ^ Token.Operator
     ОбычныйПараметр,
-//  ^ variable.parameter.bsl
+//  ^ Token.Name.Variable
     ПараметрСНекорректнымЗначением = Нелегальщина,
-//                                  ^ not:invalid.illegal.bsl
-//                                   ^ invalid.illegal.bsl
+//                                  ^ Token.Generic.Error
     ПараметрСНекорректнымЗначением =НелегальщинаБезПробела,
-//                                  ^ invalid.illegal.bsl
-//                                                        ^ keyword.operator.bsl
+//                                  ^ Token.Generic.Error
+//                                                        ^ Token.Operator
     ПараметрСДефолтнымЧисловымЗначением = 0) Экспорт
-//                                      ^ keyword.operator.assignment.bsl
-//                                        ^ constant.numeric.bsl
-//                                         ^ punctuation.bracket.end.bsl
-//                                           ^ storage.modifier.bsl
+//                                      ^ Token.Operator
+//                                        ^ Token.Literal.Number
+//                                         ^ Token.Punctuation
+//                                           ^ Token.Keyword
     Б = "текст с экраннированной "" кавычкой" + "и конкатенаций""";
-//       ^ string.quoted.double.bsl
-//                               ^^ constant.character.escape.bsl
-//                                 ^ not:constant.character.escape.bsl
-//                                              ^ string.quoted.double.bsl
-//                                                             ^^ constant.character.escape.bsl
-//                                                               ^ not:constant.character.escape.bsl
-//                                                                ^ keyword.operator.bsl
+//       ^ Token.String
+//                               ^^ Token.String.Escape
+//                                              ^ Token.String
+//                                                             ^^ Token.String.Escape
+//                                                                ^ Token.Operator
 
     В = "многострочная
-//      ^ string.quoted.double.bsl
+//      ^ Token.Literal.String
     |строка
-//  ^ string.quoted.double.bsl
+//  ^ Token.Literal.String
     //|это комментарий
-//      ^ comment.line.double-slash.bsl
+//      ^ Token.Comment.Single
     |// а это нет
-//      ^ string.quoted.double.bsl
+//      ^ Token.Literal.String
     |";
-//   ^ string.quoted.double.bsl
-//    ^ keyword.operator.bsl
+//   ^ Token.Literal.String
+//    ^ Token.Punctuation
 
     Г = "";
-//      ^^ string.quoted.double.bsl
+//      ^^ Token.Literal.String
 
     ТекстЗапроса =
     "ВЫБРАТЬ
-//  ^^ string.quoted.double.bsl
-//   ^ keyword.control.sdbl
+//  ^^ Token.Literal.String
+//   ^ Token.Keyword
     |	Таблица.Поле КАК Поле,
     |	МАКСИМУМ(Таблица.Поле2) КАК Поле2
     |ИЗ
@@ -105,147 +102,154 @@
     |	И ВЫРАЗИТЬ(Таблица.Поле КАК СТРОКА) <> """"
     |	И Таблица.Поле <> ""Строка с экраннированной """" кавычкой""
     //|Закомментированная строка
-//  ^ string.quoted.double.bsl comment.line.double-slash.bsl
+//  ^ Token.Literal.String Token.Comment.Single
     |// Закомметированная строка внутри запроса с кавычками ""ТЕКСТ""
-//  ^ string.quoted.double.bsl
-//  ^ not:comment.line.double-slash.sdbl
-//   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ comment.line.double-slash.sdbl
+//  ^ Token.Literal.String
+//  ^ not:Token.Comment.Single
+//   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Token.Comment.Single
     |СГРУППИРОВАТЬ ПО
     |	Поле
     //|//АВТОУПОРЯДОЧИВАНИЕ";
-//  ^^^^^^^^^^^^^^^^^^^^^^^^^ comment.line.double-slash.bsl
+//  ^^^^^^^^^^^^^^^^^^^^^^^^^ Token.Comment.Single
     |//АВТОУПОРЯДОЧИВАНИЕ";
-//  ^^^^^^^^^^^^^^^^^^^^^^ string.quoted.double.bsl
-//  ^ not:comment.line.double-slash.sdbl
-//   ^^^^^^^^^^^^^^^^^^^^ comment.line.double-slash.sdbl
-//                       ^ not:comment.line.double-slash.sdbl
-//                        ^ keyword.operator.bsl
+//  ^^^^^^^^^^^^^^^^^^^^^^ Token.Literal.String
+//  ^ not:Token.Comment.Single
+//   ^^^^^^^^^^^^^^^^^^^^ Token.Comment.Single
+//                       ^ not:Token.Comment.Single
+//                        ^ Token.Operator
 
     // Проверка на корректность обработки FirstLineMatch и #include: source.sdbl
     СтрокаСоСловомВыбрать = "Some selected text";
-//                                ^^^^^^ not:keyword.control.sdbl
+//                                ^^^^^^ not:Token.Keyword
 
     Число = 0.0 * 100;
-//  ^ not:support.function.bsl
-//          ^^^ constant.numeric.bsl
-//              ^ keyword.operator.arithmetic.bsl
+//  ^ Token.Name.Variable
+//          ^^^ Token.Number
+//              ^ Token.Operator
 
     Дата = '00010101000000';
-//         ^^^^^^^^^^^^^^^^ constant.other.date.bsl
+//         ^^^^^^^^^^^^^^^^ Token.Literal.Date
     КороткаяДата = '00010101';
-//                 ^^^^^^^^^^ constant.other.date.bsl
+//                 ^^^^^^^^^^ Token.Literal.Date
     ДатаСРазделителями = '0001-01-01T00:00:00';
-//                       ^^^^^^^^^^^^^^^^^^^^^ constant.other.date.bsl
+//                       ^^^^^^^^^^^^^^^^^^^^^ Token.Literal.Date
     КороткаяДатаСРазделителями = '0001/01/01';
-//                               ^^^^^^^^^^^^ constant.other.date.bsl
+//                               ^^^^^^^^^^^^ Token.Literal.Date
     СтрокаСДатойВнутри = "Литерал типа Дата: '00010101'";
-//                                          ^^^^^^^^^^^^ string.quoted.double.bsl
-//                                           ^^^^^^^^^^ not:constant.other.date.bsl
+//                                          ^^^^^^^^^^^^ Token.Literal.String
+//                                           ^^^^^^^^^^ not:Token.Literal.Date
 
     Если А = 0 И НЕ Число <= 0 Тогда
-//  ^ keyword.control.conditional.bsl
-//         ^ keyword.operator.comparison.bsl
-//           ^ constant.numeric.bsl
-//             ^ keyword.operator.logical.bsl
-//               ^^ keyword.operator.logical.bsl
-//                        ^^ keyword.operator.comparison.bsl
-//                             ^ keyword.control.conditional.bsl
+//  ^ Token.Keyword
+//         ^ Token.Operator
+//           ^ Token.Literal.Number
+//             ^ Token.Keyword
+//               ^^ Token.Keyword
+//                        ^^ Token.Operator
+//                             ^ Token.Keyword
 
         ОбычныйПараметр = Истина;
-//                        ^ constant.language.bsl
+//                        ^ Token.Keyword.Constant
     Иначе
-//  ^ keyword.control.conditional.bsl
+//  ^ Token.Keyword
         ОбычныйПараметр = Ложь
     КонецЕсли;
-//  ^ keyword.control.conditional.bsl
+//  ^ Token.Keyword
 
     Пока ЗначениеЗаполнено(Б) Цикл
-//  ^ keyword.control.repeat.bsl
-//       ^ support.function.bsl
-//                        ^ punctuation.bracket.begin.bsl
-//                         ^ not:punctuation.bracket.begin.bsl
-//                          ^ punctuation.bracket.end.bsl
+//  ^ Token.Keyword
+//       ^ Token.Name.Builtin
+//                        ^ Token.Punctuation
+//                          ^ Token.Name.Variable
+//                           ^ Token.Punctuation
+//                             ^ Token.Keyword
         Прервать;
-//      ^ keyword.control.bsl
+//      ^ Token.Keyword
     КонецЦикла;
-//  ^ keyword.control.repeat.bsl
+//  ^ Token.Keyword
 
     НевстроеннаяПроцедура();
-//  ^ not:support.function.bsl
+//  ^ Token.Name.Function
 
     НовыйОбъект = Новый ТаблицаЗначений;
-//                ^^^^^ support.function.bsl
-//                     ^ not:support.function.bsl
+//                ^^^^^ Token.Keyword
+//                     ^ Token.Name.Class
     НовыйОбъектСкобка = Новый("ТаблицаЗначений");
-//                      ^^^^^ support.function.bsl
-//                           ^ not:support.function.bsl
+//                      ^^^^^ Token.Name.Function
+//                           ^ Token.Punctuation
 
     ПрефиксЗначениеЗаполненоПостфикс = "";
-//  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not:support.function.bsl
+//  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Token.Name.Variable
+//                                  ^ Token.Operator
+//                                    ^ Token.Literal.String
+//                                     ^ Token.Literal.String
+//                                      ^ Token.Punctuation
 
     // Проверка на корректность обработки начала и конца слова
     Объект.Сообщить().Если().Цикл().Новый;
-//         ^^^^^^^^                 ^^^^^ not:support.function.bsl
-//                    ^^^^ not:keyword.control.conditional.bsl
-//                           ^^^^ not:keyword.control.repeat.bsl
+//         ^^^^^^^^                 ^^^^^ Token.Name.Function
+//                    ^^^^ Token.Name.Function
+//                           ^^^^ Token.Name.Function
 
     // Проверка подсветки глобальных свойств с точкой
     Справочники.ИмяСправочника.СоздатьЭлемент();
-//  ^ support.class.bsl
+//  ^ Token.Name.Class
     А = ХранилищеПользовательскихНастроекДинамическихСписков.Сохранить();
-//      ^ support.variable.bsl
+//      ^ Token.Name.Class
 
     А = 0;
-//  ^ variable.assignment.bsl
-//    ^ keyword.operator.assignment.bsl
+//  ^ Token.Name.Variable
+//    ^ Token.Operator
 
     Б = А = 0;
-//  ^ variable.assignment.bsl
-//    ^ keyword.operator.assignment.bsl
-//        ^ keyword.operator.comparison.bsl
+//  ^ Token.Name.Variable
+//    ^ Token.Operator
+//        ^ Token.Operator
 
     Если А = Б Тогда
-//       ^ not:variable.assignment.bsl
-//         ^ keyword.operator.comparison.bsl
+//       ^ Token.Name.Variable
+//         ^ Token.Operator
     ИначеЕсли ЗначениеЗаполнено(А) = ЗначениеЗаполнено(Б) Тогда
-//            ^ not:variable.assignment.bsl
-//                                 ^ keyword.operator.comparison.bsl
+//            ^ Token.Name.Builtin
+//                                 ^ Token.Operator
     КонецЕсли;
 
     // TODO:
-//     ^^^^	storage.type.class.todo
+//     ^^^^ Token.Comment.Single
 
     Если А И
-//       ^ not:variable.assignment.bsl
+//       ^ Token.Name.Variable
         Б = В Тогда
-//      ^ not:variable.assignment.bsl       
+//      ^ Token.Name.Variable       
         Б = 0;
-//      ^ variable.assignment.bsl
+//      ^ Token.Name.Variable
     КонецЕсли;
 
 КонецПроцедуры
-// <- storage.type.bsl
+// <- Token.Keyword
 
 Процедура НевстроеннаяПроцедура()
     Возврат;
-//  ^ keyword.control.bsl
+//  ^ Token.Keyword
 КонецПроцедуры
 
 &Перед("ПередЗаписью")
-// <- storage.type.annotation.bsl
-// ^^^ storage.type.annotation.bsl
-//     ^^^^^^^^^^^^^^ string.quoted.double.bsl
+// <- Token.Name.Decorator
+// ^^^ Token.Name.Decorator
+//     ^ Token.Punctuation
+//      ^^^^^^^^^^^^^ Token.Name.Function
+//                   ^ Token.Punctuation
 Процедура Расш1_ПередЗаписью()
 
 КонецПроцедуры
 
 #КонецЕсли
-// <- keyword.other.preprocessor.bsl
-// ^ keyword.other.preprocessor.bsl
+// <- Token.Comment.Preproc
+// ^ Token.Comment.Preproc
 
 #КонецОбласти
-// <- keyword.other.section.bsl
-// ^ keyword.other.section.bsl
+// <- Token.Comment.Preproc
+// ^ Token.Comment.Preproc
 
 ~Метка:
 Перейти ~Метка;
@@ -287,7 +291,8 @@
 
 Выполнить Алгоритм;
 
-Х = Неопределено(123); 
+Х = Неопределено(123);
+Х = Null(123);
 
 Рез = (Цена > 0) И (Количество > 0);
 
@@ -299,6 +304,14 @@
     ВызватьИсключение "Сумма должна быть больше 0";
 КонецЕсли;
 
+#Если Сервер Или ТолстыйКлиентОбычноеПриложение И НЕ ВнешнееСоединение Тогда
+#КонецЕсли
+
+#Если Сервер Тогда
+#ИначеЕсли Клиент Тогда
+#Иначе
+#КонецЕсли
+
 ```
 
 ## SDBL
@@ -306,57 +319,57 @@
 ```sdbl
 // SYNTAX TEST "source.sdbl"
 ВЫБРАТЬ
-// <- keyword.control.sdbl
+// <- Token.Keyword.Declaration
 // Комментарий запроса
-// <- comment.line.double-slash.sdbl
+// <- Token.Comment.Single
     "Многострочная
-//  ^ string.quoted.double.sdbl
+//  ^ Token.String
     // это Комментарий
-//  ^ comment.line.double-slash.sdbl
+//  ^ Token.Comment.Single
     с экранированной "" кавычкой
-//                   ^^ constant.character.escape.sdbl
+//                   ^^ Token.String.Escape
     строка" КАК Поле,
-//  ^^^^^^^ string.quoted.double.sdbl
-//  ^ string.quoted.double.sdbl
-//          ^^^ keyword.control.sdbl
-//              ^ not:keyword.control.sdbl
-//                  ^ keyword.operator.sdbl
+//  ^^^^^^^ Token.String
+//  ^ Token.String
+//          ^^^ Token.Keyword.Declaration
+//              ^ not:Token.Keyword.Declaration
+//                  ^ Token.Operator
     Неопределено КАК Поле2,
-//  ^ constant.language.sdbl
+//  ^ Token.Keyword.Constant
     0.0 КАК ДробноеЧисло,
-//  ^^^ constant.numeric.sdbl
+//  ^^^ Token.Literal.Number
     0 КАК ЦелоеЧисло,
-//  ^ constant.numeric.sdbl
+//  ^ Token.Literal.Number
     ВЫБОР КОГДА НЕ 0 = 0 * 1 ТОГДА ИСТИНА ИНАЧЕ ЛОЖЬ КОНЕЦ КАК Условие,
-//  ^^^^^ keyword.control.conditional.sdbl
-//        ^^^^^ keyword.control.conditional.sdbl
-//              ^^ keyword.operator.logical.sdbl
-//                   ^ keyword.operator.comparison.sdbl
-//                       ^ keyword.operator.arithmetic.sdbl
-//                           ^^^^^ keyword.control.conditional.sdbl
-//                                        ^^^^^ keyword.control.conditional.sdbl
-//                                                   ^^^^^ keyword.control.conditional.sdbl
+//  ^^^^^ Token.Keyword.Declaration
+//        ^^^^^ Token.Keyword.Declaration
+//              ^^ Token.Keyword.Declaration
+//                   ^ Token.Operator
+//                       ^ Token.Operator
+//                           ^^^^^ Token.Keyword.Declaration
+//                                        ^^^^^ Token.Keyword.Declaration
+//                                                   ^^^^^ Token.Keyword.Declaration
     ГОД(ДАТАВРЕМЯ(1, 1, 1)) КАК Функция,
-//  ^^^ support.function.sdbl
-//     ^ not:support.function.sdbl
-//      ^ support.function.sdbl
+//  ^^^ Token.Keyword.Declaration
+//     ^ not:Token.Keyword.Declaration
+//      ^ Token.Keyword.Declaration
     ВЫРАЗИТЬ(0 КАК Число) КАК Выражение,
-//  ^ keyword.control.sdbl
-//                 ^^^^^ support.type.sdbl
+//  ^ Token.Keyword.Declaration
+//                 ^^^^^ Token.Keyword.Declaration
     ВЫБОР КОГДА Неопределено ССЫЛКА Справочник.Справочник1 ТОГДА ИСТИНА КОНЕЦ КАК Ссылка,
-//                           ^^^^^^ keyword.operator.logical.sdbl
-//                                                                                ^^^^^^ not:keyword.operator.logical.sdbl
+//                           ^^^^^^ Token.Keyword.Declaration
+//                                                                                ^^^^^^ not:Token.Keyword.Declaration
     ВЫБОР КОГДА Справочник.Справочник2 Есть NULL ТОГДА 0 ИНАЧЕ Справочник.Количество КОНЕЦ КАК Количество,
-//                                     ^^^^^^^^^ keyword.operator.logical.sdbl
+//                                     ^^^^^^^^^ Token.Keyword.Declaration
     ВЫБОР КОГДА Справочник.Справочник2 Есть НЕ NULL ТОГДА Справочник.Количество ИНАЧЕ 0 КОНЕЦ КАК Количество1,
-//                                     ^^^^^^^^^^^^ keyword.operator.logical.sdbl
+//                                     ^^^^^^^^^^^^ Token.Keyword.Declaration
     ВЫБОР КОГДА Справочник.Справочник2 Is NULL ТОГДА 0 ИНАЧЕ Справочник.Количество КОНЕЦ КАК kolvo,
-//                                     ^^^^^^^ keyword.operator.logical.sdbl
+//                                     ^^^^^^^ Token.Keyword.Declaration
     ВЫБОР КОГДА Справочник.Справочник2 Is NOT NULL ТОГДА Справочник.Количество ИНАЧЕ 0 КОНЕЦ КАК kolvo1,
-//                                     ^^^^^^^^^^^ keyword.operator.logical.sdbl   
+//                                     ^^^^^^^^^^^ Token.Keyword.Declaration   
 
     &Параметр КАК Параметр
-//  ^^^^^^^^^ variable.parameter.sdbl
+//  ^^^^^^^^^ Token.Name.Variable
 
 
 ПОДОБНО

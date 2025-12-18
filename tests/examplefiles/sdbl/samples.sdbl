@@ -1,53 +1,80 @@
 // SYNTAX TEST "source.sdbl"
 ВЫБРАТЬ
-// <- keyword.control.sdbl
+// <- Token.Keyword.Declaration
 // Комментарий запроса
-// <- comment.line.double-slash.sdbl
+// <- Token.Comment.Single
     "Многострочная
-//  ^ string.quoted.double.sdbl
+//  ^ Token.String
     // это Комментарий
-//  ^ comment.line.double-slash.sdbl
+//  ^ Token.Comment.Single
     с экранированной "" кавычкой
-//                   ^^ constant.character.escape.sdbl
+//                   ^^ Token.String.Escape
     строка" КАК Поле,
-//  ^^^^^^^ string.quoted.double.sdbl
-//  ^ string.quoted.double.sdbl
-//          ^^^ keyword.control.sdbl
-//              ^ not:keyword.control.sdbl
-//                  ^ keyword.operator.sdbl
+//  ^^^^^^^ Token.String
+//  ^ Token.String
+//          ^^^ Token.Keyword.Declaration
+//              ^ not:Token.Keyword.Declaration
+//                  ^ Token.Operator
     Неопределено КАК Поле2,
-//  ^ constant.language.sdbl
+//  ^ Token.Keyword.Constant
     0.0 КАК ДробноеЧисло,
-//  ^^^ constant.numeric.sdbl
+//  ^^^ Token.Literal.Number
     0 КАК ЦелоеЧисло,
-//  ^ constant.numeric.sdbl
+//  ^ Token.Literal.Number
     ВЫБОР КОГДА НЕ 0 = 0 * 1 ТОГДА ИСТИНА ИНАЧЕ ЛОЖЬ КОНЕЦ КАК Условие,
-//  ^^^^^ keyword.control.conditional.sdbl
-//        ^^^^^ keyword.control.conditional.sdbl
-//              ^^ keyword.operator.logical.sdbl
-//                   ^ keyword.operator.comparison.sdbl
-//                       ^ keyword.operator.arithmetic.sdbl
-//                           ^^^^^ keyword.control.conditional.sdbl
-//                                        ^^^^^ keyword.control.conditional.sdbl
-//                                                   ^^^^^ keyword.control.conditional.sdbl
+//  ^^^^^ Token.Keyword.Declaration
+//        ^^^^^ Token.Keyword.Declaration
+//              ^^ Token.Keyword.Declaration
+//                   ^ Token.Operator
+//                       ^ Token.Operator
+//                           ^^^^^ Token.Keyword.Declaration
+//                                        ^^^^^ Token.Keyword.Declaration
+//                                                   ^^^^^ Token.Keyword.Declaration
     ГОД(ДАТАВРЕМЯ(1, 1, 1)) КАК Функция,
-//  ^^^ support.function.sdbl
-//     ^ not:support.function.sdbl
-//      ^ support.function.sdbl
+//  ^^^ Token.Keyword.Declaration
+//     ^ not:Token.Keyword.Declaration
+//      ^ Token.Keyword.Declaration
     ВЫРАЗИТЬ(0 КАК Число) КАК Выражение,
-//  ^ keyword.control.sdbl
-//                 ^^^^^ support.type.sdbl
+//  ^ Token.Keyword.Declaration
+//                 ^^^^^ Token.Keyword.Declaration
     ВЫБОР КОГДА Неопределено ССЫЛКА Справочник.Справочник1 ТОГДА ИСТИНА КОНЕЦ КАК Ссылка,
-//                           ^^^^^^ keyword.operator.logical.sdbl
-//                                                                                ^^^^^^ not:keyword.operator.logical.sdbl
+//                           ^^^^^^ Token.Keyword.Declaration
+//                                                                                ^^^^^^ not:Token.Keyword.Declaration
     ВЫБОР КОГДА Справочник.Справочник2 Есть NULL ТОГДА 0 ИНАЧЕ Справочник.Количество КОНЕЦ КАК Количество,
-//                                     ^^^^^^^^^ keyword.operator.logical.sdbl
+//                                     ^^^^^^^^^ Token.Keyword.Declaration
     ВЫБОР КОГДА Справочник.Справочник2 Есть НЕ NULL ТОГДА Справочник.Количество ИНАЧЕ 0 КОНЕЦ КАК Количество1,
-//                                     ^^^^^^^^^^^^ keyword.operator.logical.sdbl
+//                                     ^^^^^^^^^^^^ Token.Keyword.Declaration
     ВЫБОР КОГДА Справочник.Справочник2 Is NULL ТОГДА 0 ИНАЧЕ Справочник.Количество КОНЕЦ КАК kolvo,
-//                                     ^^^^^^^ keyword.operator.logical.sdbl
+//                                     ^^^^^^^ Token.Keyword.Declaration
     ВЫБОР КОГДА Справочник.Справочник2 Is NOT NULL ТОГДА Справочник.Количество ИНАЧЕ 0 КОНЕЦ КАК kolvo1,
-//                                     ^^^^^^^^^^^ keyword.operator.logical.sdbl   
+//                                     ^^^^^^^^^^^ Token.Keyword.Declaration   
 
     &Параметр КАК Параметр
-//  ^^^^^^^^^ variable.parameter.sdbl
+//  ^^^^^^^^^ Token.Name.Variable
+
+
+ПОДОБНО
+Реквизит ПОДОБНО "123%"
+Реквизит ПОДОБНО &Шаблон
+
+
+Реквизит ПОДОБНО "123" + "%"
+Реквизит ПОДОБНО &Шаблон + "%"
+Реквизит ПОДОБНО Таблица.Шаблон
+
+%
+_
+[…]
+[^…]
+_%[]^)
+
+СПЕЦСИМВОЛ
+
+    ВЫБРАТЬ
+        Номенклатура.Ссылка КАК Ссылка 
+    ИЗ
+        Справочник.Номенклатура КАК Номенклатура
+    ГДЕ
+        Номенклатура.Наименование ПОДОБНО &Шаблон СПЕЦСИМВОЛ "~"
+
+"Шуруп~_10~[21~] медь~~4~%" СПЕЦСИМВОЛ "~"

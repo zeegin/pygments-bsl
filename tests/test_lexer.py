@@ -1201,6 +1201,70 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
             ],
         )
 
+    def test_lexing_execute_method_call(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            Результат = Запрос.Выполнить();
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'Результат'),
+                (Token.Operator, '='),
+                (Token.Name.Variable, 'Запрос'),
+                (Token.Operator, '.'),
+                (Token.Name.Function, 'Выполнить'),
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_execute_nested_string_call(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            Выполнить("ВыполнитьЗапрос()");
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Keyword, 'Выполнить'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'ВыполнитьЗапрос()'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_execute_select_values(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            Выполнить("ВыбратьЗначения()");
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Keyword, 'Выполнить'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'ВыбратьЗначения()'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
     def test_lexing_type_literal_and_function(self):
         lexer = lexers.get_lexer_by_name('bsl')
 

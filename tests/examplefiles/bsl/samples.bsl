@@ -62,10 +62,10 @@
 //                                         ^ Token.Punctuation
 //                                           ^ Token.Keyword
     Б = "текст с экраннированной "" кавычкой" + "и конкатенаций""";
-//       ^ Token.String
-//                               ^^ Token.String.Escape
-//                                              ^ Token.String
-//                                                             ^^ Token.String.Escape
+//       ^ Token.Literal.String
+//                               ^^ Token.Literal.String.Escape
+//                                              ^ Token.Literal.String
+//                                                             ^^ Token.Literal.String.Escape
 //                                                                ^ Token.Operator
 
     В = "многострочная
@@ -170,7 +170,7 @@
 //                ^^^^^ Token.Keyword
 //                     ^ Token.Name.Class
     НовыйОбъектСкобка = Новый("ТаблицаЗначений");
-//                      ^^^^^ Token.Name.Function
+//                      ^^^^^ Token.Name.Builtin
 //                           ^ Token.Punctuation
 
     ПрефиксЗначениеЗаполненоПостфикс = "";
@@ -185,6 +185,7 @@
 //         ^^^^^^^^                 ^^^^^ Token.Name.Function
 //                    ^^^^ Token.Name.Function
 //                           ^^^^ Token.Name.Function
+//                                 ^^^^^ Token.Name.Variable
 
     // Проверка подсветки глобальных свойств с точкой
     Справочники.ИмяСправочника.СоздатьЭлемент();
@@ -287,7 +288,15 @@
 Выполнить Алгоритм;
 
 Х = Неопределено(123);
+//  ^ Token.Name.Variable
+//    ^ Token.Operator
+//      ^^^^^^^^^^^^^^ Token.Generic.Error
+//                    ^ Token.Punctuation
 Х = Null(123);
+//  ^ Token.Name.Variable
+//    ^ Token.Operator
+//      ^^^^^^^ Token.Generic.Error
+//             ^ Token.Punctuation
 
 Рез = (Цена > 0) И (Количество > 0);
 

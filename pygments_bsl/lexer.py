@@ -460,15 +460,12 @@ class BslLexer(RegexLexer):
         'ХранилищеСистемныхНастроек','SystemSettingsStorage'
     ), prefix='(?<!\.)', suffix=r'\b')
 
-    KEYWORD_CONSTANT = words((
+    CONSTANT_NAMES = (
         # constant.language.bsl
         'Неопределено','Undefined','Истина','True','Ложь','False','NULL'
-    ), prefix='(?<!\.)', suffix=r'\b')
+    )
 
-    # constants that must NOT be called as functions; mark as error when followed by '('
-    KEYWORD_CONST_CALL = words((
-        'Неопределено','Undefined','Null',
-    ), prefix='(?<!\.)', suffix=r'\b(?=\s*\()')
+    KEYWORD_CONSTANT = words(CONSTANT_NAMES, prefix='(?<!\.)', suffix=r'\b')
 
     KEYWORD_EXCEPTION = words((
         'ВызватьИсключение','Raise',
@@ -478,7 +475,7 @@ class BslLexer(RegexLexer):
         'ВызватьИсключение','Raise',
     ), prefix='(?<!\.)', suffix=r'(?=(\s?[\(]))')
 
-    # keywords that also used as function-like calls (treat as function when followed by '(')
+    # keywords that also used as function-like calls (treat as builtin when followed by '(')
     KEYWORD_AS_FUNCTION = words((
         'Новый','New',
     ), prefix='(?<!\.)', suffix=r'(?=(\s?[\(]))')
@@ -499,6 +496,8 @@ class BslLexer(RegexLexer):
             # decorator with quoted name: split into decorator, punctuation and inner name
             (r'(&[\wа-яё_][\wа-яё0-9_]*)\s*(\()\s*"([^"]*)"\s*(\))',
              bygroups(Token.Name.Decorator, Token.Punctuation, Token.Name.Function, Token.Punctuation)),
+            # decorator with parameters: split decorator and parse parameters
+            (r'(&[\wа-яё_][\wа-яё0-9_]*)\s*(\()', bygroups(Token.Name.Decorator, Token.Punctuation), 'decorator_params'),
             (r'[\[\]:(),;]', Token.Punctuation),
             (r'\&.*$', Token.Name.Decorator),
             (r'\b(Процедура|Функция|Procedure|Function)\b(\s+)([\wа-яё_][\wа-яё0-9_]*)\s*(\()',
@@ -506,12 +505,11 @@ class BslLexer(RegexLexer):
             (OPERATORS, Token.Operator),
             (r'\#.*$', Token.Comment.Preproc),
             # match forbidden-constant calls like Неопределено(....) as a single error token
-            (r'\b(Неопределено|Undefined|Null)\b\s*\([^\)]*\)', Token.Generic.Error),
+            (r'\b(?:' + '|'.join(CONSTANT_NAMES) + r')\b\s*\([^\)]*\)', Token.Generic.Error),
             (NAME_BUILTIN, Token.Name.Builtin),
-            (KEYWORD_CONST_CALL, Token.Generic.Error),
             (KEYWORD_DECLARATION, Token.Keyword.Declaration),
             (KEYWORD_EXCEPTION_CALL, Token.Name.Exception),
-            (KEYWORD_AS_FUNCTION, Token.Name.Function),
+            (KEYWORD_AS_FUNCTION, Token.Name.Builtin),
             (KEYWORD_EXCEPTION, Token.Name.Exception),
             (KEYWORD, Token.Keyword),
             (NAME_CLASS, Token.Name.Class),
@@ -544,13 +542,29 @@ class BslLexer(RegexLexer):
             (r'%', Token.Literal.String),
             (r'[^\"\|\n%]+', Token.String),
         ],
+        'decorator_params': [
+            (r'\)', Token.Punctuation, '#pop'),
+            (r'\n', Token.Text),
+            (r'[^\S\n]+', Token.Text),
+            (r',', Token.Operator),
+            (r'=', Token.Operator),
+            (r'"[^"]*"', Token.Literal.String),
+            (r'(\b[A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*\b)(\s*)(=)(\s*)(?!Неопределено\b|Undefined\b|Null\b|Истина\b|True\b|Ложь\b|False\b)([A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*)',
+             bygroups(Token.Name.Variable, Token.Text, Token.Operator, Token.Text, Token.Generic.Error)),
+            (r'([A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*)', Token.Name.Variable),
+            (r'\b\d+\.?\d*\b', Token.Literal.Number),
+            (r'.', Token.Text),
+        ],
         'params': [
             (r'\)', Token.Punctuation, '#pop'),
             (r'\n', Token.Text),
             (r'[^\S\n]+', Token.Text),
             (r'\,', Token.Punctuation),
+            (r'(&[\wа-яё_][\wа-яё0-9_]*)\s*(\()', bygroups(Token.Name.Decorator, Token.Punctuation), 'decorator_params'),
+            (r'\&[^\s,(]+', Token.Name.Decorator),
             (r'\bЗнач\b|\bVal\b', Token.Keyword),
-            (r'(\b[A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*\b)(\s*)(=)(\s*)([A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*)',
+            (KEYWORD_CONSTANT, Token.Keyword.Constant),
+            (r'(\b[A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*\b)(\s*)(=)(\s*)(?!Неопределено\b|Undefined\b|Null\b|Истина\b|True\b|Ложь\b|False\b)([A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*)',
              bygroups(Token.Name.Variable, Token.Text, Token.Operator, Token.Text, Token.Generic.Error)),
             (r'([A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*)', Token.Name.Variable),
             (r'=', Token.Operator),

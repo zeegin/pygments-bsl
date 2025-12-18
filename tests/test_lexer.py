@@ -306,6 +306,83 @@ class BslLexerTestCase(TestCase):
             ],
         )
 
+    def test_decorator_with_params_any(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            &НаЧемУгодно(ДажеСПараметром = "Да", СПараметромБезЗначения, "Значение без параметра")
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Decorator, '&НаЧемУгодно'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'ДажеСПараметром'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"Да"'),
+                (Token.Operator, ','),
+                (Token.Name.Variable, 'СПараметромБезЗначения'),
+                (Token.Operator, ','),
+                (Token.Literal.String, '"Значение без параметра"'),
+                (Token.Punctuation, ')'),
+            ],
+        )
+
+    def test_params_with_annotations(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+Процедура САннотированнымиПараметрами(
+
+        &АннотацияДляПараметра
+        Знач Парам1,
+    &АннотацияДляПараметра
+    &АннотацияДляПараметра1
+    &АннотацияДляПараметра2(СПараметрами = 3, 4, 5)
+    Знач Парам2,
+    Парам3,
+    Парам4 = Неопределено
+) Экспорт
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Keyword, 'Процедура'),
+                (Token.Name.Function, 'САннотированнымиПараметрами'),
+                (Token.Punctuation, '('),
+                (Token.Name.Decorator, '&АннотацияДляПараметра'),
+                (Token.Keyword, 'Знач'),
+                (Token.Name.Variable, 'Парам1'),
+                (Token.Punctuation, ','),
+                (Token.Name.Decorator, '&АннотацияДляПараметра'),
+                (Token.Name.Decorator, '&АннотацияДляПараметра1'),
+                (Token.Name.Decorator, '&АннотацияДляПараметра2'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'СПараметрами'),
+                (Token.Operator, '='),
+                (Token.Literal.Number, '3'),
+                (Token.Operator, ','),
+                (Token.Literal.Number, '4'),
+                (Token.Operator, ','),
+                (Token.Literal.Number, '5'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword, 'Знач'),
+                (Token.Name.Variable, 'Парам2'),
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'Парам3'),
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'Парам4'),
+                (Token.Operator, '='),
+                (Token.Keyword.Constant, 'Неопределено'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword, 'Экспорт'),
+            ],
+        )
+
     def test_lexing_procedure_declaration(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
@@ -831,7 +908,7 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'НовыйОбъект'),
                 (Token.Operator, '='),
-                (Token.Name.Function, 'Новый'),
+                (Token.Name.Builtin, 'Новый'),
                 (Token.Punctuation, '('),
                 (Token.Literal.String, '"'),
                 (Token.Literal.String, 'ТаблицаЗначений'),

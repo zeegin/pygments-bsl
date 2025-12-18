@@ -205,6 +205,23 @@ class BslLexerTestCase(TestCase):
             ],
         )
 
+    def test_decorator_split_name_inside(self):
+        """Desired display: '&Перед' as Token.Name.Decorator, parentheses as punctuation,
+        and the inner name as Token.Name.Function (no quotes)"""
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens('&Перед("НазваниеМетода");')
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Decorator, '&Перед'),
+                (Token.Punctuation, '('),
+                (Token.Name.Function, 'НазваниеМетода'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
     def test_lexing_procedure_declaration(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
@@ -242,7 +259,10 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Name.Decorator, '&Перед("ПередЗаписью")'),
+                (Token.Name.Decorator, '&Перед'),
+                (Token.Punctuation, '('),
+                (Token.Name.Function, 'ПередЗаписью'),
+                (Token.Punctuation, ')'),
                 (Token.Keyword, 'Процедура'),
                 (Token.Name.Function, 'Расш1_ПередЗаписью'),
                 (Token.Punctuation, '('),
@@ -278,11 +298,11 @@ class BslLexerTestCase(TestCase):
                 (Token.Punctuation, ','),
                 (Token.Name.Variable, 'ПараметрСНекорректнымЗначением'),
                 (Token.Operator, '='),
-                (Token.Name.Variable, 'Нелегальщина'), # Token.Generic.Error
+                (Token.Generic.Error, 'Нелегальщина'), # Token.Generic.Error
                 (Token.Punctuation, ','),
                 (Token.Name.Variable, 'ПараметрСНекорректнымЗначением'),
                 (Token.Operator, '='),
-                (Token.Name.Variable, 'НелегальщинаБезПробела'), # Token.Generic.Error
+                (Token.Generic.Error, 'НелегальщинаБезПробела'), # Token.Generic.Error
                 (Token.Punctuation, ','),
                 (Token.Name.Variable, 'ПараметрСДефолтнымЧисловымЗначением'),
                 (Token.Operator, '='),
@@ -709,7 +729,7 @@ class BslLexerTestCase(TestCase):
                 (Token.Name.Variable, 'НовыйОбъект'),
                 (Token.Operator, '='),
                 (Token.Keyword, 'Новый'),
-                (Token.Name.Variable, 'ТаблицаЗначений'), # <- Error? Token.Keyword.Type
+                (Token.Name.Class, 'ТаблицаЗначений'),
                 (Token.Punctuation, ';'),
             ],
         )
@@ -727,7 +747,7 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'НовыйОбъект'),
                 (Token.Operator, '='),
-                (Token.Name.Builtin, 'Новый'),
+                (Token.Name.Function, 'Новый'),
                 (Token.Punctuation, '('),
                 (Token.Literal.String, '"'),
                 (Token.Literal.String, 'ТаблицаЗначений'),
@@ -939,6 +959,194 @@ class BslLexerTestCase(TestCase):
                 (Token.Keyword, 'КонецПроцедуры')
             ],
         )
+
+    def test_lexing_execute_algorithm(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            Выполнить Алгоритм;
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Keyword, 'Выполнить'),
+                (Token.Name.Variable, 'Алгоритм'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_type_literal_and_function(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+
+        tokens = lexer.get_tokens(
+            '''
+            Y = Тип(П);
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'Y'),
+                (Token.Operator, '='),
+                (Token.Name.Builtin, 'Тип'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'П'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_logical_and_expression(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            Рез = (Цена > 0) И (Количество > 0);
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'Рез'),
+                (Token.Operator, '='),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Цена'),
+                (Token.Operator, '>'),
+                (Token.Literal.Number, '0'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword, 'И'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Количество'),
+                (Token.Operator, '>'),
+                (Token.Literal.Number, '0'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_logical_or_expression(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            Рез = (ЭтоАдмин) Или (ЭтоМенеджер);
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'Рез'),
+                (Token.Operator, '='),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'ЭтоАдмин'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword, 'Или'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'ЭтоМенеджер'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_logical_not_expression(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            Рез = Не (ЭтоАдмин);
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'Рез'),
+                (Token.Operator, '='),
+                (Token.Keyword, 'Не'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'ЭтоАдмин'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_calling_constant_is_error(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            X = Неопределено(123);
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'X'),
+                (Token.Operator, '='),
+                (Token.Generic.Error, 'Неопределено(123)'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_raise_exception_in_if(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            Если Сумма <= 0 Тогда
+                ВызватьИсключение "Сумма должна быть больше 0";
+            КонецЕсли;
+            '''
+        )
+    def test_lexing_raise_exception_function_call(self):
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Keyword, 'Если'),
+                (Token.Name.Variable, 'Сумма'),
+                (Token.Operator, '<='),
+                (Token.Literal.Number, '0'),
+                (Token.Keyword, 'Тогда'),
+                (Token.Keyword, 'ВызватьИсключение'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Сумма должна быть больше 0'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ';'),
+                (Token.Keyword, 'КонецЕсли'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_raise_exception_function_call(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens('ВызватьИсключение("Ошибка на клиенте с категорией", КатегорияОшибки.ОшибкаКонфигурации, "error.client.config", "error.client.config additional info");')
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Function, 'ВызватьИсключение'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Ошибка на клиенте с категорией'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'КатегорияОшибки'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'ОшибкаКонфигурации'),
+                (Token.Punctuation, ','),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'error.client.config'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ','),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'error.client.config additional info'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+        
 
 
 class SdblLexerTestCase(TestCase):

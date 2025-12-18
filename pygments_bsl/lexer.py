@@ -1,4 +1,4 @@
-from pygments.lexer import RegexLexer, words
+from pygments.lexer import RegexLexer, words, bygroups
 from pygments.token import Token
 
 import re
@@ -37,6 +37,8 @@ class BslLexer(RegexLexer):
         'НЕ','NOT','И','AND','ИЛИ','OR',
         # support.function.bsl
         'Новый','New',
+        # execute statement
+        'Выполнить','Execute',
         # storage.modifier.bsl
         'Знач', 'Val',
         # 
@@ -44,11 +46,11 @@ class BslLexer(RegexLexer):
         'Асинх', 'Async',
         'Ждать', 'Await',
     ), prefix='(?<!\.)', suffix=r'\b')
-
+    
     NAME_BUILTIN = words((
         # support.function.bsl
         # Глобальный контекст - функции работы со значениями типа Строка
-        'Новый','New','СтрДлина','StrLen',
+        'СтрДлина','StrLen',
         'СокрЛ','TrimL','СокрП','TrimR','СокрЛП','TrimAll',
         'Лев','Left','Прав','Right','Сред','Mid',
         'СтрНайти','StrFind',
@@ -443,6 +445,7 @@ class BslLexer(RegexLexer):
         'ОтображениеРекламы','AdRepresentation',
         'ПанельЗадачОС','OSTaskbar',
         'ПроверкаВстроенныхПокупок','InAppPurchasesValidation'
+        ,'ТаблицаЗначений','TableOfValues'
         # support.variable.bsl
         # Глобальный контекст - Свойства (переменные)
         'ГлавныйИнтерфейс','MainInterface',
@@ -462,6 +465,17 @@ class BslLexer(RegexLexer):
         'Неопределено','Undefined','Истина','True','Ложь','False','NULL'
     ), prefix='(?<!\.)', suffix=r'\b')
 
+    # constants that must NOT be called as functions; mark as error when followed by '('
+    KEYWORD_CONST_CALL = words((
+        'Неопределено','Undefined',
+    ), prefix='(?<!\.)', suffix=r'\b(?=\s*\()')
+
+    # keywords that also used as function-like calls (treat as function when followed by '(')
+    KEYWORD_AS_FUNCTION = words((
+        'Новый','New',
+        'ВызватьИсключение','Raise',
+    ), prefix='(?<!\.)', suffix=r'(?=(\s?[\(]))')
+
     OPERATORS = words((
         '=','<=','>=','<>','<','>','+','-','*','/','%','.'
     ))
@@ -472,16 +486,25 @@ class BslLexer(RegexLexer):
             (r'\n', Token.Text),
             (r'[^\S\n]+', Token.Text),
             (r'\/\/.*?(?=\n)', Token.Comment.Single),
+            # decorator with quoted name: split into decorator, punctuation and inner name
+            (r'(&[\wа-яё_][\wа-яё0-9_]*)\s*(\()\s*"([^"]*)"\s*(\))',
+             bygroups(Token.Name.Decorator, Token.Punctuation, Token.Name.Function, Token.Punctuation)),
             (r'[\[\]:(),;]', Token.Punctuation),
             (r'\&.*$', Token.Name.Decorator),
+            (r'\b(Процедура|Функция|Procedure|Function)\b(\s+)([\wа-яё_][\wа-яё0-9_]*)\s*(\()',
+             bygroups(Token.Keyword, Token.Text, Token.Name.Function, Token.Punctuation), 'params'),
             (OPERATORS, Token.Operator),
             (r'\#.*$', Token.Comment.Preproc),
+            # match forbidden-constant calls like Неопределено(....) as a single error token
+            (r'\b(Неопределено|Undefined)\b\s*\([^\)]*\)', Token.Generic.Error),
             (NAME_BUILTIN, Token.Name.Builtin),
-            (r'[\wа-яё_][\wа-яё0-9_]*(?=(\s?[\(]))', Token.Name.Function),
+            (KEYWORD_CONST_CALL, Token.Generic.Error),
             (KEYWORD_DECLARATION, Token.Keyword.Declaration),
+            (KEYWORD_AS_FUNCTION, Token.Name.Function),
             (KEYWORD, Token.Keyword),
             (NAME_CLASS, Token.Name.Class),
             (KEYWORD_CONSTANT, Token.Keyword.Constant),
+            (r'[\wа-яё_][\wа-яё0-9_]*(?=(\s?[\(]))', Token.Name.Function),
             (r'\b\d+\.?\d*\b', Token.Number),
             (r'[\wа-яё_][\wа-яё0-9_]*', Token.Name.Variable),
             ('\"', Token.String, 'string'),
@@ -494,12 +517,25 @@ class BslLexer(RegexLexer):
             (r'(?<=\n)[^\S\n]+', Token.Text),
             (r'(?<=[^\S\n])\/\/.*?(?=\n)', Token.Comment.Single),
             (r'(?<=^)\/\/.*?(?=\n)', Token.Comment.Single),
-            (r'[^\"\|\n%]+', Token.String),
-            (r'\"\"', Token.String.Escape),
             (r'\|', Token.String),
-            (r'%\d', Token.String.Interpol),
+            (r'\"\"', Token.String.Escape),
             (r'%%', Token.String.Escape),
+            (r'%\d', Token.String.Interpol),
             (r'%', Token.Literal.String),
+            (r'[^\"\|\n%]+', Token.String),
+        ],
+        'params': [
+            (r'\)', Token.Punctuation, '#pop'),
+            (r'\n', Token.Text),
+            (r'[^\S\n]+', Token.Text),
+            (r'\,', Token.Punctuation),
+            (r'\bЗнач\b|\bVal\b', Token.Keyword),
+            (r'(\b[A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*\b)(\s*)(=)(\s*)([A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*)',
+             bygroups(Token.Name.Variable, Token.Text, Token.Operator, Token.Text, Token.Generic.Error)),
+            (r'([A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*)', Token.Name.Variable),
+            (r'=', Token.Operator),
+            (r'\b\d+\.?\d*\b', Token.Number),
+            (r'.', Token.Text),
         ],
         # String.Regex
     }

@@ -1,64 +1,64 @@
-// SYNTAX TEST "source.bsl"
+// SYNTAX TEST "source.os"
 #Использовать cmdline
-// <- keyword.control.import.bsl
+// <- Token.Keyword
 
 Процедура САннотированнымиПараметрами(
 
   	&АннотацияДляПараметра
-//  ^^^ storage.type.annotation.bsl
+//  ^^^ Token.Name.Decorator
   	Знач Парам1,
-//  ^ storage.modifier.bsl
-//       ^ variable.parameter.bsl
+//  ^ Token.Keyword
+//       ^ Token.Name.Variable
     &АннотацияДляПараметра
-//  ^^^ storage.type.annotation.bsl
+//  ^^^ Token.Name.Decorator
     &АннотацияДляПараметра1
-//  ^^^ storage.type.annotation.bsl
+//  ^^^ Token.Name.Decorator
     &АннотацияДляПараметра2(СПараметрами = 3, 4, 5)
-//  ^^^ storage.type.annotation.bsl
-//                         ^ punctuation.bracket.begin.bsl
-//                          ^^^ variable.annotation.bsl
-//                                       ^ keyword.operator.assignment.bsl
-//                                         ^ constant.numeric.bsl
-//                                          ^ keyword.operator.bsl
-//                                            ^ constant.numeric.bsl
-//                                                ^ punctuation.bracket.end.bsl
+//  ^^^ Token.Name.Decorator
+//                         ^ Token.Punctuation
+//                          ^^^ Token.Name.Variable
+//                                       ^ Token.Operator
+//                                         ^ Token.Literal.Number
+//                                          ^ Token.Operator
+//                                            ^ Token.Literal.Number
+//                                                ^ Token.Punctuation
     Знач Парам2,
-//  ^ storage.modifier.bsl
-//       ^ variable.parameter.bsl
+//  ^ Token.Keyword
+//       ^ Token.Name.Variable
     Парам3,
-//  ^ variable.parameter.bsl
+//  ^ Token.Name.Variable
     Парам4 = Неопределено
-//  ^ variable.parameter.bsl
+//  ^ Token.Name.Variable
 ) Экспорт
-// <- punctuation.bracket.end.bsl
-// ^ storage.modifier.bsl
+// <- Token.Punctuation
+// ^ Token.Keyword
 КонецПроцедуры
-// <- storage.type.bsl
+// <- Token.Keyword
 
 &НаСервере
-// <- storage.modifier.directive.bsl
-// ^ storage.modifier.directive.bsl
+// <- Token.Name.Decorator
+// ^ Token.Name.Decorator
 &НаКлиентеНаСервереБезКонтекста
-// <- storage.modifier.directive.bsl
-// ^ storage.modifier.directive.bsl
+// <- Token.Name.Decorator
+// ^ Token.Name.Decorator
 &НаЧемУгодно(ДажеСПараметром = "Да", СПараметромБезЗначения, "Значение без параметра")
-// <- storage.type.annotation.bsl
-// ^ storage.type.annotation.bsl
-//          ^ punctuation.bracket.begin.bsl
-//           ^^^ variable.annotation.bsl
-//                           ^ keyword.operator.assignment.bsl
-//                             ^^^^ string.quoted.double.bsl
-//                                 ^ keyword.operator.bsl
-//                                   ^^^ variable.annotation.bsl
-//                                                         ^ keyword.operator.bsl
-//                                                           ^^^^ string.quoted.double.bsl
+// <- Token.Name.Decorator
+// ^ Token.Name.Decorator
+//          ^ Token.Punctuation
+//           ^^^ Token.Name.Variable
+//                           ^ Token.Operator
+//                             ^^^^ Token.Literal.String
+//                                 ^ Token.Operator
+//                                   ^^^ Token.Name.Variable
+//                                                         ^ Token.Operator
+//                                                           ^^^^ Token.Literal.String
 &НаЧемУгодно(ДажеДважды = Истина)
-// <- storage.type.annotation.bsl
-// ^ storage.type.annotation.bsl
-//          ^ punctuation.bracket.begin.bsl
-//           ^^^ variable.annotation.bsl
-//                      ^ keyword.operator.assignment.bsl
-//                        ^ constant.language.bsl
+// <- Token.Name.Decorator
+// ^ Token.Name.Decorator
+//          ^ Token.Punctuation
+//           ^^^ Token.Name.Variable
+//                      ^ Token.Operator
+//                        ^ Token.Keyword.Constant
 Процедура ТестДолжен_ПроверитьПолучениеАннотацийМетода() Экспорт
 
 КонецПроцедуры

@@ -551,9 +551,9 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'Число'),
                 (Token.Operator, '='),
-                (Token.Number, '0.0'),
+                (Token.Literal.Number, '0.0'),
                 (Token.Operator, '*'),
-                (Token.Number, '100'),
+                (Token.Literal.Number, '100'),
                 (Token.Punctuation, ';'),
             ],
         )
@@ -1156,6 +1156,21 @@ class BslLexerTestCase(TestCase):
             ],
         )
 
+    def test_calling_undefined_is_error(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            Неопределено(123)
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Generic.Error, 'Неопределено(123)'),
+            ],
+        )
+
     def test_calling_constant_is_error(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
@@ -1210,7 +1225,7 @@ class BslLexerTestCase(TestCase):
                 (Token.Operator, '<='),
                 (Token.Literal.Number, '0'),
                 (Token.Keyword, 'Тогда'),
-                (Token.Keyword, 'ВызватьИсключение'),
+                (Token.Name.Exception, 'ВызватьИсключение'),
                 (Token.Literal.String, '"'),
                 (Token.Literal.String, 'Сумма должна быть больше 0'),
                 (Token.Literal.String, '"'),
@@ -1227,7 +1242,7 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(
             self.__filter_tokens(tokens),
             [
-                (Token.Name.Function, 'ВызватьИсключение'),
+                (Token.Name.Exception, 'ВызватьИсключение'),
                 (Token.Punctuation, '('),
                 (Token.Literal.String, '"'),
                 (Token.Literal.String, 'Ошибка на клиенте с категорией'),

@@ -29,7 +29,7 @@ class BslLexer(RegexLexer):
         'Тогда','Then','КонецЕсли','EndIf',
         # keyword.control.exception.bsl
         'Попытка','Try','Исключение','Except',
-        'КонецПопытки','EndTry','ВызватьИсключение','Raise',
+        'КонецПопытки','EndTry',
         # keyword.control.repeat.bsl
         'Пока','While','Для','For','Каждого','Each',
         'Из','In','По','To','Цикл','Do','КонецЦикла', 'EndDo',
@@ -470,10 +470,17 @@ class BslLexer(RegexLexer):
         'Неопределено','Undefined','Null',
     ), prefix='(?<!\.)', suffix=r'\b(?=\s*\()')
 
+    KEYWORD_EXCEPTION = words((
+        'ВызватьИсключение','Raise',
+    ), prefix='(?<!\.)', suffix=r'\b')
+
+    KEYWORD_EXCEPTION_CALL = words((
+        'ВызватьИсключение','Raise',
+    ), prefix='(?<!\.)', suffix=r'(?=(\s?[\(]))')
+
     # keywords that also used as function-like calls (treat as function when followed by '(')
     KEYWORD_AS_FUNCTION = words((
         'Новый','New',
-        'ВызватьИсключение','Raise',
     ), prefix='(?<!\.)', suffix=r'(?=(\s?[\(]))')
 
     OPERATORS = words((
@@ -503,12 +510,14 @@ class BslLexer(RegexLexer):
             (NAME_BUILTIN, Token.Name.Builtin),
             (KEYWORD_CONST_CALL, Token.Generic.Error),
             (KEYWORD_DECLARATION, Token.Keyword.Declaration),
+            (KEYWORD_EXCEPTION_CALL, Token.Name.Exception),
             (KEYWORD_AS_FUNCTION, Token.Name.Function),
+            (KEYWORD_EXCEPTION, Token.Name.Exception),
             (KEYWORD, Token.Keyword),
             (NAME_CLASS, Token.Name.Class),
             (KEYWORD_CONSTANT, Token.Keyword.Constant),
             (r'[\wа-яё_][\wа-яё0-9_]*(?=(\s?[\(]))', Token.Name.Function),
-            (r'\b\d+\.?\d*\b', Token.Number),
+            (r'\b\d+\.?\d*\b', Token.Literal.Number),
             (r'[\wа-яё_][\wа-яё0-9_]*', Token.Name.Variable),
             ('\"', Token.String, 'string'),
             (r'\'.*?\'', Token.Literal.Date),
@@ -545,7 +554,7 @@ class BslLexer(RegexLexer):
              bygroups(Token.Name.Variable, Token.Text, Token.Operator, Token.Text, Token.Generic.Error)),
             (r'([A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*)', Token.Name.Variable),
             (r'=', Token.Operator),
-            (r'\b\d+\.?\d*\b', Token.Number),
+            (r'\b\d+\.?\d*\b', Token.Literal.Number),
             (r'.', Token.Text),
         ],
         # String.Regex

@@ -12,7 +12,7 @@ repo_url: 'https://github.com/zeegin/pygments-bsl'
 edit_uri: 'edit/master/docs'
 
 # Copyright
-copyright: Copyright &copy; 2019 - 2024 Ingvar Vilkman
+copyright: Copyright &copy; 2019 - 2025 Ingvar Vilkman
 
 theme: 
   name: material
@@ -79,7 +79,18 @@ markdown_extensions:
   - codehilite
   - pymdownx.details
   - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      check_paths: false
+      base_path:
+        - docs
+        - .
   - pymdownx.superfences
   
 extra_css:
   - stylesheets/extra.css
+
+nav:
+  - index.md
+  - big.md
+  - tokens.md

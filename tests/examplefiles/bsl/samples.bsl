@@ -119,7 +119,7 @@
 
     Число = 0.0 * 100;
 //  ^ Token.Name.Variable
-//          ^^^ Token.Number
+//          ^^^ Token.Literal.Number
 //              ^ Token.Operator
 
     Дата = '00010101000000';

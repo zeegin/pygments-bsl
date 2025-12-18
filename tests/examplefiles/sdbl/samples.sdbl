@@ -4,14 +4,14 @@
 // Комментарий запроса
 // <- Token.Comment.Single
     "Многострочная
-//  ^ Token.String
+//  ^ Token.Literal.String
     // это Комментарий
 //  ^ Token.Comment.Single
     с экранированной "" кавычкой
-//                   ^^ Token.String.Escape
+//                   ^^ Token.Literal.String.Escape
     строка" КАК Поле,
-//  ^^^^^^^ Token.String
-//  ^ Token.String
+//  ^^^^^^^ Token.Literal.String
+//  ^ Token.Literal.String
 //          ^^^ Token.Keyword.Declaration
 //              ^ not:Token.Keyword.Declaration
 //                  ^ Token.Operator

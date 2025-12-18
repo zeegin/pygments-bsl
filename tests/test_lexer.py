@@ -55,6 +55,43 @@ class BslLexerTestCase(TestCase):
             ],
         )
 
+    def test_sdbl_bilingual_keywords(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+АВТОНОМЕРЗАПИСИ ДЛЯ ИЗМЕНЕНИЯ ИТОГИ ПО ИНДЕКСИРОВАТЬ ПО СГРУППИРОВАТЬ ПО СОЕДИНЕНИЕ ПО УПОРЯДОЧИТЬ ПО ПРЕДСТАВЛЕНИЕССЫЛКИ РАЗНОСТЬДАТ СГРУППИРОВАНОПО УНИКАЛЬНЫЙИДЕНТИФИКАТОР
+RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRESENTATION DATEDIFF GROUPEDBY UUID
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'АВТОНОМЕРЗАПИСИ'),
+                (Token.Keyword.Declaration, 'ДЛЯ ИЗМЕНЕНИЯ'),
+                (Token.Keyword.Declaration, 'ИТОГИ ПО'),
+                (Token.Keyword.Declaration, 'ИНДЕКСИРОВАТЬ ПО'),
+                (Token.Keyword.Declaration, 'СГРУППИРОВАТЬ ПО'),
+                (Token.Keyword.Declaration, 'СОЕДИНЕНИЕ ПО'),
+                (Token.Keyword.Declaration, 'УПОРЯДОЧИТЬ ПО'),
+                (Token.Keyword.Declaration, 'ПРЕДСТАВЛЕНИЕССЫЛКИ'),
+                (Token.Keyword.Declaration, 'РАЗНОСТЬДАТ'),
+                (Token.Keyword.Declaration, 'СГРУППИРОВАНОПО'),
+                (Token.Keyword.Declaration, 'УНИКАЛЬНЫЙИДЕНТИФИКАТОР'),
+                (Token.Keyword.Declaration, 'RECORDAUTONUMBER'),
+                (Token.Keyword.Declaration, 'FOR UPDATE'),
+                (Token.Keyword.Declaration, 'TOTALS BY'),
+                (Token.Keyword.Declaration, 'INDEX BY'),
+                (Token.Keyword.Declaration, 'GROUP BY'),
+                (Token.Keyword.Declaration, 'JOIN ON'),
+                (Token.Keyword.Declaration, 'ORDER BY'),
+                (Token.Keyword.Declaration, 'REFPRESENTATION'),
+                (Token.Keyword.Declaration, 'DATEDIFF'),
+                (Token.Keyword.Declaration, 'GROUPEDBY'),
+                (Token.Keyword.Declaration, 'UUID'),
+            ],
+        )
+
     def test_lexing_preproc_if_chain(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
@@ -614,6 +651,32 @@ class BslLexerTestCase(TestCase):
                 (Token.Punctuation, ';'),
             ],
         )
+
+    def test_query_inside_string_uses_sdbl(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+Запрос = Новый Запрос(
+    "ВЫБРАТЬ
+    |   ТаблицаНомераСчетов.НомерСчета КАК НомерСчета,
+    |   ТаблицаНомераСчетов.Владелец КАК Владелец
+    |ПОМЕСТИТЬ ТаблицаНомераСчетов
+    |ИЗ
+    |   &ТаблицаНомераСчетов КАК ТаблицаНомераСчетов
+    |ИНДЕКСИРОВАТЬ ПО
+    |   Владелец
+    |"
+);
+            '''
+        )
+
+        filtered = self.__filter_tokens(tokens)
+        self.assertIn((Token.Keyword.Declaration, 'ВЫБРАТЬ'), filtered)
+        self.assertIn((Token.Keyword.Declaration, 'ПОМЕСТИТЬ'), filtered)
+        self.assertIn((Token.Keyword.Declaration, 'ИНДЕКСИРОВАТЬ ПО'), filtered)
+        self.assertIn((Token.Name.Variable, 'ТаблицаНомераСчетов'), filtered)
+        self.assertIn((Token.Literal.String, '|'), filtered)
+        self.assertIn((Token.Literal.String, '"'), filtered)  # closing quote kept as string token
 
     def test_lexing_number(self):
         lexer = lexers.get_lexer_by_name('bsl')
@@ -1409,5 +1472,464 @@ class SdblLexerTestCase(TestCase):
                 (Token.Keyword.Declaration, 'КАК'),
                 (Token.Name.Variable, 'Поле'),
                 (Token.Punctuation, ','),
+            ],
+        )
+
+    def test_lexing_numbers_and_operators(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+ВЫБОР КОГДА НЕ 0 = 0 * 1 ТОГДА ИСТИНА ИНАЧЕ ЛОЖЬ КОНЕЦ КАК Условие,
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ВЫБОР'),
+                (Token.Keyword.Declaration, 'КОГДА'),
+                (Token.Keyword.Declaration, 'НЕ'),
+                (Token.Literal.Number, '0'),
+                (Token.Operator, '='),
+                (Token.Literal.Number, '0'),
+                (Token.Operator, '*'),
+                (Token.Literal.Number, '1'),
+                (Token.Keyword.Declaration, 'ТОГДА'),
+                (Token.Keyword.Constant, 'ИСТИНА'),
+                (Token.Keyword.Declaration, 'ИНАЧЕ'),
+                (Token.Keyword.Constant, 'ЛОЖЬ'),
+                (Token.Keyword.Declaration, 'КОНЕЦ'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'Условие'),
+                (Token.Punctuation, ','),
+            ],
+        )
+
+    def test_lexing_functions_and_numbers(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+ГОД(ДАТАВРЕМЯ(1, 1, 1)) КАК Функция,
+ВЫРАЗИТЬ(0 КАК Число) КАК Выражение,
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'ГОД'),
+                (Token.Punctuation, '('),
+                (Token.Name.Builtin, 'ДАТАВРЕМЯ'),
+                (Token.Punctuation, '('),
+                (Token.Literal.Number, '1'),
+                (Token.Punctuation, ','),
+                (Token.Literal.Number, '1'),
+                (Token.Punctuation, ','),
+                (Token.Literal.Number, '1'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'Функция'),
+                (Token.Punctuation, ','),
+                (Token.Name.Builtin, 'ВЫРАЗИТЬ'),
+                (Token.Punctuation, '('),
+                (Token.Literal.Number, '0'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Keyword.Declaration, 'Число'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'Выражение'),
+                (Token.Punctuation, ','),
+            ],
+        )
+
+    def test_sdbl_functions_are_builtin(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+АВТОНОМЕРЗАПИСИ() РАЗНОСТЬДАТ(ДАТА(), ДАТАВРЕМЯ(1,1,1)) ИНДЕКСИРОВАТЬ ПО НАБОРАМ Таблица
+INDEX BY SETS Table
+ПОДСТРОКА("abc",1,2) СУММА(1) КОЛИЧЕСТВО(*) ОКР(1.23,2) ЕСТЬNULL(Поле,0) СГРУППИРОВАНОПО(Поле) РАЗМЕРХРАНИМЫХДАННЫХ(Поле) УНИКАЛЬНЫЙИДЕНТИФИКАТОР(Поле)
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'АВТОНОМЕРЗАПИСИ'),
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'РАЗНОСТЬДАТ'),
+                (Token.Punctuation, '('),
+                (Token.Name.Builtin, 'ДАТА'),
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ','),
+                (Token.Name.Builtin, 'ДАТАВРЕМЯ'),
+                (Token.Punctuation, '('),
+                (Token.Literal.Number, '1'),
+                (Token.Punctuation, ','),
+                (Token.Literal.Number, '1'),
+                (Token.Punctuation, ','),
+                (Token.Literal.Number, '1'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'ИНДЕКСИРОВАТЬ ПО НАБОРАМ'),
+                (Token.Name.Variable, 'Таблица'),
+                (Token.Keyword.Declaration, 'INDEX BY SETS'),
+                (Token.Name.Variable, 'Table'),
+                (Token.Name.Builtin, 'ПОДСТРОКА'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'abc'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ','),
+                (Token.Literal.Number, '1'),
+                (Token.Punctuation, ','),
+                (Token.Literal.Number, '2'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'СУММА'),
+                (Token.Punctuation, '('),
+                (Token.Literal.Number, '1'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'КОЛИЧЕСТВО'),
+                (Token.Punctuation, '('),
+                (Token.Operator, '*'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'ОКР'),
+                (Token.Punctuation, '('),
+                (Token.Literal.Number, '1.23'),
+                (Token.Punctuation, ','),
+                (Token.Literal.Number, '2'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'ЕСТЬNULL'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Punctuation, ','),
+                (Token.Literal.Number, '0'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'СГРУППИРОВАНОПО'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'РАЗМЕРХРАНИМЫХДАННЫХ'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'УНИКАЛЬНЫЙИДЕНТИФИКАТОР'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Punctuation, ')'),
+            ],
+        )
+
+    def test_sdbl_aggregate_functions(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+ВЫБРАТЬ
+   Накладная.Номенклатура.Наименование,
+   СУММА (Накладная.Сумма) КАК Сумма,
+   СРЕДНЕЕ (Накладная.Сумма) КАК Среднее,
+   МАКСИМУМ (Накладная.Сумма) КАК Максимум,
+   МИНИМУМ (Накладная.Сумма) КАК Минимум,
+   КОЛИЧЕСТВО (Накладная.Сумма) КАК Колич,
+   КОЛИЧЕСТВО (РАЗЛИЧНЫЕ Накладная.Сумма) КАК КоличРазл,
+   КОЛИЧЕСТВО (*) КАК КоличВсе
+ИЗ
+   Документ.РасходнаяНакладная.Состав КАК Накладная
+СГРУППИРОВАТЬ ПО
+   Накладная.Номенклатура
+ИТОГИ ОБЩИЕ
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Name.Variable, 'Накладная'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Номенклатура'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Наименование'),
+                (Token.Punctuation, ','),
+                (Token.Name.Builtin, 'СУММА'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Накладная'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Сумма'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Keyword.Declaration, 'Сумма'),
+                (Token.Punctuation, ','),
+                (Token.Name.Builtin, 'СРЕДНЕЕ'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Накладная'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Сумма'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Keyword.Declaration, 'Среднее'),
+                (Token.Punctuation, ','),
+                (Token.Name.Builtin, 'МАКСИМУМ'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Накладная'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Сумма'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Keyword.Declaration, 'Максимум'),
+                (Token.Punctuation, ','),
+                (Token.Name.Builtin, 'МИНИМУМ'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Накладная'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Сумма'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Keyword.Declaration, 'Минимум'),
+                (Token.Punctuation, ','),
+                (Token.Name.Builtin, 'КОЛИЧЕСТВО'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Накладная'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Сумма'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'Колич'),
+                (Token.Punctuation, ','),
+                (Token.Name.Builtin, 'КОЛИЧЕСТВО'),
+                (Token.Punctuation, '('),
+                (Token.Keyword.Declaration, 'РАЗЛИЧНЫЕ'),
+                (Token.Name.Variable, 'Накладная'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Сумма'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'КоличРазл'),
+                (Token.Punctuation, ','),
+                (Token.Name.Builtin, 'КОЛИЧЕСТВО'),
+                (Token.Punctuation, '('),
+                (Token.Operator, '*'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'КоличВсе'),
+                (Token.Keyword.Declaration, 'ИЗ'),
+                (Token.Name.Variable, 'Документ'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'РасходнаяНакладная'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Состав'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'Накладная'),
+                (Token.Keyword.Declaration, 'СГРУППИРОВАТЬ ПО'),
+                (Token.Name.Variable, 'Накладная'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Номенклатура'),
+                (Token.Keyword.Declaration, 'ИТОГИ'),
+                (Token.Keyword.Declaration, 'ОБЩИЕ'),
+            ],
+        )
+
+    def test_sdbl_binary_and_logical_operators(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+ВЫБРАТЬ
+    1 + 2 - 3 * 4 / 5 КАК Арифметика,
+    "A" + "B" КАК Строки
+ГДЕ
+    Поле > 0
+    И Поле < 10
+    И Поле МЕЖДУ 1 И 5
+    И Поле ПОДОБНО "%стр%"
+    И Поле В ИЕРАРХИИ ДругаяТаблица
+    И Поле В (1,2,3)
+    И Поле = NULL
+    И Поле ЕСТЬ NULL
+    И Поле ССЫЛКА Справочник.Номенклатура
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Literal.Number, '1'),
+                (Token.Operator, '+'),
+                (Token.Literal.Number, '2'),
+                (Token.Operator, '-'),
+                (Token.Literal.Number, '3'),
+                (Token.Operator, '*'),
+                (Token.Literal.Number, '4'),
+                (Token.Operator, '/'),
+                (Token.Literal.Number, '5'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'Арифметика'),
+                (Token.Punctuation, ','),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'A'),
+                (Token.Literal.String, '"'),
+                (Token.Operator, '+'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'B'),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'Строки'),
+                (Token.Keyword.Declaration, 'ГДЕ'),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Operator, '>'),
+                (Token.Literal.Number, '0'),
+                (Token.Keyword.Declaration, 'И'),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Operator, '<'),
+                (Token.Literal.Number, '10'),
+                (Token.Keyword.Declaration, 'И'),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Keyword.Declaration, 'МЕЖДУ'),
+                (Token.Literal.Number, '1'),
+                (Token.Keyword.Declaration, 'И'),
+                (Token.Literal.Number, '5'),
+                (Token.Keyword.Declaration, 'И'),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Keyword.Declaration, 'ПОДОБНО'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, '%стр%'),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'И'),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Keyword.Declaration, 'В'),
+                (Token.Keyword.Declaration, 'ИЕРАРХИИ'),
+                (Token.Name.Variable, 'ДругаяТаблица'),
+                (Token.Keyword.Declaration, 'И'),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Keyword.Declaration, 'В'),
+                (Token.Punctuation, '('),
+                (Token.Literal.Number, '1'),
+                (Token.Punctuation, ','),
+                (Token.Literal.Number, '2'),
+                (Token.Punctuation, ','),
+                (Token.Literal.Number, '3'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'И'),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Operator, '='),
+                (Token.Keyword.Constant, 'NULL'),
+                (Token.Keyword.Declaration, 'И'),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Keyword.Declaration, 'ЕСТЬ'),
+                (Token.Keyword.Constant, 'NULL'),
+                (Token.Keyword.Declaration, 'И'),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Keyword.Declaration, 'ССЫЛКА'),
+                (Token.Name.Variable, 'Справочник'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Номенклатура'),
+            ],
+        )
+
+    def test_sdbl_case_expression_and_cast(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+ВЫБРАТЬ
+    ВЫБОР
+       КОГДА Цена > 1000 ТОГДА "1000 -"
+       КОГДА Цена > 100 ТОГДА "100 - 1000"
+    ИНАЧЕ "Не Задана"
+    КОНЕЦ КАК ЦенаКатегория,
+    ВЫРАЗИТЬ(Поле КАК ЧИСЛО(10,2)) КАК ЧислоПоля
+ИЗ Таблица
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Keyword.Declaration, 'ВЫБОР'),
+                (Token.Keyword.Declaration, 'КОГДА'),
+                (Token.Name.Variable, 'Цена'),
+                (Token.Operator, '>'),
+                (Token.Literal.Number, '1000'),
+                (Token.Keyword.Declaration, 'ТОГДА'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, '1000 -'),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'КОГДА'),
+                (Token.Name.Variable, 'Цена'),
+                (Token.Operator, '>'),
+                (Token.Literal.Number, '100'),
+                (Token.Keyword.Declaration, 'ТОГДА'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, '100 - 1000'),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'ИНАЧЕ'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Не Задана'),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'КОНЕЦ'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'ЦенаКатегория'),
+                (Token.Punctuation, ','),
+                (Token.Name.Builtin, 'ВЫРАЗИТЬ'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Keyword.Declaration, 'ЧИСЛО'),
+                (Token.Punctuation, '('),
+                (Token.Literal.Number, '10'),
+                (Token.Punctuation, ','),
+                (Token.Literal.Number, '2'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'ЧислоПоля'),
+                (Token.Keyword.Declaration, 'ИЗ'),
+                (Token.Name.Variable, 'Таблица'),
+            ],
+        )
+
+    def test_like_and_escape(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+Номенклатура.Наименование ПОДОБНО &Шаблон СПЕЦСИМВОЛ "~"
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'Номенклатура'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Наименование'),
+                (Token.Keyword.Declaration, 'ПОДОБНО'),
+                (Token.Name.Constant, '&Шаблон'),
+                (Token.Keyword.Declaration, 'СПЕЦСИМВОЛ'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, '~'),
+                (Token.Literal.String, '"'),
+            ],
+        )
+
+    def test_line_continuation_pipe_in_sdbl(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+|   Таблица.Ссылка КАК Ссылка
+            '''
+        )
+
+        self.assertEqual(
+            self.__filter_tokens(tokens),
+            [
+                (Token.Generic.Error, '|'),
+                (Token.Name.Variable, 'Таблица'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Ссылка'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'Ссылка'),
             ],
         )

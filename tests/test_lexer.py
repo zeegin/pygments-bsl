@@ -9,14 +9,17 @@ from pygments.token import Token
 from pygments_bsl.lexer import BslLexer, SdblLexer
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
+SPACE_RE = re.compile(r'^[ \n]+$')
+
+
+def filter_tokens(tokens):
+    """Drop whitespace/empty tokens for easier assertions."""
+    return [tok for tok in tokens if not SPACE_RE.match(tok[1]) and tok[1] != '']
+
 
 class BslLexerTestCase(TestCase):
 
     maxDiff = None # if characters too more at assertEqual
-
-    def __filter_tokens(self, tokens):
-        space = re.compile('^[ \n]+$')
-        return [i for i in tokens if not space.match(i[1]) and not i[1] == '']
 
     def test_guess_lexer_for_filename(self):
         with open(os.path.join(CURRENT_DIR, 'examplefiles', 'bsl', 'samples.bsl'), 'r', encoding='utf-8') as fh:
@@ -47,7 +50,7 @@ class BslLexerTestCase(TestCase):
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Comment.Preproc, '#Область ИмяОбласти'),
                 (Token.Comment.Single, '// это комментарий'),
@@ -65,7 +68,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword.Declaration, 'АВТОНОМЕРЗАПИСИ'),
                 (Token.Keyword.Declaration, 'ДЛЯ ИЗМЕНЕНИЯ'),
@@ -104,7 +107,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Comment.Preproc, '#Если'),
                 (Token.Keyword.Constant, 'Сервер'),
@@ -127,7 +130,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Comment.Preproc, '#Если'),
                 (Token.Keyword.Constant, 'Сервер'),
@@ -155,7 +158,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Comment.Preproc, '#Вставка'),
                 (Token.Keyword, 'Процедура'),
@@ -174,103 +177,68 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
             ],
         )
 
-    def test_lexing_variable_declaration(self):
+    def test_variable_declarations(self):
         lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
-            '''
-            Перем А Экспорт;
-            '''
-        )
+        cases = [
+            (
+                'Перем А Экспорт;',
+                [
+                    (Token.Keyword.Declaration, 'Перем'),
+                    (Token.Name.Variable, 'А'),
+                    (Token.Keyword, 'Экспорт'),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+            (
+                'Перем А, Б;',
+                [
+                    (Token.Keyword.Declaration, 'Перем'),
+                    (Token.Name.Variable, 'А'),
+                    (Token.Punctuation, ','),
+                    (Token.Name.Variable, 'Б'),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+            (
+                'Перем А Экспорт, Б;',
+                [
+                    (Token.Keyword.Declaration, 'Перем'),
+                    (Token.Name.Variable, 'А'),
+                    (Token.Keyword, 'Экспорт'),
+                    (Token.Punctuation, ','),
+                    (Token.Name.Variable, 'Б'),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+            (
+                'Перем А, Б Экспорт;',
+                [
+                    (Token.Keyword.Declaration, 'Перем'),
+                    (Token.Name.Variable, 'А'),
+                    (Token.Punctuation, ','),
+                    (Token.Name.Variable, 'Б'),
+                    (Token.Keyword, 'Экспорт'),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+            (
+                'Перем А Экспорт, Б Экспорт;',
+                [
+                    (Token.Keyword.Declaration, 'Перем'),
+                    (Token.Name.Variable, 'А'),
+                    (Token.Keyword, 'Экспорт'),
+                    (Token.Punctuation, ','),
+                    (Token.Name.Variable, 'Б'),
+                    (Token.Keyword, 'Экспорт'),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+        ]
 
-        self.assertEqual(
-            self.__filter_tokens(tokens),
-            [
-                (Token.Keyword.Declaration, 'Перем'),
-                (Token.Name.Variable, 'А'),
-                (Token.Keyword, 'Экспорт'),
-                (Token.Punctuation, ';'),
-            ],
-        )
-
-    def test_lexing_variable_declaration_multi(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
-            '''
-            Перем А, Б;
-            '''
-        )
-
-        self.assertEqual(
-            self.__filter_tokens(tokens),
-            [
-                (Token.Keyword.Declaration, 'Перем'),
-                (Token.Name.Variable, 'А'),
-                (Token.Punctuation, ','),
-                (Token.Name.Variable, 'Б'),
-                (Token.Punctuation, ';'),
-            ],
-        )
-
-    def test_lexing_variable_declaration_multi_export_first(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
-            '''
-            Перем А Экспорт, Б;
-            '''
-        )
-
-        self.assertEqual(
-            self.__filter_tokens(tokens),
-            [
-                (Token.Keyword.Declaration, 'Перем'),
-                (Token.Name.Variable, 'А'),
-                (Token.Keyword, 'Экспорт'),
-                (Token.Punctuation, ','),
-                (Token.Name.Variable, 'Б'),
-                (Token.Punctuation, ';'),
-            ],
-        )
-    
-    def test_lexing_variable_declaration_multi_export_second(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
-            '''
-            Перем А, Б Экспорт;
-            '''
-        )
-
-        self.assertEqual(
-            self.__filter_tokens(tokens),
-            [
-                (Token.Keyword.Declaration, 'Перем'),
-                (Token.Name.Variable, 'А'),
-                (Token.Punctuation, ','),
-                (Token.Name.Variable, 'Б'),
-                (Token.Keyword, 'Экспорт'),
-                (Token.Punctuation, ';'),
-            ],
-        )
-
-    def test_lexing_variable_declaration_multi_export_both(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
-            '''
-            Перем А Экспорт, Б Экспорт;
-            '''
-        )
-
-        self.assertEqual(
-            self.__filter_tokens(tokens),
-            [
-                (Token.Keyword.Declaration, 'Перем'),
-                (Token.Name.Variable, 'А'),
-                (Token.Keyword, 'Экспорт'),
-                (Token.Punctuation, ','),
-                (Token.Name.Variable, 'Б'),
-                (Token.Keyword, 'Экспорт'),
-                (Token.Punctuation, ';'),
-            ],
-        )
+        for source, expected in cases:
+            with self.subTest(source=source):
+                tokens = lexer.get_tokens(source)
+                self.assertEqual(filter_tokens(tokens), expected)
 
     def test_lexing_inline_comment(self):
         lexer = lexers.get_lexer_by_name('bsl')
@@ -281,7 +249,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword.Declaration, 'Перем'),
                 (Token.Name.Variable, 'ДиалогРаботыСКаталогом'),
@@ -301,7 +269,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Comment.Preproc, '#Если'),
                 (Token.Keyword.Constant, 'Сервер'),
@@ -320,7 +288,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Decorator, '&НаСервере;'),
             ],
@@ -333,7 +301,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         tokens = lexer.get_tokens('&Перед("НазваниеМетода");')
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Decorator, '&Перед'),
                 (Token.Punctuation, '('),
@@ -352,7 +320,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Decorator, '&НаЧемУгодно'),
                 (Token.Punctuation, '('),
@@ -386,7 +354,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword, 'Процедура'),
                 (Token.Name.Function, 'САннотированнымиПараметрами'),
@@ -431,7 +399,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword, 'Процедура'),
                 (Token.Name.Function, 'НевстроеннаяПроцедура'),
@@ -455,7 +423,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Decorator, '&Перед'),
                 (Token.Punctuation, '('),
@@ -484,7 +452,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword, 'Процедура'),
                 (Token.Name.Function, 'ИмяПроцедуры'),
@@ -519,7 +487,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'Б'),
                 (Token.Operator, '='),
@@ -551,7 +519,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'В'),
                 (Token.Operator, '='),
@@ -579,7 +547,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Builtin, 'СтрШаблон'),
                 (Token.Punctuation, '('),
@@ -619,7 +587,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'Строка'),
                 (Token.Operator, '='),
@@ -641,7 +609,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'СтрокаСоСловомВыбрать'),
                 (Token.Operator, '='),
@@ -670,7 +638,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
             '''
         )
 
-        filtered = self.__filter_tokens(tokens)
+        filtered = filter_tokens(tokens)
         self.assertIn((Token.Keyword.Declaration, 'ВЫБРАТЬ'), filtered)
         self.assertIn((Token.Keyword.Declaration, 'ПОМЕСТИТЬ'), filtered)
         self.assertIn((Token.Keyword.Declaration, 'ИНДЕКСИРОВАТЬ ПО'), filtered)
@@ -687,7 +655,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'Число'),
                 (Token.Operator, '='),
@@ -708,7 +676,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'Дата'),
                 (Token.Operator, '='),
@@ -727,7 +695,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'КороткаяДата'),
                 (Token.Operator, '='),
@@ -745,7 +713,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'ДатаСРазделителями'),
                 (Token.Operator, '='),
@@ -763,7 +731,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'КороткаяДатаСРазделителями'),
                 (Token.Operator, '='),
@@ -782,7 +750,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'СтрокаСДатойВнутри'),
                 (Token.Operator, '='),
@@ -806,7 +774,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword, 'Если'),
                 (Token.Name.Variable, 'А'),
@@ -844,7 +812,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword, 'If'),
                 (Token.Keyword.Constant, 'True'),
@@ -878,7 +846,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword, 'Пока'),
                 (Token.Name.Builtin, 'ЗначениеЗаполнено'),
@@ -903,7 +871,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Function, 'НевстроеннаяПроцедура'),
                 (Token.Punctuation, '('),
@@ -918,26 +886,57 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
 
     def test_lexing_call_builtin_function(self):
         lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
-            '''
-            СтрДлина();
-            СтрДлина ();
-            '''
-        )
+        cases = [
+            'СтрДлина();',
+            'СтрДлина ();',
+        ]
+        expected = [
+            (Token.Name.Builtin, 'СтрДлина'),
+            (Token.Punctuation, '('),
+            (Token.Punctuation, ')'),
+            (Token.Punctuation, ';'),
+        ]
 
-        self.assertEqual(
-            self.__filter_tokens(tokens),
-            [
-                (Token.Name.Builtin, 'СтрДлина'),
-                (Token.Punctuation, '('),
-                (Token.Punctuation, ')'),
-                (Token.Punctuation, ';'),
-                (Token.Name.Builtin, 'СтрДлина'),
-                (Token.Punctuation, '('),
-                (Token.Punctuation, ')'),
-                (Token.Punctuation, ';'),
-            ],
-        )
+        for source in cases:
+            with self.subTest(source=source):
+                tokens = lexer.get_tokens(source)
+                self.assertEqual(filter_tokens(tokens), expected)
+
+    def test_call_only_builtins_priority(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        cases = [
+            (
+                'Булево(); Дата();',
+                [
+                    (Token.Name.Builtin, 'Булево'),
+                    (Token.Punctuation, '('),
+                    (Token.Punctuation, ')'),
+                    (Token.Punctuation, ';'),
+                    (Token.Name.Builtin, 'Дата'),
+                    (Token.Punctuation, '('),
+                    (Token.Punctuation, ')'),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+            (
+                'Объект.Булево;\nОбъект.Дата;',
+                [
+                    (Token.Name.Variable, 'Объект'),
+                    (Token.Operator, '.'),
+                    (Token.Name.Variable, 'Булево'),
+                    (Token.Punctuation, ';'),
+                    (Token.Name.Variable, 'Объект'),
+                    (Token.Operator, '.'),
+                    (Token.Name.Variable, 'Дата'),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+        ]
+
+        for source, expected in cases:
+            with self.subTest(source=source):
+                tokens = lexer.get_tokens(source)
+                self.assertEqual(filter_tokens(tokens), expected)
 
     def test_lexing_call_new(self):
         lexer = lexers.get_lexer_by_name('bsl')
@@ -948,7 +947,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'НовыйОбъект'),
                 (Token.Operator, '='),
@@ -967,7 +966,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'НовыйОбъект'),
                 (Token.Operator, '='),
@@ -990,7 +989,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'ПрефиксЗначениеЗаполненоПостфикс'),
                 (Token.Operator, '='),
@@ -1009,7 +1008,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'Объект'),
                 (Token.Operator, '.'),
@@ -1041,7 +1040,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Class, 'Справочники'),
                 (Token.Operator, '.'),
@@ -1063,7 +1062,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'А'),
                 (Token.Operator, '='),
@@ -1085,7 +1084,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'Б'),
                 (Token.Operator, '='),
@@ -1106,7 +1105,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Label, '~Метка'),
                 (Token.Punctuation, ':'),
@@ -1125,7 +1124,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Builtin, 'НачатьТранзакцию'),
             ],
@@ -1142,7 +1141,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'ПараметрСНекорректнымЗначением'),
                 (Token.Operator, '='),
@@ -1167,7 +1166,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword, 'Асинх'),
                 (Token.Keyword, 'Процедура'),
@@ -1193,7 +1192,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword, 'Выполнить'),
                 (Token.Name.Variable, 'Алгоритм'),
@@ -1211,7 +1210,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'Запрос'),
                 (Token.Operator, '='),
@@ -1240,7 +1239,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Builtin, 'Выполнить'),
                 (Token.Punctuation, '('),
@@ -1261,7 +1260,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword, 'Выполнить'),
                 (Token.Punctuation, '('),
@@ -1284,7 +1283,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'ГруппаФормы'),
                 (Token.Operator, '='),
@@ -1311,7 +1310,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Builtin, 'ВопросАсинх'),
                 (Token.Punctuation, '('),
@@ -1330,7 +1329,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'Y'),
                 (Token.Operator, '='),
@@ -1351,7 +1350,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'Рез'),
                 (Token.Operator, '='),
@@ -1379,7 +1378,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'Рез'),
                 (Token.Operator, '='),
@@ -1403,7 +1402,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'Рез'),
                 (Token.Operator, '='),
@@ -1424,7 +1423,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Generic.Error, 'Неопределено(123)'),
             ],
@@ -1439,7 +1438,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'X'),
                 (Token.Operator, '='),
@@ -1457,7 +1456,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'X'),
                 (Token.Operator, '='),
@@ -1477,7 +1476,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         )
     def test_lexing_raise_exception_function_call(self):
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword, 'Если'),
                 (Token.Name.Variable, 'Сумма'),
@@ -1499,7 +1498,7 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         tokens = lexer.get_tokens('ВызватьИсключение("Ошибка на клиенте с категорией", КатегорияОшибки.ОшибкаКонфигурации, "error.client.config", "error.client.config additional info");')
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Exception, 'ВызватьИсключение'),
                 (Token.Punctuation, '('),
@@ -1529,11 +1528,6 @@ class SdblLexerTestCase(TestCase):
 
     maxDiff = None # if characters too more at assertEqual
 
-    def __filter_tokens(self, tokens):
-        space = re.compile('^[ \n]+$')
-        return [i for i in tokens if not space.match(i[1]) and not i[1] == '']
-
-
     def test_guess_lexer_for_filename(self):
         with open(os.path.join(CURRENT_DIR, 'examplefiles', 'sdbl', 'samples.sdbl'), 'r', encoding='utf-8') as fh:
             text_sdbl = fh.read()
@@ -1555,7 +1549,7 @@ class SdblLexerTestCase(TestCase):
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
                 (Token.Keyword.Constant, 'Неопределено'),
@@ -1577,7 +1571,7 @@ class SdblLexerTestCase(TestCase):
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
                 (Token.Literal.String, '"'),
@@ -1603,7 +1597,7 @@ class SdblLexerTestCase(TestCase):
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword.Declaration, 'ВЫБОР'),
                 (Token.Keyword.Declaration, 'КОГДА'),
@@ -1634,7 +1628,7 @@ class SdblLexerTestCase(TestCase):
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Builtin, 'ГОД'),
                 (Token.Punctuation, '('),
@@ -1673,7 +1667,7 @@ INDEX BY SETS Table
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Builtin, 'АВТОНОМЕРЗАПИСИ'),
                 (Token.Punctuation, '('),
@@ -1764,7 +1758,7 @@ INDEX BY SETS Table
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
                 (Token.Name.Variable, 'Накладная'),
@@ -1872,7 +1866,7 @@ INDEX BY SETS Table
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
                 (Token.Literal.Number, '1'),
@@ -1964,7 +1958,7 @@ INDEX BY SETS Table
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
                 (Token.Keyword.Declaration, 'ВЫБОР'),
@@ -2019,7 +2013,7 @@ INDEX BY SETS Table
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Name.Variable, 'Номенклатура'),
                 (Token.Operator, '.'),
@@ -2038,11 +2032,12 @@ INDEX BY SETS Table
         tokens = lexer.get_tokens(
             '''
 |   Таблица.Ссылка КАК Ссылка
+|   Таблица.Контрагент КАК Контрагент
             '''
         )
 
         self.assertEqual(
-            self.__filter_tokens(tokens),
+            filter_tokens(tokens),
             [
                 (Token.Generic.Error, '|'),
                 (Token.Name.Variable, 'Таблица'),
@@ -2050,5 +2045,11 @@ INDEX BY SETS Table
                 (Token.Name.Variable, 'Ссылка'),
                 (Token.Keyword.Declaration, 'КАК'),
                 (Token.Name.Variable, 'Ссылка'),
+                (Token.Generic.Error, '|'),
+                (Token.Name.Variable, 'Таблица'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Контрагент'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'Контрагент'),
             ],
         )

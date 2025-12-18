@@ -11,11 +11,18 @@ from .generated_data import (
     TYPE_NAMES,
 )
 
+PREFIX_NO_DOT = r'(?<!\.)'
+SUFFIX_WORD = r'\b'
+SUFFIX_CALL = r'(?=(\s?[\(]))'
+
+def words_no_dot(items, suffix):
+    """Helper to reduce repeated prefixes."""
+    return words(items, prefix=PREFIX_NO_DOT, suffix=suffix)
+
 CALL_ONLY_BUILTINS = {
     'Булево','Boolean','Число','Number','Строка','String','Дата','Date',
 }
 CONSTANT_NAMES = (
-    # constant.language.bsl
     'Неопределено','Undefined','Истина','True','Ложь','False','NULL'
 )
 
@@ -26,80 +33,67 @@ class BslLexer(RegexLexer):
 
     flags = re.MULTILINE | re.IGNORECASE | re.VERBOSE
 
-    KEYWORD_DECLARATION = words((
+    KEYWORD_DECLARATION = words_no_dot((
         # storage.type.var.bsl
         'Перем','Var',
-    ), prefix='(?<!\.)', suffix=r'\b')    
+    ), suffix=SUFFIX_WORD)
 
-    KEYWORD = words((
-        # storage.type.bsl
+    KEYWORD = words_no_dot((
         'Процедура','Procedure','Функция','Function',
-        # storage.modifier.bsl
         'Экспорт', 'Export',
-        # storage.type.bsl
         'КонецПроцедуры','EndProcedure','КонецФункции','EndFunction',
-        # keyword.control.bsl
         'Прервать','Break','Продолжить','Continue','Возврат','Return',
-        # keyword.control.conditional.bsl
         'Если','If','Иначе','Else','ИначеЕсли','ElsIf',
         'Тогда','Then','КонецЕсли','EndIf',
-        # keyword.control.exception.bsl
         'Попытка','Try','Исключение','Except',
         'КонецПопытки','EndTry',
-        # keyword.control.repeat.bsl
         'Пока','While','Для','For','Каждого','Each',
         'Из','In','По','To','Цикл','Do','КонецЦикла', 'EndDo',
-        # keyword.operator.logical.bsl
         'НЕ','NOT','И','AND','ИЛИ','OR',
-        # support.function.bsl
         'Новый','New',
         'Выполнить','Execute',
-        # storage.modifier.bsl
         'Знач', 'Val',
-        # 
         'Перейти', 'Goto',
         'Асинх', 'Async',
         'Ждать', 'Await',
-    ), prefix='(?<!\.)', suffix=r'\b')
+    ), suffix=SUFFIX_WORD)
     
     NAME_CLASS_NAMES = tuple(dict.fromkeys(GLOBAL_PROPERTY_NAMES))
 
-    NAME_CLASS = words(
-        tuple(name for name in dict.fromkeys(NAME_CLASS_NAMES)
-              if name not in CALL_ONLY_BUILTINS and name not in CONSTANT_NAMES),
-        prefix='(?<!\.)',
-        suffix=r'\b'
+    NAME_CLASS = words_no_dot(
+        tuple(
+            name for name in dict.fromkeys(NAME_CLASS_NAMES)
+            if name not in CALL_ONLY_BUILTINS and name not in CONSTANT_NAMES
+        ),
+        suffix=SUFFIX_WORD
     )
 
-    NAME_BUILTIN = words(
+    NAME_BUILTIN = words_no_dot(
         tuple(name for name in dict.fromkeys(GLOBAL_METHOD_NAMES) if name not in CALL_ONLY_BUILTINS),
-        prefix='(?<!\.)',
-        suffix=r'\b'
+        suffix=SUFFIX_WORD
     )
 
-    NAME_BUILTIN_CALL = words(
+    NAME_BUILTIN_CALL = words_no_dot(
         tuple(CALL_ONLY_BUILTINS),
-        prefix='(?<!\.)',
-        suffix=r'(?=(\s?[\(]))'
+        suffix=SUFFIX_CALL
     )
 
-    KEYWORD_CONSTANT = words(CONSTANT_NAMES, prefix='(?<!\.)', suffix=r'\b')
+    KEYWORD_CONSTANT = words_no_dot(CONSTANT_NAMES, suffix=SUFFIX_WORD)
 
-    KEYWORD_EXCEPTION = words((
+    KEYWORD_EXCEPTION = words_no_dot((
         'ВызватьИсключение','Raise',
-    ), prefix='(?<!\.)', suffix=r'\b')
+    ), suffix=SUFFIX_WORD)
 
-    KEYWORD_EXCEPTION_CALL = words((
+    KEYWORD_EXCEPTION_CALL = words_no_dot((
         'ВызватьИсключение','Raise',
-    ), prefix='(?<!\.)', suffix=r'(?=(\s?[\(]))')
+    ), suffix=SUFFIX_CALL)
 
     # keywords that also used as function-like calls (treat as builtin when followed by '(')
-    KEYWORD_AS_FUNCTION = words((
+    KEYWORD_AS_FUNCTION = words_no_dot((
         'Новый','New',
-    ), prefix='(?<!\.)', suffix=r'(?=(\s?[\(]))')
+    ), suffix=SUFFIX_CALL)
 
-    # treat execute as builtin only when executing nested call string
-    EXECUTE_CALL = r'(?<!\.)\b(Выполнить|Execute)\b(?=\s*\(\s*\"Выполнить)'
+    EXECUTE_STRING_CALL = r'(?<!\.)\b(Выполнить|Execute)\b(?=\s*\(\s*"Выполнить)'
 
     TYPE_NAME_PATTERN = r'(?:' + '|'.join(re.escape(n) for n in TYPE_NAMES) + r')'
     GLOBAL_METHOD_PATTERN = r'(?<!\.)\b(?:' + '|'.join(re.escape(n) for n in GLOBAL_METHOD_NAMES) + r')\b(?=(\s?[\(]))'
@@ -138,7 +132,7 @@ class BslLexer(RegexLexer):
             (KEYWORD_DECLARATION, Token.Keyword.Declaration),
             (KEYWORD_EXCEPTION_CALL, Token.Name.Exception),
             (KEYWORD_AS_FUNCTION, Token.Name.Builtin),
-            (EXECUTE_CALL, Token.Name.Builtin),
+            (EXECUTE_STRING_CALL, Token.Name.Builtin),
             (KEYWORD_EXCEPTION, Token.Name.Exception),
             (KEYWORD, Token.Keyword),
             (KEYWORD_CONSTANT, Token.Keyword.Constant),
@@ -305,7 +299,6 @@ class SdblLexer(RegexLexer):
         'СОЕДИНЕНИЕ','JOIN',
         'СПЕЦСИМВОЛ','ESCAPE',
         'СРЕДНЕЕ','AVG',
-        'ССЫЛКА','REFS',
         'СТРОКА','STRING',
         'СУММА','SUM',
         'ТИП','TYPE',
@@ -360,10 +353,10 @@ class SdblLexer(RegexLexer):
             (r'\|', Token.Generic.Error),
             (r'(&[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)', Token.Name.Constant),
             (OPERATORS, Token.Operator),
-            (r'(?<=\bКАК\s)Ссылка\b', Token.Name.Variable),
             (r'(?<=\.)[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*', Token.Name.Variable),
             (r'[\[\]:(),;]', Token.Punctuation),
             (FUNCTION_CALL, Token.Name.Builtin),
+            (r'(?-i:ССЫЛКА|REFS)\b', Token.Keyword.Declaration),
             (KEYWORD_DECLARATION, Token.Keyword.Declaration),
             (KEYWORD_CONSTANT, Token.Keyword.Constant),
             (r'\b\d+\.?\d*\b', Token.Literal.Number),

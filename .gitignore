@@ -8,3 +8,4 @@ build
 .pytest_cache
 .venv
 .DS_Store
+site/

@@ -547,7 +547,8 @@ class BslLexer(RegexLexer):
         'query_string': [
             (r'""', Token.Literal.String.Escape),
             (r'"', Token.Literal.String, '#pop'),
-            (r'[^"]+', using(lambda: SdblQueryLexer())),
+            # Delay instantiation to avoid forward reference issues and keep formatter options
+            (r'[^"]+', using(lambda **kwargs: SdblQueryLexer(**kwargs))),
         ],
         'decorator_params': [
             (r'\)', Token.Punctuation, '#pop'),

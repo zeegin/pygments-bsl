@@ -76,9 +76,13 @@ extra:
 
 markdown_extensions:
   - admonition
-  - codehilite
   - pymdownx.details
-  - pymdownx.highlight
+  - pymdownx.highlight:
+      use_pygments: true
+      pygments_lang_class: true
+      linenums: true
+      anchor_linenums: true
+      default_lang: bsl
   - pymdownx.inlinehilite
   - pymdownx.snippets:
       check_paths: false

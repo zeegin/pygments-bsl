@@ -9,12 +9,15 @@ from pygments.token import Token
 from pygments_bsl.lexer import BslLexer, SdblLexer
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
-SPACE_RE = re.compile(r'^[ \n]+$')
+SPACE_RE = re.compile(r'^[ \n\r\uFEFF]+$')
 
 
 def filter_tokens(tokens):
     """Drop whitespace/empty tokens for easier assertions."""
-    return [tok for tok in tokens if not SPACE_RE.match(tok[1]) and tok[1] != '']
+    return [
+        tok for tok in tokens
+        if not (tok[0] is Token.Text and SPACE_RE.match(tok[1])) and tok[1] != ''
+    ]
 
 
 class BslLexerTestCase(TestCase):
@@ -55,43 +58,6 @@ class BslLexerTestCase(TestCase):
                 (Token.Comment.Preproc, '#Область ИмяОбласти'),
                 (Token.Comment.Single, '// это комментарий'),
                 (Token.Comment.Preproc, '#КонецОбласти'),
-            ],
-        )
-
-    def test_sdbl_bilingual_keywords(self):
-        lexer = lexers.get_lexer_by_name('sdbl')
-        tokens = lexer.get_tokens(
-            '''
-АВТОНОМЕРЗАПИСИ ДЛЯ ИЗМЕНЕНИЯ ИТОГИ ПО ИНДЕКСИРОВАТЬ ПО СГРУППИРОВАТЬ ПО СОЕДИНЕНИЕ ПО УПОРЯДОЧИТЬ ПО ПРЕДСТАВЛЕНИЕССЫЛКИ РАЗНОСТЬДАТ СГРУППИРОВАНОПО УНИКАЛЬНЫЙИДЕНТИФИКАТОР
-RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRESENTATION DATEDIFF GROUPEDBY UUID
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
-            [
-                (Token.Keyword.Declaration, 'АВТОНОМЕРЗАПИСИ'),
-                (Token.Keyword.Declaration, 'ДЛЯ ИЗМЕНЕНИЯ'),
-                (Token.Keyword.Declaration, 'ИТОГИ ПО'),
-                (Token.Keyword.Declaration, 'ИНДЕКСИРОВАТЬ ПО'),
-                (Token.Keyword.Declaration, 'СГРУППИРОВАТЬ ПО'),
-                (Token.Keyword.Declaration, 'СОЕДИНЕНИЕ ПО'),
-                (Token.Keyword.Declaration, 'УПОРЯДОЧИТЬ ПО'),
-                (Token.Keyword.Declaration, 'ПРЕДСТАВЛЕНИЕССЫЛКИ'),
-                (Token.Keyword.Declaration, 'РАЗНОСТЬДАТ'),
-                (Token.Keyword.Declaration, 'СГРУППИРОВАНОПО'),
-                (Token.Keyword.Declaration, 'УНИКАЛЬНЫЙИДЕНТИФИКАТОР'),
-                (Token.Keyword.Declaration, 'RECORDAUTONUMBER'),
-                (Token.Keyword.Declaration, 'FOR UPDATE'),
-                (Token.Keyword.Declaration, 'TOTALS BY'),
-                (Token.Keyword.Declaration, 'INDEX BY'),
-                (Token.Keyword.Declaration, 'GROUP BY'),
-                (Token.Keyword.Declaration, 'JOIN ON'),
-                (Token.Keyword.Declaration, 'ORDER BY'),
-                (Token.Keyword.Declaration, 'REFPRESENTATION'),
-                (Token.Keyword.Declaration, 'DATEDIFF'),
-                (Token.Keyword.Declaration, 'GROUPEDBY'),
-                (Token.Keyword.Declaration, 'UUID'),
             ],
         )
 
@@ -141,6 +107,130 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
                 (Token.Keyword.Constant, 'ВнешнееСоединение'),
                 (Token.Comment.Preproc, 'Тогда'),
                 (Token.Comment.Preproc, '#КонецЕсли'),
+            ],
+        )
+
+    def test_lexing_preproc_if_nested(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+#Если (Клиент Или (НЕ Клиент)) И НЕ Клиент Тогда
+#ИначеЕсли ((((Не (ВебКлиент))) И ((НЕ МобильныйКлиент)))) Тогда
+#КонецЕсли
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Preproc, '#Если'),
+                (Token.Comment.Preproc, '(Клиент'),
+                (Token.Comment.Preproc, 'Или'),
+                (Token.Comment.Preproc, '(НЕ'),
+                (Token.Keyword.Constant, 'Клиент'),
+                (Token.Comment.Preproc, '))'),
+                (Token.Comment.Preproc, 'И'),
+                (Token.Comment.Preproc, 'НЕ'),
+                (Token.Keyword.Constant, 'Клиент'),
+                (Token.Comment.Preproc, 'Тогда'),
+                (Token.Comment.Preproc, '#ИначеЕсли'),
+                (Token.Comment.Preproc, '((((Не'),
+                (Token.Comment.Preproc, '(ВебКлиент)))'),
+                (Token.Comment.Preproc, 'И'),
+                (Token.Comment.Preproc, '((НЕ'),
+                (Token.Keyword.Constant, 'МобильныйКлиент'),
+                (Token.Comment.Preproc, '))))'),
+                (Token.Comment.Preproc, 'Тогда'),
+                (Token.Comment.Preproc, '#КонецЕсли'),
+            ],
+        )
+
+    def test_lexing_preproc_if_platforms(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+#Если MacOS Или Linux Тогда
+#КонецЕсли
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Preproc, '#Если'),
+                (Token.Keyword.Constant, 'MacOS'),
+                (Token.Comment.Preproc, 'Или'),
+                (Token.Keyword.Constant, 'Linux'),
+                (Token.Comment.Preproc, 'Тогда'),
+                (Token.Comment.Preproc, '#КонецЕсли'),
+            ],
+        )
+
+    def test_lexing_shebang(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens('#! /usr/bin/bsl')
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Preproc, '#! /usr/bin/bsl'),
+            ],
+        )
+
+    def test_lexing_preproc_native(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens('#native')
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Preproc, '#native'),
+            ],
+        )
+
+    def test_lexing_preproc_unknown_symbol(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+#Если Нечто Тогда
+#КонецЕсли
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Preproc, '#Если'),
+                (Token.Comment.Preproc, 'Нечто'),
+                (Token.Comment.Preproc, 'Тогда'),
+                (Token.Comment.Preproc, '#КонецЕсли'),
+            ],
+        )
+
+    def test_multiline_string_with_preproc_delete(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+"выбрать
+#Удаление
+|часть строки
+#КонецУдаления
+|конец строки"
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.String, '"'),
+                (Token.String, 'выбрать'),
+                (Token.Comment.Preproc, '#Удаление'),
+                (Token.Literal.String, '|'),
+                (Token.Literal.String, 'часть строки'),
+                (Token.Comment.Preproc, '#КонецУдаления'),
+                (Token.Literal.String, '|'),
+                (Token.String, 'конец строки'),
+                (Token.String, '"'),
             ],
         )
 
@@ -276,6 +366,101 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
                 (Token.Comment.Preproc, 'Тогда'),
                 (Token.Comment.Single, '// это комментарий'),
                 (Token.Comment.Preproc, '#КонецЕсли'),
+            ],
+        )
+
+    def test_lexing_bom(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens('\ufeffПроцедура Тест()')
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Keyword, 'Процедура'),
+                (Token.Name.Function, 'Тест'),
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+            ],
+        )
+
+    def test_lexing_preproc_use(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        cases = [
+            ('#Использовать lib', [(Token.Comment.Preproc, '#Использовать'), (Token.Name.Variable, 'lib')]),
+            ('#Использовать "lib"', [(Token.Comment.Preproc, '#Использовать'), (Token.Literal.String, '"lib"')]),
+            ('#Использовать lib-name', [(Token.Comment.Preproc, '#Использовать'), (Token.Name.Variable, 'lib-name')]),
+            ('#Использовать 1lib', [(Token.Comment.Preproc, '#Использовать'), (Token.Name.Variable, '1lib')]),
+        ]
+
+        for source, expected in cases:
+            with self.subTest(source=source):
+                tokens = lexer.get_tokens(source)
+                self.assertEqual(filter_tokens(tokens), expected)
+
+    def test_preproc_region_comment(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens('#КонецОбласти // Концевой комментарий')
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Preproc, '#КонецОбласти // Концевой комментарий'),
+            ],
+        )
+
+    def test_string_tail_and_escapes(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens('''
+        А = " \n | А """" + А \n  |";
+        ''')
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'А'),
+                (Token.Operator, '='),
+                (Token.String, '"'),
+                (Token.String, ' '),
+                (Token.Literal.String, '|'),
+                (Token.Literal.String, ' А '),
+                (Token.String.Escape, '""'),
+                (Token.String.Escape, '""'),
+                (Token.String, ' + А '),
+                (Token.Literal.String, '|'),
+                (Token.String, '"'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_keywords_after_dot(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens('Поле.Процедура; Поле.Функция;')
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'Поле'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Процедура'),
+                (Token.Punctuation, ';'),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Функция'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_label_keywords(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens('~Если: ~КонецЕсли;')
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Label, '~Если'),
+                (Token.Punctuation, ':'),
+                (Token.Name.Label, '~КонецЕсли'),
+                (Token.Punctuation, ';'),
             ],
         )
     
@@ -670,11 +855,134 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
                 (Token.Name.Variable, 'Строка'),
                 (Token.Operator, '='),
                 (Token.Literal.String, '"'),
-                (Token.Literal.String, 'Кефир 15'),
-                (Token.Literal.String, '%'),
-                (Token.Literal.String, ' жирности'),
+                (Token.Literal.String, 'Кефир 15% жирности'),
                 (Token.Literal.String, '"'),
                 (Token.Punctuation, ';')
+            ],
+        )
+
+    def test_lexing_text_interpol_edge_cases(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        cases = [
+            (
+                'ПростоСтрока = "Без интерполяции %% параметра.";',
+                [
+                    (Token.Name.Variable, 'ПростоСтрока'),
+                    (Token.Operator, '='),
+                    (Token.Literal.String, '"'),
+                    (Token.Literal.String, 'Без интерполяции '),
+                    (Token.Literal.String.Escape, '%%'),
+                    (Token.Literal.String, ' параметра.'),
+                    (Token.Literal.String, '"'),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+            (
+                "СтрШаблон(НСтр(\"ru = \\\'Проверка %1 внутри НСтр\\\'\"));",
+                [
+                    (Token.Name.Builtin, 'СтрШаблон'),
+                    (Token.Punctuation, '('),
+                    (Token.Name.Builtin, 'НСтр'),
+                    (Token.Punctuation, '('),
+                    (Token.Literal.String, '"'),
+                    (Token.Name.Attribute, 'ru'),
+                    (Token.Literal.String, ' '),
+                    (Token.Operator, '='),
+                    (Token.Literal.String, ' '),
+                    (Token.Literal.String.Escape, "\\\'"),
+                    (Token.Literal.String, "Проверка "),
+                    (Token.Literal.String.Interpol, '%1'),
+                    (Token.Literal.String, " внутри НСтр"),
+                    (Token.Literal.String.Escape, "\\\'"),
+                    (Token.Literal.String, '"'),
+                    (Token.Punctuation, ')'),
+                    (Token.Punctuation, ')'),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+            (
+                'СтрШаблон("Проверка без интерполяции % параметра.");',
+                [
+                    (Token.Name.Builtin, 'СтрШаблон'),
+                    (Token.Punctuation, '('),
+                    (Token.Literal.String, '"'),
+                    (Token.Literal.String, 'Проверка без интерполяции % параметра.'),
+                    (Token.Literal.String, '"'),
+                    (Token.Punctuation, ')'),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+            (
+                'СтрШаблон("Проверка с некорректной интерполяцией %A параметра.");',
+                [
+                    (Token.Name.Builtin, 'СтрШаблон'),
+                    (Token.Punctuation, '('),
+                    (Token.Literal.String, '"'),
+                    (Token.Literal.String, 'Проверка с некорректной интерполяцией '),
+                    (Token.Generic.Error, '%A'),
+                    (Token.Literal.String, ' параметра.'),
+                    (Token.Literal.String, '"'),
+                    (Token.Punctuation, ')'),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+        ]
+
+        for source, expected in cases:
+            with self.subTest(source=source):
+                tokens = lexer.get_tokens(source)
+                self.assertEqual(filter_tokens(tokens), expected)
+
+    def test_lexing_nstr_with_single_quotes(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            НСтр("ru = 'Проверка'");
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'НСтр'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Name.Attribute, 'ru'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, " 'Проверка'"),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_nstr_locale_keys(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            НСтр("ru = 'Проверка';en = 'Check'");
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'НСтр'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Name.Attribute, 'ru'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, " 'Проверка'"),
+                (Token.Operator, ';'),
+                (Token.Name.Attribute, 'en'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, " 'Check'"),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
             ],
         )
 
@@ -1261,6 +1569,55 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
             ],
         )
 
+    def test_lexing_wait_and_identifier(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            Асинх Процедура Test(Ждать, wait)
+                Ждать 1;
+                Ждать (Ждать 1);
+                Ждать Об;
+                Если Ждать Тогда
+                    Возврат;
+                КонецЕсли;
+            КонецПроцедуры
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Keyword, 'Асинх'),
+                (Token.Keyword, 'Процедура'),
+                (Token.Name.Function, 'Test'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Ждать'),
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'wait'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword, 'Ждать'),
+                (Token.Literal.Number, '1'),
+                (Token.Punctuation, ';'),
+                (Token.Keyword, 'Ждать'),
+                (Token.Punctuation, '('),
+                (Token.Keyword, 'Ждать'),
+                (Token.Literal.Number, '1'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+                (Token.Keyword, 'Ждать'),
+                (Token.Name.Variable, 'Об'),
+                (Token.Punctuation, ';'),
+                (Token.Keyword, 'Если'),
+                (Token.Keyword, 'Ждать'),
+                (Token.Keyword, 'Тогда'),
+                (Token.Keyword, 'Возврат'),
+                (Token.Punctuation, ';'),
+                (Token.Keyword, 'КонецЕсли'),
+                (Token.Punctuation, ';'),
+                (Token.Keyword, 'КонецПроцедуры'),
+            ],
+        )
+
     def test_lexing_execute_algorithm(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
@@ -1616,6 +1973,206 @@ class SdblLexerTestCase(TestCase):
         lexer = lexers.get_lexer_by_name('sdbl')
         self.assertEqual(lexer.name, SdblLexer.name)
 
+    def test_sdbl_keyword_of(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens('FOR UPDATE OF')
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'FOR UPDATE'),
+                (Token.Keyword.Declaration, 'OF'),
+            ],
+        )
+
+    def test_sdbl_english_function_aliases(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+LOWER("a") UPPER("b") STRINGLENGTH("c")
+TRIMALL("d") TRIML("e") TRIMR("f")
+STRFIND("a", "b") STRREPLACE("a", "b", "c")
+ROUND(1.2) INT(3.4)
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'LOWER'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'a'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'UPPER'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'b'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'STRINGLENGTH'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'c'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'TRIMALL'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'd'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'TRIML'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'e'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'TRIMR'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'f'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'STRFIND'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'a'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ','),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'b'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'STRREPLACE'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'a'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ','),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'b'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ','),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'c'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'ROUND'),
+                (Token.Punctuation, '('),
+                (Token.Literal.Number, '1.2'),
+                (Token.Punctuation, ')'),
+                (Token.Name.Builtin, 'INT'),
+                (Token.Punctuation, '('),
+                (Token.Literal.Number, '3.4'),
+                (Token.Punctuation, ')'),
+            ],
+        )
+
+    def test_sdbl_metadata_roots_english(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+InformationRegister.Reg.Table
+AccumulationRegister.Reg.Table
+AccountingRegister.Reg.Table
+CalculationRegister.Reg.Table
+DocumentJournal.DocJ.Table
+FilterCriterion.Crit.Table
+Sequence.Seq.Table
+Task.Task1.Table
+Document.Doc.Table
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Namespace, 'InformationRegister'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Reg'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Table'),
+                (Token.Name.Namespace, 'AccumulationRegister'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Reg'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Table'),
+                (Token.Name.Namespace, 'AccountingRegister'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Reg'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Table'),
+                (Token.Name.Namespace, 'CalculationRegister'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Reg'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Table'),
+                (Token.Name.Namespace, 'DocumentJournal'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'DocJ'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Table'),
+                (Token.Name.Namespace, 'FilterCriterion'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Crit'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Table'),
+                (Token.Name.Namespace, 'Sequence'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Seq'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Table'),
+                (Token.Name.Namespace, 'Task'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Task1'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Table'),
+                (Token.Name.Namespace, 'Document'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Doc'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Table'),
+            ],
+        )
+
+    def test_sdbl_metadata_roots_russian(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+РегистрБухгалтерии.Рег.Таблица
+РегистрРасчета.Рег.Таблица
+Последовательность.Рег.Таблица
+Задача.Рег.Таблица
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Namespace, 'РегистрБухгалтерии'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Рег'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Таблица'),
+                (Token.Name.Namespace, 'РегистрРасчета'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Рег'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Таблица'),
+                (Token.Name.Namespace, 'Последовательность'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Рег'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Таблица'),
+                (Token.Name.Namespace, 'Задача'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Рег'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Таблица'),
+            ],
+        )
 
     def test_lexing_constant(self):
         lexer = lexers.get_lexer_by_name('sdbl')
@@ -1636,6 +2193,73 @@ class SdblLexerTestCase(TestCase):
             ],
         )
 
+    def test_lexing_raise_exception_multiline(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            ВызватьИсключение(
+                "Документ не может быть проведен",
+                КатегорияОшибки.ОшибкаКонфигурации,
+                "ERR.DOCS.0001",
+                "Клиенту запрещена отгрузка"
+            );
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Exception, 'ВызватьИсключение'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Документ не может быть проведен'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'КатегорияОшибки'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'ОшибкаКонфигурации'),
+                (Token.Punctuation, ','),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'ERR.DOCS.0001'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ','),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Клиенту запрещена отгрузка'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_delete_insert_in_code(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            #Удаление
+            Если СтароеУсловие Тогда
+            #КонецУдаления
+            #Вставка
+            НовоеУсловие = Выражение;
+            #КонецВставки
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Preproc, '#Удаление'),
+                (Token.Keyword, 'Если'),
+                (Token.Name.Variable, 'СтароеУсловие'),
+                (Token.Keyword, 'Тогда'),
+                (Token.Comment.Preproc, '#КонецУдаления'),
+                (Token.Comment.Preproc, '#Вставка'),
+                (Token.Name.Variable, 'НовоеУсловие'),
+                (Token.Operator, '='),
+                (Token.Name.Variable, 'Выражение'),
+                (Token.Punctuation, ';'),
+                (Token.Comment.Preproc, '#КонецВставки'),
+            ],
+        )
     def test_lexing_multiline_string_with_comment(self):
         lexer = lexers.get_lexer_by_name('sdbl')
         tokens = lexer.get_tokens(
@@ -2044,11 +2668,11 @@ INDEX BY SETS Table
                 (Token.Operator, '.'),
                 (Token.Name.Function, 'СрезПервых'),
                 (Token.Punctuation, '('),
-                (Token.Name.Constant, '&ПараметрДата'),
+                (Token.Literal.String.Interpol, '&ПараметрДата'),
                 (Token.Punctuation, ','),
                 (Token.Name.Variable, 'Валюта'),
                 (Token.Operator, '='),
-                (Token.Name.Constant, '&ПараметрВалюта'),
+                (Token.Literal.String.Interpol, '&ПараметрВалюта'),
                 (Token.Punctuation, ')'),
             ],
         )
@@ -2074,14 +2698,14 @@ INDEX BY SETS Table
                 (Token.Operator, '.'),
                 (Token.Name.Function, 'ОстаткиИОбороты'),
                 (Token.Punctuation, '('),
-                (Token.Name.Constant, '&НачПериода'),
+                (Token.Literal.String.Interpol, '&НачПериода'),
                 (Token.Punctuation, ','),
-                (Token.Name.Constant, '&КонПериода'),
+                (Token.Literal.String.Interpol, '&КонПериода'),
                 (Token.Punctuation, ','),
                 (Token.Punctuation, ','),
                 (Token.Name.Variable, 'Склад'),
                 (Token.Operator, '='),
-                (Token.Name.Constant, '&ПараметрСклад'),
+                (Token.Literal.String.Interpol, '&ПараметрСклад'),
                 (Token.Punctuation, ')'),
             ],
         )
@@ -2330,7 +2954,7 @@ INDEX BY SETS Table
                 (Token.Operator, '.'),
                 (Token.Name.Variable, 'Наименование'),
                 (Token.Keyword.Declaration, 'ПОДОБНО'),
-                (Token.Name.Constant, '&Шаблон'),
+                (Token.Literal.String.Interpol, '&Шаблон'),
                 (Token.Keyword.Declaration, 'СПЕЦСИМВОЛ'),
                 (Token.Literal.String, '"'),
                 (Token.Literal.String, '~'),

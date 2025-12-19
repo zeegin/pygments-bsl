@@ -1,6 +1,7 @@
 from pygments.lexer import RegexLexer, words, bygroups, using
 from pygments.token import Token
 
+from functools import lru_cache
 import re
 import copy
 
@@ -15,10 +16,136 @@ PREFIX_NO_DOT = r'(?<!\.)'
 SUFFIX_WORD = r'\b'
 SUFFIX_CALL = r'(?=(\s?[\(]))'
 IDENT = r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+IDENT_RE = re.compile(r'^' + IDENT + r'$', re.IGNORECASE)
 
-def words_no_dot(items, suffix):
-    """Helper to reduce repeated prefixes."""
-    return words(items, prefix=PREFIX_NO_DOT, suffix=suffix)
+@lru_cache(maxsize=4096)
+def _casefold(text):
+    return text.casefold()
+
+def _casefold_set(items):
+    return {_casefold(item) for item in items}
+
+def _is_call(text, end_pos):
+    pos = end_pos
+    length = len(text)
+    while pos < length and text[pos].isspace():
+        pos += 1
+    return pos < length and text[pos] == '('
+
+def _call_has_args(text, end_pos):
+    pos = end_pos
+    length = len(text)
+    while pos < length and text[pos].isspace():
+        pos += 1
+    if pos >= length or text[pos] != '(':
+        return False
+    pos += 1
+    while pos < length and text[pos].isspace():
+        pos += 1
+    return pos < length and text[pos] != ')'
+
+def _bsl_name_callback(lexer, match):
+    name = match.group(0)
+    name_cf = _casefold(name)
+    is_call = _is_call(match.string, match.end())
+
+    if name_cf in lexer._bsl_exception_names:
+        yield match.start(), Token.Name.Exception, name
+        return
+
+    if name_cf in lexer._bsl_keyword_as_function and is_call:
+        yield match.start(), Token.Name.Builtin, name
+        return
+
+    if name_cf in lexer._bsl_call_only_builtins:
+        yield match.start(), (Token.Name.Builtin if is_call else Token.Name.Variable), name
+        return
+
+    if name_cf in lexer._bsl_keyword_declaration:
+        yield match.start(), Token.Keyword.Declaration, name
+        return
+
+    if name_cf in lexer._bsl_keyword_constant:
+        yield match.start(), Token.Keyword.Constant, name
+        return
+
+    if name_cf in lexer._bsl_keyword:
+        yield match.start(), Token.Keyword, name
+        return
+
+    if name_cf in lexer._bsl_name_builtin:
+        yield match.start(), Token.Name.Builtin, name
+        return
+
+    if name_cf in lexer._bsl_name_class:
+        yield match.start(), Token.Name.Class, name
+        return
+
+    yield match.start(), (Token.Name.Function if is_call else Token.Name.Variable), name
+
+def _sdbl_name_callback(lexer, match):
+    name = match.group(0)
+    name_cf = _casefold(name)
+    is_call = _is_call(match.string, match.end())
+
+    if name_cf in lexer._sdbl_function_call and is_call:
+        yield match.start(), Token.Name.Builtin, name
+        return
+
+    if name_cf in lexer._sdbl_keyword_constant:
+        yield match.start(), Token.Keyword.Constant, name
+        return
+
+    if name_cf in lexer._sdbl_keyword_declaration:
+        yield match.start(), Token.Keyword.Declaration, name
+        return
+
+    if name_cf in lexer._sdbl_name_class:
+        yield match.start(), Token.Name.Class, name
+        return
+
+    yield match.start(), Token.Name.Variable, name
+
+def _sdbl_metadata_callback(lexer, match):
+    text = match.group(0)
+    parts = text.split('.')
+    pos = match.start()
+    has_error = False
+
+    root = parts[0]
+    root_cf = _casefold(root)
+    is_call = _is_call(match.string, match.end())
+    has_args = _call_has_args(match.string, match.end())
+
+    root_token = Token.Name.Namespace
+    if root_cf == _casefold('РегистрСведений') and len(parts) >= 3 and is_call and has_args:
+        root_token = Token.Name.Class
+
+    yield pos, root_token, root
+    pos += len(root)
+
+    for idx, segment in enumerate(parts[1:], start=1):
+        yield pos, Token.Operator, '.'
+        pos += 1
+
+        if IDENT_RE.fullmatch(segment):
+            if idx == len(parts) - 1 and is_call:
+                seg_token = Token.Name.Function
+            elif has_error:
+                seg_token = Token.Name.Variable
+            else:
+                seg_token = Token.Name.Class
+            yield pos, seg_token, segment
+        else:
+            yield pos, Token.Generic.Error, segment
+            has_error = True
+        pos += len(segment)
+
+def _locale_assignment_callback(lexer, match):
+    yield match.start(), Token.Name.Attribute, match.group(1)
+    if match.group(2):
+        yield match.start(2), Token.String, match.group(2)
+    yield match.start(3), Token.Operator, match.group(3)
 
 CALL_ONLY_BUILTINS = {
     'Булево','Boolean','Число','Number','Строка','String','Дата','Date',
@@ -34,12 +161,12 @@ class BslLexer(RegexLexer):
 
     flags = re.MULTILINE | re.IGNORECASE | re.VERBOSE
 
-    KEYWORD_DECLARATION = words_no_dot((
+    _KEYWORD_DECLARATION_WORDS = (
         # storage.type.var.bsl
         'Перем','Var',
-    ), suffix=SUFFIX_WORD)
+    )
 
-    KEYWORD = words_no_dot((
+    _KEYWORD_WORDS = (
         'Процедура','Procedure','Функция','Function',
         'Экспорт', 'Export',
         'КонецПроцедуры','EndProcedure','КонецФункции','EndFunction',
@@ -57,47 +184,35 @@ class BslLexer(RegexLexer):
         'Перейти', 'Goto',
         'Асинх', 'Async',
         'Ждать', 'Await',
-    ), suffix=SUFFIX_WORD)
+    )
     
     NAME_CLASS_NAMES = tuple(dict.fromkeys(GLOBAL_PROPERTY_NAMES))
 
-    NAME_CLASS = words_no_dot(
-        tuple(
-            name for name in dict.fromkeys(NAME_CLASS_NAMES)
-            if name not in CALL_ONLY_BUILTINS and name not in CONSTANT_NAMES
-        ),
-        suffix=SUFFIX_WORD
+    _NAME_CLASS_WORDS = tuple(
+        name for name in NAME_CLASS_NAMES
+        if name not in CALL_ONLY_BUILTINS and name not in CONSTANT_NAMES
     )
 
-    NAME_BUILTIN = words_no_dot(
-        tuple(name for name in dict.fromkeys(GLOBAL_METHOD_NAMES) if name not in CALL_ONLY_BUILTINS),
-        suffix=SUFFIX_WORD
+    _NAME_BUILTIN_WORDS = tuple(
+        name for name in dict.fromkeys(GLOBAL_METHOD_NAMES)
+        if name not in CALL_ONLY_BUILTINS
     )
 
-    NAME_BUILTIN_CALL = words_no_dot(
-        tuple(CALL_ONLY_BUILTINS),
-        suffix=SUFFIX_CALL
-    )
+    _KEYWORD_CONSTANT_WORDS = CONSTANT_NAMES
 
-    KEYWORD_CONSTANT = words_no_dot(CONSTANT_NAMES, suffix=SUFFIX_WORD)
-
-    KEYWORD_EXCEPTION = words_no_dot((
+    _KEYWORD_EXCEPTION_WORDS = (
         'ВызватьИсключение','Raise',
-    ), suffix=SUFFIX_WORD)
-
-    KEYWORD_EXCEPTION_CALL = words_no_dot((
-        'ВызватьИсключение','Raise',
-    ), suffix=SUFFIX_CALL)
+    )
 
     # keywords that also used as function-like calls (treat as builtin when followed by '(')
-    KEYWORD_AS_FUNCTION = words_no_dot((
+    _KEYWORD_AS_FUNCTION_WORDS = (
         'Новый','New',
-    ), suffix=SUFFIX_CALL)
+    )
 
     EXECUTE_STRING_CALL = r'(?<!\.)\b(Выполнить|Execute)\b(?=\s*\(\s*"Выполнить)'
+    QUERY_STRING_START = r'"(?=[^"]*\b(ВЫБРАТЬ|SELECT)\b)(?![^"]*(?:\r?\n)\#(?:Удаление|КонецУдаления|Delete|EndDelete))'
 
     TYPE_NAME_PATTERN = r'(?:' + '|'.join(re.escape(n) for n in TYPE_NAMES) + r')'
-    GLOBAL_METHOD_PATTERN = r'(?<!\.)\b(?:' + '|'.join(re.escape(n) for n in GLOBAL_METHOD_NAMES) + r')\b(?=(\s?[\(]))'
 
     OPERATORS = words((
         '=','<=','>=','<>','<','>','+','-','*','/','%','.'
@@ -149,11 +264,25 @@ class BslLexer(RegexLexer):
     ]) + r')'
 
     # see https://pygments.org/docs/tokens
+    _bsl_keyword_declaration = _casefold_set(_KEYWORD_DECLARATION_WORDS)
+    _bsl_keyword = _casefold_set(_KEYWORD_WORDS)
+    _bsl_keyword_constant = _casefold_set(_KEYWORD_CONSTANT_WORDS)
+    _bsl_exception_names = _casefold_set(_KEYWORD_EXCEPTION_WORDS)
+    _bsl_keyword_as_function = _casefold_set(_KEYWORD_AS_FUNCTION_WORDS)
+    _bsl_call_only_builtins = _casefold_set(CALL_ONLY_BUILTINS)
+    _bsl_name_builtin = _casefold_set(_NAME_BUILTIN_WORDS)
+    _bsl_name_class = _casefold_set(_NAME_CLASS_WORDS)
+    _bsl_keyword_constant_pattern = words(CONSTANT_NAMES, prefix=PREFIX_NO_DOT, suffix=SUFFIX_WORD)
+
     tokens = {
         'root': [
-            (r'\n', Token.Text),
+            (r'\ufeff', Token.Text),
+            (r'\r\n?|\n', Token.Text),
             (r'[^\S\n]+', Token.Text),
+            (r'\#\!.*?(?=\n|$)', Token.Comment.Preproc),
             (r'\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'\#(Использовать|Use)\b', Token.Comment.Preproc, 'preproc_use'),
+            (r'\#(native)\b.*', Token.Comment.Preproc),
             (r'\#(Если|If)\b', Token.Comment.Preproc, 'preproc_if'),
             (r'\#(ИначеЕсли|ElsIf)\b', Token.Comment.Preproc, 'preproc_if'),
             (r'\#(Иначе|Else|КонецЕсли|EndIf|Область|Region|КонецОбласти|EndRegion|Вставка|Insert|КонецВставки|EndInsert|Удаление|Delete|КонецУдаления|EndDelete)\b.*', Token.Comment.Preproc),
@@ -173,45 +302,61 @@ class BslLexer(RegexLexer):
             (r'\#.*$', Token.Comment.Preproc),
             # match forbidden-constant calls like Неопределено(....) as a single error token
             (r'\b(?:' + '|'.join(CONSTANT_NAMES) + r')\b\s*\([^\)]*\)', Token.Generic.Error),
-            (NAME_BUILTIN_CALL, Token.Name.Builtin),
-            (GLOBAL_METHOD_PATTERN, Token.Name.Builtin),
-            (NAME_BUILTIN, Token.Name.Builtin),
-            (KEYWORD_DECLARATION, Token.Keyword.Declaration),
-            (KEYWORD_EXCEPTION_CALL, Token.Name.Exception),
-            (KEYWORD_AS_FUNCTION, Token.Name.Builtin),
             (EXECUTE_STRING_CALL, Token.Name.Builtin),
-            (KEYWORD_EXCEPTION, Token.Name.Exception),
-            (KEYWORD, Token.Keyword),
-            (KEYWORD_CONSTANT, Token.Keyword.Constant),
-            (NAME_CLASS, Token.Name.Class),
-            (r'[\wа-яё_][\wа-яё0-9_]*(?=(\s?[\(]))', Token.Name.Function),
+            (rf'(?<=\.){IDENT}(?=\s*\()', Token.Name.Function),
+            (rf'(?<=\.){IDENT}', Token.Name.Variable),
+            (rf'{PREFIX_NO_DOT}{IDENT}', _bsl_name_callback),
             (r'\b\d+\.?\d*\b', Token.Literal.Number),
-            (r'[\wа-яё_][\wа-яё0-9_]*', Token.Name.Variable),
-            (r'"(?=[^"]*\b(ВЫБРАТЬ|SELECT)\b)', Token.Literal.String, 'query_string'),
+            (QUERY_STRING_START, Token.Literal.String, 'query_string'),
+            (r'"(?=(?:[^"]|"")*\b(?:ru|en)\b\s*=)', Token.String, 'string_locale'),
             ('\"', Token.String, 'string'),
             (r'\'.*?\'', Token.Literal.Date),
             (r'~.*?(?=[:;])', Token.Name.Label),
         ],
         'preproc_if': [
-            (r'\n', Token.Text, '#pop'),
-            (r'\b(Сервер|НаСервере|Клиент|НаКлиенте|ТонкийКлиент|МобильныйКлиент|ВебКлиент|ВнешнееСоединение|ТолстыйКлиентУправляемоеПриложение|ТолстыйКлиентОбычноеПриложение|МобильныйАвтономныйСервер|МобильноеПриложениеКлиент|МобильноеПриложениеСервер)\b', Token.Keyword.Constant),
+            (r'\r\n?|\n', Token.Text, '#pop'),
+            (r'\b(Сервер|НаСервере|Клиент|НаКлиенте|ТонкийКлиент|МобильныйКлиент|ВебКлиент|ВнешнееСоединение|ТолстыйКлиентУправляемоеПриложение|ТолстыйКлиентОбычноеПриложение|МобильныйАвтономныйСервер|МобильноеПриложениеКлиент|МобильноеПриложениеСервер|Windows|Linux|MacOS)\b', Token.Keyword.Constant),
             (r'\b(И|Или|НЕ|Then|Тогда|And|Or|Not)\b', Token.Comment.Preproc),
             (r'\#', Token.Comment.Preproc),
             (r'[^\S\n]+', Token.Text),
             (r'[^\s#]+', Token.Comment.Preproc),
         ],
+        'preproc_use': [
+            (r'\r\n?|\n', Token.Text, '#pop'),
+            (r'[^\S\n]+', Token.Text),
+            (r'"[^"]*"', Token.Literal.String),
+            (r'[^\s#]+', Token.Name.Variable),
+        ],
         'string': [
             ('\"(?![\"])', Token.String, '#pop'),
-            (r'\n', Token.Text),
+            (r'\r\n?|\n', Token.Text),
+            (r'(?<=\n)[^\S\n]+', Token.Text),
+            (r'(?<=[^\S\n])\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'\#(Удаление|Delete|КонецУдаления|EndDelete)\b.*', Token.Comment.Preproc),
+            (r'(?<=^)\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'\|', Token.String),
+            (r'\"\"', Token.String.Escape),
+            (r"\\'", Token.String.Escape),
+            (r'%\d', Token.String.Interpol),
+            (r'%%', Token.String.Escape),
+            (r'%[A-Za-zА-Яа-яЁё_]', Token.Generic.Error),
+            (r'(?:\\(?!\')|%(?![%\dA-Za-zА-Яа-яЁё_])|[^\"\|\n%\\])+', Token.String),
+        ],
+        'string_locale': [
+            ('\"(?![\"])', Token.String, '#pop'),
+            (r'\r\n?|\n', Token.Text),
             (r'(?<=\n)[^\S\n]+', Token.Text),
             (r'(?<=[^\S\n])\/\/.*?(?=\n)', Token.Comment.Single),
             (r'(?<=^)\/\/.*?(?=\n)', Token.Comment.Single),
             (r'\|', Token.String),
             (r'\"\"', Token.String.Escape),
-            (r'%%', Token.String.Escape),
+            (r"\\'", Token.String.Escape),
             (r'%\d', Token.String.Interpol),
-            (r'%', Token.Literal.String),
-            (r'[^\"\|\n%]+', Token.String),
+            (r'%%', Token.String.Escape),
+            (r'%[A-Za-zА-Яа-яЁё_]', Token.Generic.Error),
+            (r'(\b(?:ru|en)\b)(\s*)(=)', _locale_assignment_callback),
+            (r';', Token.Operator),
+            (r'(?:(?!\b(?:ru|en)\b\s*=)(?:\\(?!\')|%(?![%\dA-Za-zА-Яа-яЁё_])|[^\"\|\n%\\;]))+', Token.String),
         ],
         'query_string': [
             (r'""', Token.Literal.String.Escape),
@@ -221,7 +366,7 @@ class BslLexer(RegexLexer):
         ],
         'decorator_params': [
             (r'\)', Token.Punctuation, '#pop'),
-            (r'\n', Token.Text),
+            (r'\r\n?|\n', Token.Text),
             (r'[^\S\n]+', Token.Text),
             (r',', Token.Operator),
             (r'=', Token.Operator),
@@ -230,24 +375,24 @@ class BslLexer(RegexLexer):
              bygroups(Token.Name.Variable, Token.Text, Token.Operator, Token.Text, Token.Generic.Error)),
             (r'([A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*)', Token.Name.Variable),
             (r'\b\d+\.?\d*\b', Token.Literal.Number),
-            (r'"(?=[^"]*\b(ВЫБРАТЬ|SELECT)\b)', Token.Literal.String, 'query_string'),
+            (QUERY_STRING_START, Token.Literal.String, 'query_string'),
             (r'.', Token.Text),
         ],
         'params': [
             (r'\)', Token.Punctuation, '#pop'),
-            (r'\n', Token.Text),
+            (r'\r\n?|\n', Token.Text),
             (r'[^\S\n]+', Token.Text),
             (r'\,', Token.Punctuation),
             (r'(&[\wа-яё_][\wа-яё0-9_]*)\s*(\()', bygroups(Token.Name.Decorator, Token.Punctuation), 'decorator_params'),
             (r'\&[^\s,(]+', Token.Name.Decorator),
             (r'\bЗнач\b|\bVal\b', Token.Keyword),
-            (KEYWORD_CONSTANT, Token.Keyword.Constant),
+            (_bsl_keyword_constant_pattern, Token.Keyword.Constant),
             (r'(\b[A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*\b)(\s*)(=)(\s*)(?!Неопределено\b|Undefined\b|Null\b|Истина\b|True\b|Ложь\b|False\b)([A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*)',
              bygroups(Token.Name.Variable, Token.Text, Token.Operator, Token.Text, Token.Generic.Error)),
             (r'([A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*)', Token.Name.Variable),
             (r'=', Token.Operator),
             (r'\b\d+\.?\d*\b', Token.Literal.Number),
-            (r'"(?=[^"]*\b(ВЫБРАТЬ|SELECT)\b)', Token.Literal.String, 'query_string'),
+            (QUERY_STRING_START, Token.Literal.String, 'query_string'),
             (r'.', Token.Text),
         ],
         # String.Regex
@@ -263,7 +408,7 @@ class SdblLexer(RegexLexer):
 
     flags = re.MULTILINE | re.IGNORECASE | re.VERBOSE
 
-    KEYWORD_DECLARATION = words((
+    _KEYWORD_DECLARATION_WORDS = (
         'ДЛЯ ИЗМЕНЕНИЯ','FOR UPDATE',
         'ИТОГИ ПО','TOTALS BY',
         'ИНДЕКСИРОВАТЬ ПО','INDEX BY','ИНДЕКСИРОВАТЬ ПО НАБОРАМ','INDEX BY SETS',
@@ -326,7 +471,7 @@ class SdblLexer(RegexLexer):
         'ОБЪЕДИНИТЬ','UNION',
         'ПЕРВЫЕ','TOP',
         'ПЕРИОДАМИ','PERIODS',
-        'ПО','BY','ON',
+        'ПО','BY','ON','OF',
         'ПОДОБНО','LIKE',
         'ПОДСТРОКА','SUBSTRING',
         'ПОЛНОЕ','FULL',
@@ -359,18 +504,18 @@ class SdblLexer(RegexLexer):
         'УПОРЯДОЧИТЬ','ORDER',
         'ЧАС','HOUR',
         'ЧИСЛО','NUMBER',
-    ), prefix='(?<!\.)', suffix=r'\b')
+    )
     
-    KEYWORD_CONSTANT = words((
+    _KEYWORD_CONSTANT_WORDS = (
         # constant.language.sdbl
         'НЕОПРЕДЕЛЕНО','UNDEFINED','Истина','True','Ложь','False','NULL'
-    ), prefix='(?<!\.)', suffix=r'\b')
+    )
 
     IDENT = r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
-    METADATA_ROOT = r'(?:РегистрСведений|РегистрНакопления|Документ|ЖурналДокументов|ВнешнийИсточникДанных|Константа|Перечисление|ПланВидовРасчета|ПланВидовХарактеристик|ПланОбмена|ПланСчетов|БизнесПроцесс|БизнесПроцессы|КритерийОтбора|Справочник|Catalog|ExternalDataSource|Constant|Enum|ChartOfCalculationTypes|ChartOfCharacteristicTypes|ExchangePlan|ChartOfAccounts|BusinessProcess|BusinessProcesses)'
-    BAD_SEGMENT = r'[^\s\.,;\(\)]+'
+    METADATA_ROOT = r'(?:РегистрСведений|РегистрНакопления|РегистрБухгалтерии|РегистрРасчета|Документ|ЖурналДокументов|ВнешнийИсточникДанных|Константа|Перечисление|ПланВидовРасчета|ПланВидовХарактеристик|ПланОбмена|ПланСчетов|БизнесПроцесс|БизнесПроцессы|КритерийОтбора|Последовательность|Задача|Справочник|Catalog|ExternalDataSource|Constant|Enum|ChartOfCalculationTypes|ChartOfCharacteristicTypes|ExchangePlan|ChartOfAccounts|BusinessProcess|BusinessProcesses|Document|DocumentJournal|InformationRegister|AccumulationRegister|AccountingRegister|CalculationRegister|Task|FilterCriterion|Sequence)'
+    _METADATA_CHAIN = rf'{PREFIX_NO_DOT}{METADATA_ROOT}(?:\.[^\s\.,;\(\)]+)+'
 
-    FUNCTION_CALL = words((
+    _FUNCTION_CALL_WORDS = (
         'ГОД','YEAR',
         'ДАТАВРЕМЯ','DATETIME',
         'ВЫРАЗИТЬ','CAST',
@@ -380,9 +525,13 @@ class SdblLexer(RegexLexer):
         'АВТОНОМЕРЗАПИСИ','RECORDAUTONUMBER',
         'ПОДСТРОКА','SUBSTRING','СТРОКА','STRING',
         'ДлинаСтроки',
+        'STRINGLENGTH',
         'СокрЛ','СокрП','СокрЛП',
+        'TRIML','TRIMR','TRIMALL',
         'Лев','Прав','СтрНайти','ВРег','НРег','СтрЗаменить',
+        'STRFIND','STRREPLACE','UPPER','LOWER',
         'ACOS','ASIN','ATAN','COS','TAN','SIN','EXP','LOG','LOG10','POW','SQRT','ОКР','ЦЕЛ',
+        'ROUND','INT',
         'СУММА','SUM','МИНИМУМ','MIN','МАКСИМУМ','MAX','СРЕДНЕЕ','AVG','КОЛИЧЕСТВО','COUNT',
         'ТИП','TYPE','ТИПЗНАЧЕНИЯ','VALUETYPE',
         'НАЧАЛОПЕРИОДА','BEGINOFPERIOD','КОНЕЦПЕРИОДА','ENDOFPERIOD',
@@ -392,58 +541,56 @@ class SdblLexer(RegexLexer):
         'ДОБАВИТЬ','ADD','ИНДЕКСИРОВАТЬ ПО НАБОРАМ','INDEX BY SETS',
         'ПРЕДСТАВЛЕНИЕ','PRESENTATION','ПРЕДСТАВЛЕНИЕССЫЛКИ','REFPRESENTATION',
         'ЕСТЬNULL','ISNULL','СГРУППИРОВАНОПО','GROUPEDBY','РАЗМЕРХРАНИМЫХДАННЫХ','УНИКАЛЬНЫЙИДЕНТИФИКАТОР','UUID',
-    ), prefix='(?<!\.)', suffix=r'(?=(\s?[\(]))')
-
-    NAME_CLASS = words(
-        tuple(dict.fromkeys(GLOBAL_PROPERTY_NAMES + ('РегистрСведений',))),
-        prefix='(?<!\.)',
-        suffix=r'\b'
     )
+
+    _NAME_CLASS_WORDS = tuple(dict.fromkeys(GLOBAL_PROPERTY_NAMES + ('РегистрСведений',)))
 
     OPERATORS = r'(<=|>=|<>|=|<|>|\+|-|\*|\/|\.)'
 
+    _KEYWORD_DECLARATION_PHRASES = tuple(
+        word for word in _KEYWORD_DECLARATION_WORDS if ' ' in word
+    )
+    _KEYWORD_DECLARATION_SINGLE = tuple(
+        word for word in _KEYWORD_DECLARATION_WORDS if ' ' not in word
+    )
+    _FUNCTION_CALL_PHRASES = tuple(
+        word for word in _FUNCTION_CALL_WORDS if ' ' in word
+    )
+    _FUNCTION_CALL_SINGLE = tuple(
+        word for word in _FUNCTION_CALL_WORDS if ' ' not in word
+    )
+
+    _sdbl_keyword_declaration = _casefold_set(_KEYWORD_DECLARATION_SINGLE)
+    _sdbl_keyword_constant = _casefold_set(_KEYWORD_CONSTANT_WORDS)
+    _sdbl_function_call = _casefold_set(_FUNCTION_CALL_SINGLE)
+    _sdbl_name_class = _casefold_set(_NAME_CLASS_WORDS)
+
     tokens = {
         'root': [
-            (r'\n', Token.Text),
+            (r'\ufeff', Token.Text),
+            (r'\r\n?|\n', Token.Text),
             (r'[^\S\n]+', Token.Text),
             (r'\/\/.*?(?=\n)', Token.Comment.Single),
             (r'\|', Token.Generic.Error),
-            (r'(&[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)', Token.Name.Constant),
+            (r'(&[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)', Token.Literal.String.Interpol),
             (r'(\.)([!#][^\s\.,;\(\)]+)', bygroups(Token.Operator, Token.Generic.Error)),
-            (rf'({METADATA_ROOT})(\.)(?!{IDENT})({BAD_SEGMENT})', bygroups(Token.Name.Namespace, Token.Operator, Token.Generic.Error)),
-            (rf'({METADATA_ROOT})(\.)({IDENT})(\.)(?!{IDENT})({BAD_SEGMENT})', bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class, Token.Operator, Token.Generic.Error)),
             (OPERATORS, Token.Operator),
-            (rf'({METADATA_ROOT})(\.)({IDENT})(\.)({IDENT})(\.)({IDENT})(\.)({IDENT})(\.)({IDENT})',
-             bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class)),
-            (rf'({METADATA_ROOT})(\.)({IDENT})(\.)({IDENT})(\.)({IDENT})(\.)({IDENT})',
-             bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class)),
-            (rf'({METADATA_ROOT})(\.)({IDENT})(\.)({IDENT})(\.)({IDENT})',
-             bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class)),
-            (rf'(РегистрСведений)(\.)({IDENT})(\.)({IDENT})(?=\s*\(\s*[^\s\)])',
-             bygroups(Token.Name.Class, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Function)),
-            (rf'({METADATA_ROOT})(\.)({IDENT})(\.)({IDENT})(?=\s*\()',
-             bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Function)),
-            (rf'({METADATA_ROOT})(\.)({IDENT})(\.)({IDENT})(?!\s*\()',
-             bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class)),
-            (rf'({METADATA_ROOT})(\.)({IDENT})(?!\s*\()',
-             bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class)),
+            (_METADATA_CHAIN, _sdbl_metadata_callback),
             (r'(КАК)(\s+)(?!(?i:(?:ЧИСЛО|NUMBER|ИЗМЕНЕНИЯ|UPDATE))(?=\s|,|\(|\)|\n|$))([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)',
              bygroups(Token.Keyword.Declaration, Token.Text, Token.Name.Variable)),
-            (rf'(?<=\.)(?:{IDENT})(?=\s*\()', Token.Name.Function),
-            (rf'(?<=\.)(?:{IDENT})', Token.Name.Variable),
+            (rf'(?<=\.){IDENT}(?=\s*\()', Token.Name.Function),
+            (rf'(?<=\.){IDENT}', Token.Name.Variable),
             (r'[\[\]:(),;]', Token.Punctuation),
-            (FUNCTION_CALL, Token.Name.Builtin),
-            (NAME_CLASS, Token.Name.Class),
+            (words(_FUNCTION_CALL_PHRASES, prefix=PREFIX_NO_DOT, suffix=SUFFIX_CALL), Token.Name.Builtin),
             (r'(?-i:ССЫЛКА|REFS)\b', Token.Keyword.Declaration),
-            (KEYWORD_DECLARATION, Token.Keyword.Declaration),
-            (KEYWORD_CONSTANT, Token.Keyword.Constant),
+            (words(_KEYWORD_DECLARATION_PHRASES, prefix=PREFIX_NO_DOT, suffix=SUFFIX_WORD), Token.Keyword.Declaration),
+            (rf'{PREFIX_NO_DOT}{IDENT}', _sdbl_name_callback),
             (r'\b\d+\.?\d*\b', Token.Literal.Number),
-            (r'[\wа-яё_][\wа-яё0-9_]*', Token.Name.Variable),
             ('\"', Token.Literal.String, 'string'),
         ],
         'string': [
             ('\"(?![\"])', Token.Literal.String, '#pop'),
-            (r'\n', Token.Text),
+            (r'\r\n?|\n', Token.Text),
             (r'(?<=\n)[^\S\n]+', Token.Text),
             (r'(?<=[^\S\n])\/\/.*?(?=\n)', Token.Comment.Single),
             (r'(?<=^)\/\/.*?(?=\n)', Token.Comment.Single),

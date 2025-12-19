@@ -19,3 +19,9 @@
 ```sdbl
 --8<-- "tests/examplefiles/sdbl/samples.sdbl"
 ```
+
+### Big BSL sample
+
+```sdbl
+--8<-- "tests/examplefiles/bsl/big.bsl"
+```

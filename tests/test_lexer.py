@@ -507,6 +507,63 @@ class BslLexerTestCase(TestCase):
             ],
         )
 
+    def test_doc_comment_structure_type(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+// Возвращаемое значение:
+//  Структура:
+//     * Дата - Дата
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Возвращаемое значение'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//  '),
+                (Token.Name.Class, 'Структура'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//     '),
+                (Token.Punctuation, '* '),
+                (Token.Name.Variable, 'Дата'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Дата'),
+            ],
+        )
+
+    def test_doc_comment_structure_bullet_type(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+// Параметры:
+//  СведенияОбОбновлении - Структура:
+//     * КодАдресногоОбъекта - Структура:
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Параметры'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//  '),
+                (Token.Name.Variable, 'СведенияОбОбновлении'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Структура'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//     '),
+                (Token.Punctuation, '* '),
+                (Token.Name.Variable, 'КодАдресногоОбъекта'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Структура'),
+                (Token.Punctuation, ':'),
+            ],
+        )
+
     def test_lexing_doc_comment_sections_and_links(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
@@ -1551,11 +1608,11 @@ class BslLexerTestCase(TestCase):
             ],
         )
 
-    def test_lexing_nstr_locale_keys(self):
+    def test_lexing_nstr_locale_keys_with_space_after_semicolon(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
             '''
-            НСтр("ru = 'Проверка';en = 'Check'");
+            НСтр("ru = 'Русский'; en = 'English'");
             '''
         )
 
@@ -1568,13 +1625,217 @@ class BslLexerTestCase(TestCase):
                 (Token.Name.Attribute, 'ru'),
                 (Token.Literal.String, ' '),
                 (Token.Operator, '='),
-                (Token.Literal.String, " 'Проверка'"),
+                (Token.Literal.String, " 'Русский'"),
                 (Token.Operator, ';'),
+                (Token.Literal.String, ' '),
                 (Token.Name.Attribute, 'en'),
                 (Token.Literal.String, ' '),
                 (Token.Operator, '='),
-                (Token.Literal.String, " 'Check'"),
+                (Token.Literal.String, " 'English'"),
                 (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+
+    def test_lexing_nstr_locale_missing_semicolon_same_line(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            НСтр("ru = 'Русский' en = 'English'");
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'НСтр'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Name.Attribute, 'ru'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, " 'Русский'"),
+                (Token.Generic.Error, " en = 'English'"),
+                (Token.Generic.Error, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_nstr_locale_missing_closing_single_quote(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            НСтр("ru = 'Русский;
+                 |en = 'English'"
+            );
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'НСтр'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Generic.Error, "ru = 'Русский;"),
+                (Token.Generic.Error, '\n'),
+                (Token.Generic.Error, "                 |en = 'English'"),
+                (Token.Generic.Error, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_nstr_locale_keys_missing_open_quote(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            НСтр("ru = Русский'" en = 'English';");
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'НСтр'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Generic.Error, "ru = Русский'"),
+                (Token.Generic.Error, '"'),
+                (Token.Name.Variable, 'en'),
+                (Token.Operator, '='),
+                (Token.Literal.Date, "'English'"),
+                (Token.Punctuation, ';'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, ');'),
+            ],
+        )
+
+    def test_lexing_nstr_locale_missing_quote_before_next(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            НСтр("ru = 'Русский'" en = 'English';");
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'НСтр'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Name.Attribute, 'ru'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, " 'Русский'"),
+                (Token.Literal.String, '"'),
+                (Token.Name.Variable, 'en'),
+                (Token.Operator, '='),
+                (Token.Literal.Date, "'English'"),
+                (Token.Punctuation, ';'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, ');'),
+            ],
+        )
+
+    def test_lexing_nstr_locale_extra_single_quote(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            НСтр("ru = 'Русский'';
+                 |en = 'English';"
+            );
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'НСтр'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Name.Attribute, 'ru'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, " 'Русский'"),
+                (Token.Generic.Error, "';"),
+                (Token.Generic.Error, '\n'),
+                (Token.Generic.Error, "                 |en = 'English';"),
+                (Token.Generic.Error, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_pipe_outside_string_is_error(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+Строка =
+    "Пример";
+    |Проблемы";
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'Строка'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Пример'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ';'),
+                (Token.Generic.Error, '|Проблемы";'),
+            ],
+        )
+
+    def test_pipe_outside_string_after_multiline_string(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+Строка =
+    "Пример"
+    |Проблемы";
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'Строка'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Пример'),
+                (Token.Literal.String, '"'),
+                (Token.Generic.Error, '|Проблемы";'),
+            ],
+        )
+
+    def test_lexing_nstr_multiline_without_semicolon_is_error(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            НСтр("ru = 'Русский'
+                 |en = 'English'"
+            );
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'НСтр'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Generic.Error, "ru = 'Русский'"),
+                (Token.Generic.Error, '\n'),
+                (Token.Generic.Error, "                 |en = 'English'"),
+                (Token.Generic.Error, '"'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
             ],
@@ -1597,6 +1858,22 @@ class BslLexerTestCase(TestCase):
                 (Token.Literal.String, 'Some selected text'),
                 (Token.Literal.String, '"'),
                 (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_string_followed_by_identifier(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens('Строка = "Пример" нелегальщина')
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'Строка'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Пример'),
+                (Token.Literal.String, '"'),
+                (Token.Name.Variable, 'нелегальщина'),
             ],
         )
 
@@ -3804,6 +4081,45 @@ INDEX BY SETS Table
                 (Token.Comment.Single, '//|//АВТОУПОРЯДОЧИВАНИЕ";'),
                 (Token.Literal.String, '|'),
                 (Token.Comment.Single, '//АВТОУПОРЯДОЧИВАНИЕ'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_constraint_logic_string(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+Ограничение.Текст =
+"РазрешитьЧтениеИзменение
+|ГДЕ
+| ЗначениеРазрешено(Организация)
+|И ЗначениеРазрешено(Контрагент)";
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'Ограничение'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Текст'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'РазрешитьЧтениеИзменение'),
+                (Token.Literal.String, '|'),
+                (Token.Keyword.Declaration, 'ГДЕ'),
+                (Token.Literal.String, '|'),
+                (Token.Name.Builtin, 'ЗначениеРазрешено'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Организация'),
+                (Token.Punctuation, ')'),
+                (Token.Literal.String, '|'),
+                (Token.Operator.Word, 'И'),
+                (Token.Name.Builtin, 'ЗначениеРазрешено'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Контрагент'),
+                (Token.Punctuation, ')'),
                 (Token.Literal.String, '"'),
                 (Token.Punctuation, ';'),
             ],

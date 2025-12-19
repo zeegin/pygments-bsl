@@ -88,6 +88,11 @@
     color: rgb(255, 0, 0);
 }
 
+[data-md-color-scheme="default"] .language-bsl .kc,
+[data-md-color-scheme="slate"] .language-bsl .kc {
+    color: rgb(255, 0, 0);
+}
+
 [data-md-color-scheme="default"] .language-sdbl .si,
 [data-md-color-scheme="slate"] .language-sdbl .si,
 [data-md-color-scheme="default"] .language-bsl .si,

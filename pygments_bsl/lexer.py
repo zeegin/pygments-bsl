@@ -106,6 +106,29 @@ def _sdbl_name_callback(lexer, match):
 
     yield match.start(), Token.Name.Variable, name
 
+def _constraint_name_callback(lexer, match):
+    name = match.group(0)
+    name_cf = _casefold(name)
+    is_call = _is_call(match.string, match.end())
+
+    if name_cf in lexer._acl_function_call and is_call:
+        yield match.start(), Token.Name.Builtin, name
+        return
+
+    if name_cf in lexer._acl_keyword_constant:
+        yield match.start(), Token.Keyword.Constant, name
+        return
+
+    if name_cf in lexer._acl_keyword_declaration:
+        yield match.start(), Token.Keyword.Declaration, name
+        return
+
+    if name_cf in lexer._acl_name_class:
+        yield match.start(), Token.Name.Class, name
+        return
+
+    yield match.start(), Token.Name.Variable, name
+
 def _sdbl_metadata_callback(lexer, match):
     text = match.group(0)
     parts = text.split('.')
@@ -146,6 +169,30 @@ def _locale_assignment_callback(lexer, match):
     if match.group(2):
         yield match.start(2), Token.String, match.group(2)
     yield match.start(3), Token.Operator, match.group(3)
+
+def _locale_missing_semicolon_callback(lexer, match):
+    yield match.start(1), Token.Name.Attribute, match.group(1)
+    if match.group(2):
+        yield match.start(2), Token.String, match.group(2)
+    yield match.start(3), Token.Operator, match.group(3)
+    value = f"{match.group(4)}'{match.group(5)}'"
+    if value:
+        yield match.start(4), Token.String, value
+    error = f"{match.group(6)}{match.group(7)}"
+    if error:
+        yield match.start(6), Token.Generic.Error, error
+
+def _locale_extra_quote_callback(lexer, match):
+    yield match.start(1), Token.Name.Attribute, match.group(1)
+    if match.group(2):
+        yield match.start(2), Token.String, match.group(2)
+    yield match.start(3), Token.Operator, match.group(3)
+    value = f"{match.group(4)}'{match.group(5)}'"
+    if value:
+        yield match.start(4), Token.String, value
+    error = f"{match.group(6)}{match.group(7)}"
+    if error:
+        yield match.start(6), Token.Generic.Error, error
 
 def _doc_type_list_with_iz_callback(lexer, match):
     yield match.start(1), Token.Comment.Single, match.group(1)
@@ -234,6 +281,46 @@ class BslLexer(RegexLexer):
 
     EXECUTE_STRING_CALL = r'(?<!\.)\b(Выполнить|Execute)\b(?=\s*\(\s*"Выполнить)'
     QUERY_STRING_START = r'"(?=[^"]*\b(ВЫБРАТЬ|SELECT)\b)(?![^"]*(?:\r?\n)\#(?:Удаление|КонецУдаления|Delete|EndDelete))'
+    CONSTRAINT_STRING_START = (
+        r'"(?=[^"]*\b(?:'
+        r'РазрешитьЧтениеИзменение|AllowReadUpdate|'
+        r'РазрешитьЧтение|AllowRead|'
+        r'РазрешитьИзменениеЕслиРазрешеноЧтение|AllowUpdateIfReadingAllowed|'
+        r'ПрисоединитьДополнительныеТаблицы|AttachAdditionalTables|'
+        r'ЗначениеРазрешено|ValueAllowed|'
+        r'ЧтениеОбъектаРазрешено|ObjectReadingAllowed|'
+        r'ИзменениеОбъектаРазрешено|ObjectUpdateAllowed|'
+        r'ЧтениеСпискаРазрешено|ListReadingAllowed|'
+        r'ИзменениеСпискаРазрешено|ListUpdateAllowed|'
+        r'ПравоДоступа|AccessRight|'
+        r'РольДоступна|RoleAvailable'
+        r')\b)'
+        r'(?![^"]*(?:\r?\n)\#(?:Удаление|КонецУдаления|Delete|EndDelete))'
+    )
+    LOCALE_KEY_PATTERN = r'[a-z]{2,3}'
+    _ODD_LOCALE_QUOTES_LOOKAHEAD = (
+        r'(?=(?:[^\n\']*\'[^\n\']*\')*[^\n\']*\'[^\n\']*(?=\n|"))'
+    )
+    _LOCALE_MISSING_SEMICOLON_PATTERN = (
+        r'(?:(?<=\n)|^)(\b' + LOCALE_KEY_PATTERN + r'\b)(\s*)(=)(\s*)'
+        r'\'([^\n\']*)\'(\s+)(\b' + LOCALE_KEY_PATTERN + r'\b[^\n"]*)'
+        r'(?=\n|")'
+    )
+    _LOCALE_EXTRA_QUOTE_PATTERN = (
+        r'(?:(?<=\n)|^)(\b' + LOCALE_KEY_PATTERN + r'\b)(\s*)(=)(\s*)'
+        r'\'([^\n\']*)\'(\')([^\n"]*)'
+        r'(?=\n|")'
+    )
+    _LOCALE_MISSING_SEMICOLON_FIRST_PATTERN = (
+        r'(\b' + LOCALE_KEY_PATTERN + r'\b)(\s*)(=)(\s*)'
+        r'\'([^\n\']*)\'(\s+)(\b' + LOCALE_KEY_PATTERN + r'\b[^\n"]*)'
+        r'(?=\n|")'
+    )
+    _LOCALE_EXTRA_QUOTE_FIRST_PATTERN = (
+        r'(\b' + LOCALE_KEY_PATTERN + r'\b)(\s*)(=)(\s*)'
+        r'\'([^\n\']*)\'(\')([^\n"]*)'
+        r'(?=\n|")'
+    )
 
     TYPE_NAME_PATTERN = r'(?:' + '|'.join(re.escape(n) for n in TYPE_NAMES) + r')'
     DOC_TYPE_NAMES = tuple(dict.fromkeys(TYPE_NAMES + tuple(CALL_ONLY_BUILTINS) + (
@@ -338,6 +425,7 @@ class BslLexer(RegexLexer):
             (r'\ufeff', Token.Text),
             (r'\r\n?|\n', Token.Text),
             (r'[^\S\n]+', Token.Text),
+            (r'\|.*?(?=\n|$)', Token.Generic.Error),
             (r'\#\!.*?(?=\n|$)', Token.Comment.Preproc),
             (r'(\/\/\s*)(СМ\.|SEE)(\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)(\s*)(\()(.*?)(\))',
              bygroups(Token.Comment.Single, Token.Keyword, Token.Comment.Single, Token.Name.Namespace, Token.Comment.Single, Token.Punctuation, Token.Comment.Single, Token.Punctuation)),
@@ -347,6 +435,8 @@ class BslLexer(RegexLexer):
              bygroups(Token.Comment.Single, Token.Keyword, Token.Punctuation)),
             (r'(\/\/\s*)(Параметры|Parameters|Возвращаемое\s+значение|Returns|Пример(?:ы)?|Example(?:s)?|Варианты\s+вызова|Call\s+options)(:)',
              bygroups(Token.Comment.Single, Token.Keyword, Token.Punctuation)),
+            (r'(\/\/\s*)(Структура)(\s*:)',
+             bygroups(Token.Comment.Single, Token.Name.Class, Token.Punctuation)),
             (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+)([Ии]з)(\s+)(см\.)(\s+)([A-Za-zА-Яa-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яa-яЁё_][\wа-яё0-9_]*)*)(\s*-\s*)(.*)',
              bygroups(Token.Comment.Single, Token.Name.Class, Token.Punctuation, Token.Keyword, Token.Punctuation, Token.Keyword, Token.Comment.Single, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
             (r'(\/\/\s*)([A-Za-zА-Яa-яЁё_][\wа-яё0-9_]*)(\s+)([Ии]з)(\s+)(см\.)(\s+)([A-Za-zА-Яa-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яa-яЁё_][\wа-яё0-9_]*)*)(?=\s*$)',
@@ -357,9 +447,9 @@ class BslLexer(RegexLexer):
              bygroups(Token.Comment.Single, Token.Name.Class, Token.Punctuation, Token.Keyword, Token.Punctuation, Token.Name.Class)),
             (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(см\.)(\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)(.*)',
              bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Keyword, Token.Comment.Single, Token.Name.Class, Token.Comment.Single)),
-            (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')(\s*:\s*)(см\.)(\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)(.*)',
+            (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')([^\S\n]*:[^\S\n]*)(см\.)(\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)(.*)',
              bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Name.Class, Token.Punctuation, Token.Keyword, Token.Comment.Single, Token.Name.Class, Token.Comment.Single)),
-            (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')(\s*:\s*)(.*)',
+            (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')([^\S\n]*:[^\S\n]*)(.*)',
              bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
             (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')(\s+)([Ии]з)(\s+)(см\.)(\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)(\s+(?:-|–)\s+)(.*)',
              bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Name.Class, Token.Punctuation, Token.Keyword, Token.Punctuation, Token.Keyword, Token.Comment.Single, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
@@ -379,6 +469,8 @@ class BslLexer(RegexLexer):
              bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Comment.Single)),
             (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_PATTERN + r'|' + DOC_TYPE_LIST_PATTERN + r')(?=\s*$)',
              bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Name.Class)),
+            (r'(\/\/\s*)(\*+\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')(\s*:)',
+             bygroups(Token.Comment.Single, Token.Punctuation, Token.Name.Variable, Token.Punctuation, Token.Name.Class, Token.Punctuation)),
             (r'(\/\/\s*)(\*+\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')(\s+)([Ии]з)(\s+)([^-\n]*?)(\s+(?:-|–)\s+)(.*)',
              bygroups(Token.Comment.Single, Token.Punctuation, Token.Name.Variable, Token.Punctuation, Token.Name.Class, Token.Punctuation, Token.Keyword, Token.Punctuation, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
             (r'(\/\/\s*)(\*+\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(см\.)(\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)(.*)',
@@ -428,8 +520,9 @@ class BslLexer(RegexLexer):
             (rf'(?<=\.){IDENT}', Token.Name.Variable),
             (rf'{PREFIX_NO_DOT}{IDENT}', _bsl_name_callback),
             (r'\b\d+\.?\d*\b', Token.Literal.Number),
+            (CONSTRAINT_STRING_START, Token.Literal.String, 'constraint_string'),
             (QUERY_STRING_START, Token.Literal.String, 'query_string'),
-            (r'"(?=(?:[^"]|"")*\b(?:ru|en)\b\s*=)', Token.String, 'string_locale'),
+            (r'"(?=(?:[^"]|"")*\b' + LOCALE_KEY_PATTERN + r'\b\s*=)', Token.String, 'string_locale_first_line'),
             ('\"', Token.String, 'string'),
             (r'\'.*?\'', Token.Literal.Date),
             (r'~.*?(?=[:;])', Token.Name.Label),
@@ -463,9 +556,15 @@ class BslLexer(RegexLexer):
             (r'%[A-Za-zА-Яа-яЁё_]', Token.Generic.Error),
             (r'(?:\\(?!\')|%(?![%\dA-Za-zА-Яа-яЁё_])|[^\"\|\n%\\])+', Token.String),
         ],
-        'string_locale': [
+        'string_locale_first_line': [
             ('\"(?![\"])', Token.String, '#pop'),
-            (r'\r\n?|\n', Token.Text),
+            (_LOCALE_MISSING_SEMICOLON_FIRST_PATTERN, _locale_missing_semicolon_callback, 'string_locale_error'),
+            (_LOCALE_EXTRA_QUOTE_FIRST_PATTERN, _locale_extra_quote_callback, 'string_locale_error'),
+            (r'(?=[^\n]*\b' + LOCALE_KEY_PATTERN + r'\b\s*=)' +
+             _ODD_LOCALE_QUOTES_LOOKAHEAD +
+             r'[^\n"]+(?=\n|")', Token.Generic.Error, 'string_locale_error'),
+            (r'(?![^\n]*;)[^\n"]+(?=\n)', Token.Generic.Error, 'string_locale_error'),
+            (r'\r\n?|\n', Token.Text, ('#pop', 'string_locale')),
             (r'(?<=\n)[^\S\n]+', Token.Text),
             (r'(?<=[^\S\n])\/\/.*?(?=\n)', Token.Comment.Single),
             (r'(?<=^)\/\/.*?(?=\n)', Token.Comment.Single),
@@ -475,9 +574,38 @@ class BslLexer(RegexLexer):
             (r'%\d', Token.String.Interpol),
             (r'%%', Token.String.Escape),
             (r'%[A-Za-zА-Яа-яЁё_]', Token.Generic.Error),
-            (r'(\b(?:ru|en)\b)(\s*)(=)', _locale_assignment_callback),
+            (r'(\b' + LOCALE_KEY_PATTERN + r'\b)(\s*)(=)', _locale_assignment_callback),
             (r';', Token.Operator),
-            (r'(?:(?!\b(?:ru|en)\b\s*=)(?:\\(?!\')|%(?![%\dA-Za-zА-Яа-яЁё_])|[^\"\|\n%\\;]))+', Token.String),
+            (r'(?:(?!\b' + LOCALE_KEY_PATTERN + r'\b\s*=)(?:\\(?!\')|%(?![%\dA-Za-zА-Яа-яЁё_])|[^\"\|\n%\\;]))+', Token.String),
+        ],
+        'string_locale': [
+            ('\"(?![\"])', Token.String, '#pop'),
+            (r'\r\n?|\n', Token.Text),
+            (r'(?<=\n)' + _LOCALE_MISSING_SEMICOLON_PATTERN, _locale_missing_semicolon_callback, 'string_locale_error'),
+            (r'(?<=\n)' + _LOCALE_EXTRA_QUOTE_PATTERN, _locale_extra_quote_callback, 'string_locale_error'),
+            (r'(?<=\n)(?=[^\n]*\b' + LOCALE_KEY_PATTERN + r'\b\s*=)' +
+             _ODD_LOCALE_QUOTES_LOOKAHEAD +
+             r'[^\n"]+(?=\n|")', Token.Generic.Error, 'string_locale_error'),
+            (r'(?<=\n)(?![^\n]*;)[^\n"]+(?=\n)', Token.Generic.Error, 'string_locale_error'),
+            (r'(?<=\n)(?![^\n]*;)[^\n"]+(?=")', Token.Generic.Error, 'string_locale_error'),
+            (r'(?<=\n)[^\S\n]+', Token.Text),
+            (r'(?<=[^\S\n])\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'(?<=^)\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'\|', Token.String),
+            (r'\"\"', Token.String.Escape),
+            (r"\\'", Token.String.Escape),
+            (r'%\d', Token.String.Interpol),
+            (r'%%', Token.String.Escape),
+            (r'%[A-Za-zА-Яа-яЁё_]', Token.Generic.Error),
+            (r'(\b' + LOCALE_KEY_PATTERN + r'\b)(\s*)(=)', _locale_assignment_callback),
+            (r';', Token.Operator),
+            (r'(?:(?!\b' + LOCALE_KEY_PATTERN + r'\b\s*=)(?:\\(?!\')|%(?![%\dA-Za-zА-Яа-яЁё_])|[^\"\|\n%\\;]))+', Token.String),
+        ],
+        'string_locale_error': [
+            (r'\"\"', Token.Generic.Error),
+            (r'"', Token.Generic.Error, '#pop:2'),
+            (r'\r\n?|\n', Token.Generic.Error),
+            (r'[^\"\n]+', Token.Generic.Error),
         ],
         'query_string': [
             (r'[^\S\n]+', Token.Text),
@@ -490,6 +618,16 @@ class BslLexer(RegexLexer):
             (r'\n', Token.Text),
             (r'(?:[^"/\n]|/(?!/))+', using(lambda **kwargs: SdblQueryLexer(**kwargs))),
         ],
+        'constraint_string': [
+            (r'[^\S\n]+', Token.Text),
+            (r'(\|)(//(?:[^"\n]|\"\")*(?=\n|"))',
+             bygroups(Token.Literal.String, Token.Comment.Single)),
+            (r'//[^\n]*', Token.Comment.Single),
+            (r'""', Token.Literal.String.Escape),
+            (r'"', Token.Literal.String, '#pop'),
+            (r'\n', Token.Text),
+            (r'(?:[^"/\n]|/(?!/))+', using(lambda **kwargs: ConstraintLogicLexer(**kwargs))),
+        ],
         'decorator_params': [
             (r'\)', Token.Punctuation, '#pop'),
             (r'\r\n?|\n', Token.Text),
@@ -501,6 +639,7 @@ class BslLexer(RegexLexer):
              bygroups(Token.Name.Variable, Token.Text, Token.Operator, Token.Text, Token.Generic.Error)),
             (r'([A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*)', Token.Name.Variable),
             (r'\b\d+\.?\d*\b', Token.Literal.Number),
+            (CONSTRAINT_STRING_START, Token.Literal.String, 'constraint_string'),
             (QUERY_STRING_START, Token.Literal.String, 'query_string'),
             (r'.', Token.Text),
         ],
@@ -519,6 +658,7 @@ class BslLexer(RegexLexer):
             (r'([A-Za-zА-Яа-яёЁ_][\wа-яё0-9_]*)', Token.Name.Variable),
             (r'=', Token.Operator),
             (r'\b\d+\.?\d*\b', Token.Literal.Number),
+            (CONSTRAINT_STRING_START, Token.Literal.String, 'constraint_string'),
             (QUERY_STRING_START, Token.Literal.String, 'query_string'),
             (r'.', Token.Text),
         ],
@@ -772,3 +912,113 @@ class SdblQueryLexer(SdblLexer):
         if len(rule) >= 2 and rule[0] == r'\|' and rule[1] == Token.Generic.Error:
             _root_rules[idx] = (r'\|', Token.Literal.String)
             break
+
+
+class ConstraintLogicLexer(RegexLexer):
+    name = '1C (Access Rights Logic) Lexer'
+    aliases = []
+    filenames = []
+
+    flags = re.MULTILINE | re.IGNORECASE | re.VERBOSE
+
+    _KEYWORD_DECLARATION_WORDS = (
+        'ПрисоединитьДополнительныеТаблицы','AttachAdditionalTables',
+        'ЭтотСписок','ThisList',
+        'РазрешитьЧтениеИзменение','AllowReadUpdate',
+        'РазрешитьЧтение','AllowRead',
+        'РазрешитьИзменениеЕслиРазрешеноЧтение','AllowUpdateIfReadingAllowed',
+        'ГДЕ','WHERE',
+        'ЛЕВОЕ','LEFT',
+        'СОЕДИНЕНИЕ','JOIN',
+        'ПО','ON',
+        'КАК','AS',
+        'ВЫБОР','CASE',
+        'КОГДА','WHEN',
+        'ТОГДА','THEN',
+        'ИНАЧЕ','ELSE',
+        'КОНЕЦ','END',
+        'ТОЛЬКО','ONLY',
+        'КРОМЕ','EXCEPT',
+    )
+
+    _OPERATOR_WORDS = (
+        'И','ИЛИ','НЕ',
+        'В','ЕСТЬ',
+    )
+
+    _KEYWORD_CONSTANT_WORDS = (
+        'НЕОПРЕДЕЛЕНО','UNDEFINED','Истина','True','Ложь','False','NULL','Null',
+        'ПустаяСсылка','Отключено','Disabled',
+    )
+
+    _FUNCTION_CALL_WORDS = (
+        'ЗначениеРазрешено','ValueAllowed',
+        'ЧтениеОбъектаРазрешено','ObjectReadingAllowed',
+        'ИзменениеОбъектаРазрешено','ObjectUpdateAllowed',
+        'ЧтениеСпискаРазрешено','ListReadingAllowed',
+        'ИзменениеСпискаРазрешено','ListUpdateAllowed',
+        'ЭтоАвторизованныйПользователь','IsAuthorizedUser',
+        'ПравоДоступа','AccessRight',
+        'РольДоступна','RoleAvailable',
+        'ДляВсехСтрок','ForAllRows',
+        'ДляОднойИзСтрок','ForAtLeastOneRow',
+        'ТипЗначения','ValueType',
+        'Тип','Type',
+        'Значение','Value',
+    )
+
+    IDENT = r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+    METADATA_ROOT = SdblLexer.METADATA_ROOT
+    _METADATA_CHAIN = rf'{PREFIX_NO_DOT}{METADATA_ROOT}(?:\.[^\s\.,;\(\)]+)+'
+
+    OPERATORS = r'(<=|>=|<>|=|<|>|\+|-|\*|\/|\.)'
+
+    _KEYWORD_DECLARATION_PHRASES = tuple(
+        word for word in _KEYWORD_DECLARATION_WORDS if ' ' in word
+    )
+    _KEYWORD_DECLARATION_SINGLE = tuple(
+        word for word in _KEYWORD_DECLARATION_WORDS if ' ' not in word
+    )
+    _OPERATOR_WORD_SINGLE = tuple(
+        word for word in _OPERATOR_WORDS if ' ' not in word
+    )
+    _FUNCTION_CALL_PHRASES = tuple(
+        word for word in _FUNCTION_CALL_WORDS if ' ' in word
+    )
+    _FUNCTION_CALL_SINGLE = tuple(
+        word for word in _FUNCTION_CALL_WORDS if ' ' not in word
+    )
+
+    _acl_keyword_declaration = _casefold_set(_KEYWORD_DECLARATION_SINGLE)
+    _acl_keyword_constant = _casefold_set(_KEYWORD_CONSTANT_WORDS)
+    _acl_function_call = _casefold_set(_FUNCTION_CALL_SINGLE)
+    _acl_name_class = _casefold_set(SdblLexer._NAME_CLASS_WORDS)
+
+    tokens = {
+        'root': [
+            (r'\ufeff', Token.Text),
+            (r'\r\n?|\n', Token.Text),
+            (r'[^\S\n]+', Token.Text),
+            (r'\/\/.*?(?=\n|$)', Token.Comment.Single),
+            (r'\|', Token.Literal.String),
+            (OPERATORS, Token.Operator),
+            (words(_OPERATOR_WORD_SINGLE, prefix=PREFIX_NO_DOT, suffix=SUFFIX_WORD), Token.Operator.Word),
+            (_METADATA_CHAIN, _sdbl_metadata_callback),
+            (rf'(?<=\.){IDENT}(?=\s*\()', Token.Name.Function),
+            (rf'(?<=\.){IDENT}', Token.Name.Variable),
+            (r'[\[\]:(),;]', Token.Punctuation),
+            (rf'{PREFIX_NO_DOT}{IDENT}', _constraint_name_callback),
+            (r'\b\d+\.?\d*\b', Token.Literal.Number),
+            ('\"', Token.Literal.String, 'string'),
+        ],
+        'string': [
+            ('\"(?![\"])', Token.Literal.String, '#pop'),
+            (r'\r\n?|\n', Token.Text),
+            (r'(?<=\n)[^\S\n]+', Token.Text),
+            (r'(?<=[^\S\n])\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'(?<=^)\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'\"\"', Token.Literal.String.Escape),
+            (r'\|', Token.Literal.String),
+            (r'[^\"\n]+', Token.Literal.String),
+        ]
+    }

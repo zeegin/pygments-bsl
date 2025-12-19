@@ -369,6 +369,581 @@ class BslLexerTestCase(TestCase):
             ],
         )
 
+    def test_lexing_doc_comments(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+// Параметры:
+//   Форма - ФормаКлиентскогоПриложения - форма, из которой вызвана процедура
+//   Отказ - Булево - признак отказа
+//      ДополнительнаяРегистрация - ТаблицаЗначений
+//                                - Массив - строки или структуры, описывающие отбор.
+//     НастройкиДополненияВыгрузки - см. ИнтерактивноеИзменениеВыгрузки
+//     ИмяРеквизитаДополнения      - Строка - имя реквизита формы для создания или заполнения.
+//     ДополнениеВыгрузки - Структура
+//                        - ДанныеФормыКоллекция - описание параметров выгрузки:
+//       * УзелИнформационнойБазы - ПланОбменаСсылка - узел плана обмена.
+//     ДополнениеВыгрузки - Структура
+//                        - ДанныеФормыСтруктура - описание параметров выгрузки:
+//       * КомпоновщикОтбораВсехДокументов - КомпоновщикНастроекКомпоновкиДанных
+//       * АдресКомпоновщикаВсехДокументов - Строка
+//       * АдресХранилищаФормы - Строка
+// Возвращаемое значение:
+//   Булево - описание
+//     Массив из Число - с номерами используемых вариантов:
+//               0 - без отбора, 1 - отбор всех документов, 2 - подробный, 3 - сценарий узла.
+// Пример:
+//   * Первый пункт
+//   ** Вложенный пункт
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Параметры'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//   '),
+                (Token.Name.Variable, 'Форма'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'ФормаКлиентскогоПриложения'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'форма, из которой вызвана процедура'),
+                (Token.Comment.Single, '//   '),
+                (Token.Name.Variable, 'Отказ'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Булево'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'признак отказа'),
+                (Token.Comment.Single, '//      '),
+                (Token.Name.Variable, 'ДополнительнаяРегистрация'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'ТаблицаЗначений'),
+                (Token.Comment.Single, '//                                '),
+                (Token.Punctuation, '- '),
+                (Token.Name.Class, 'Массив'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'строки или структуры, описывающие отбор.'),
+                (Token.Comment.Single, '//     '),
+                (Token.Name.Variable, 'НастройкиДополненияВыгрузки'),
+                (Token.Punctuation, ' - '),
+                (Token.Keyword, 'см.'),
+                (Token.Comment.Single, ' '),
+                (Token.Name.Class, 'ИнтерактивноеИзменениеВыгрузки'),
+                (Token.Comment.Single, '//     '),
+                (Token.Name.Variable, 'ИмяРеквизитаДополнения'),
+                (Token.Punctuation, '      - '),
+                (Token.Name.Class, 'Строка'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'имя реквизита формы для создания или заполнения.'),
+                (Token.Comment.Single, '//     '),
+                (Token.Name.Variable, 'ДополнениеВыгрузки'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Структура'),
+                (Token.Comment.Single, '//                        '),
+                (Token.Punctuation, '- '),
+                (Token.Name.Class, 'ДанныеФормыКоллекция'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'описание параметров выгрузки:'),
+                (Token.Comment.Single, '//       '),
+                (Token.Punctuation, '* '),
+                (Token.Name.Variable, 'УзелИнформационнойБазы'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'ПланОбменаСсылка'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'узел плана обмена.'),
+                (Token.Comment.Single, '//     '),
+                (Token.Name.Variable, 'ДополнениеВыгрузки'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Структура'),
+                (Token.Comment.Single, '//                        '),
+                (Token.Punctuation, '- '),
+                (Token.Name.Class, 'ДанныеФормыСтруктура'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'описание параметров выгрузки:'),
+                (Token.Comment.Single, '//       '),
+                (Token.Punctuation, '* '),
+                (Token.Name.Variable, 'КомпоновщикОтбораВсехДокументов'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'КомпоновщикНастроекКомпоновкиДанных'),
+                (Token.Comment.Single, '//       '),
+                (Token.Punctuation, '* '),
+                (Token.Name.Variable, 'АдресКомпоновщикаВсехДокументов'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Строка'),
+                (Token.Comment.Single, '//       '),
+                (Token.Punctuation, '* '),
+                (Token.Name.Variable, 'АдресХранилищаФормы'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Строка'),
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Возвращаемое значение'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//   '),
+                (Token.Name.Class, 'Булево'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'описание'),
+                (Token.Comment.Single, '//     '),
+                (Token.Name.Class, 'Массив'),
+                (Token.Punctuation, ' '),
+                (Token.Keyword, 'из'),
+                (Token.Punctuation, ' '),
+                (Token.Name.Class, 'Число'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'с номерами используемых вариантов:'),
+                (Token.Comment.Single, '//               0 - без отбора, 1 - отбор всех документов, 2 - подробный, 3 - сценарий узла.'),
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Пример'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//   '),
+                (Token.Punctuation, '*'),
+                (Token.Comment.Single, ' '),
+                (Token.Comment.Single, 'Первый пункт'),
+                (Token.Comment.Single, '//   '),
+                (Token.Punctuation, '**'),
+                (Token.Comment.Single, ' '),
+                (Token.Comment.Single, 'Вложенный пункт'),
+            ],
+        )
+
+    def test_lexing_doc_comment_sections_and_links(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+// Parameters:
+// Returns:
+//     Массив из Число
+// Example:
+// Call options:
+// Устарела.
+// Deprecate:
+// СМ. ОбщийМодуль.Метод()
+// SEE CommonModule.Method(Парам1, Значение)
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Parameters'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Returns'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//     '),
+                (Token.Name.Class, 'Массив'),
+                (Token.Punctuation, ' '),
+                (Token.Keyword, 'из'),
+                (Token.Punctuation, ' '),
+                (Token.Name.Class, 'Число'),
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Example'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Call options'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Устарела'),
+                (Token.Punctuation, '.'),
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Deprecate'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'СМ.'),
+                (Token.Comment.Single, ' '),
+                (Token.Name.Namespace, 'ОбщийМодуль.Метод'),
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'SEE'),
+                (Token.Comment.Single, ' '),
+                (Token.Name.Namespace, 'CommonModule.Method'),
+                (Token.Punctuation, '('),
+                (Token.Comment.Single, 'Парам1, Значение'),
+                (Token.Punctuation, ')'),
+            ],
+        )
+
+    def test_lexing_doc_comment_bullets_unbounded(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+// Возвращаемое значение:
+//   Структура - настройки типового варианта:
+//     * Использование - Булево - признак разрешения использования варианта.
+//     ** Порядок - Число - порядок размещения варианта.
+//     *** Заголовок - Строка - позволяет переопределить название.
+//     **** Пояснение - Строка - позволяет переопределить текст.
+//     ***** Отбор - см. ОписаниеДополнительнойРегистрацииВариантаВыгрузки
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Возвращаемое значение'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//   '),
+                (Token.Name.Class, 'Структура'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'настройки типового варианта:'),
+                (Token.Comment.Single, '//     '),
+                (Token.Punctuation, '* '),
+                (Token.Name.Variable, 'Использование'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Булево'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'признак разрешения использования варианта.'),
+                (Token.Comment.Single, '//     '),
+                (Token.Punctuation, '** '),
+                (Token.Name.Variable, 'Порядок'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Число'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'порядок размещения варианта.'),
+                (Token.Comment.Single, '//     '),
+                (Token.Punctuation, '*** '),
+                (Token.Name.Variable, 'Заголовок'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Строка'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'позволяет переопределить название.'),
+                (Token.Comment.Single, '//     '),
+                (Token.Punctuation, '**** '),
+                (Token.Name.Variable, 'Пояснение'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Строка'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'позволяет переопределить текст.'),
+                (Token.Comment.Single, '//     '),
+                (Token.Punctuation, '***** '),
+                (Token.Name.Variable, 'Отбор'),
+                (Token.Punctuation, ' - '),
+                (Token.Keyword, 'см.'),
+                (Token.Comment.Single, ' '),
+                (Token.Name.Class, 'ОписаниеДополнительнойРегистрацииВариантаВыгрузки'),
+            ],
+        )
+
+    def test_lexing_doc_comment_param_array_type(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+// Параметры:
+//   ЗапросыРазрешений - Массив из УникальныйИдентификатор - коллекция запросов разрешений.
+//   Объект - КонстантаМенеджерЗначения - менеджер значения объекта данных.
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Параметры'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//   '),
+                (Token.Name.Variable, 'ЗапросыРазрешений'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Массив'),
+                (Token.Punctuation, ' '),
+                (Token.Keyword, 'из'),
+                (Token.Punctuation, ' '),
+                (Token.Name.Class, 'УникальныйИдентификатор'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'коллекция запросов разрешений.'),
+                (Token.Comment.Single, '//   '),
+                (Token.Name.Variable, 'Объект'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'КонстантаМенеджерЗначения'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'менеджер значения объекта данных.'),
+            ],
+        )
+
+    def test_lexing_doc_comment_hyphen_without_spaces_is_plain(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+// Процедура-обработчик команды "Рассчитать"
+// Обычная строка
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// Процедура-обработчик команды "Рассчитать"'),
+                (Token.Comment.Single, '// Обычная строка'),
+            ],
+        )
+
+    def test_lexing_doc_comment_param_type_with_dots(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+// Параметры:
+//  Адреса - Строка - строка, содержащая электронные адреса
+//  ЗадачаИсполнителя - ЗадачаСсылка.ЗадачаИсполнителя – проверяемая задача
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Параметры'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//  '),
+                (Token.Name.Variable, 'Адреса'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Строка'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'строка, содержащая электронные адреса'),
+                (Token.Comment.Single, '//  '),
+                (Token.Name.Variable, 'ЗадачаИсполнителя'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'ЗадачаСсылка.ЗадачаИсполнителя'),
+                (Token.Punctuation, ' – '),
+                (Token.Comment.Single, 'проверяемая задача'),
+            ],
+        )
+
+    def test_lexing_doc_comment_param_type_list(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+// КоллекцияСтрок – ТаблицаЗначений, Массив, СписокЗначений – коллекция для сравнения.
+// ФормируемыйОтчет – ОбъектМетаданныхОтчет
+// ПрисоединенныйФайлОбъект - ОпределяемыйТип.ПрисоединенныйФайлОбъект - элемент справочника файлов.
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Name.Variable, 'КоллекцияСтрок'),
+                (Token.Punctuation, ' – '),
+                (Token.Name.Class, 'ТаблицаЗначений, Массив, СписокЗначений'),
+                (Token.Punctuation, ' – '),
+                (Token.Comment.Single, 'коллекция для сравнения.'),
+                (Token.Comment.Single, '// '),
+                (Token.Name.Variable, 'ФормируемыйОтчет'),
+                (Token.Punctuation, ' – '),
+                (Token.Name.Class, 'ОбъектМетаданныхОтчет'),
+                (Token.Comment.Single, '// '),
+                (Token.Name.Variable, 'ПрисоединенныйФайлОбъект'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'ОпределяемыйТип.ПрисоединенныйФайлОбъект'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'элемент справочника файлов.'),
+            ],
+        )
+
+    def test_lexing_doc_comment_param_type_with_colon_see(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+// СведенияОРегионе – СтрокаТаблицыЗначений: см. РегистрыСведений.АдресныеОбъекты.КлассификаторСубъектовРФ
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Name.Variable, 'СведенияОРегионе'),
+                (Token.Punctuation, ' – '),
+                (Token.Name.Class, 'СтрокаТаблицыЗначений'),
+                (Token.Punctuation, ': '),
+                (Token.Keyword, 'см.'),
+                (Token.Comment.Single, ' '),
+                (Token.Name.Class, 'РегистрыСведений.АдресныеОбъекты.КлассификаторСубъектовРФ'),
+            ],
+        )
+
+    def test_lexing_doc_comment_param_type_and_desc_colon(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+// КоллекцияСтрок - КоллекцияЗначений – коллекция для сравнения;
+// ФормируемыйОтчет - ОбъектМетаданных: Отчет
+// ПрисоединенныйФайлОбъект - элемент справочника файлов.
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Name.Variable, 'КоллекцияСтрок'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'КоллекцияЗначений'),
+                (Token.Punctuation, ' – '),
+                (Token.Comment.Single, 'коллекция для сравнения;'),
+                (Token.Comment.Single, '// '),
+                (Token.Name.Variable, 'ФормируемыйОтчет'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'ОбъектМетаданных'),
+                (Token.Punctuation, ': '),
+                (Token.Comment.Single, 'Отчет'),
+                (Token.Comment.Single, '// '),
+                (Token.Name.Variable, 'ПрисоединенныйФайлОбъект'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'элемент справочника файлов.'),
+            ],
+        )
+
+    def test_lexing_doc_comment_sm_and_iz_consistency(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+//  КонтактнаяИнформация - см. Документ.ЗаказПокупателя
+// РеквизитыКомпонент - Массив из см. ВнешниеКомпоненты.РеквизитыКомпоненты
+// - Массив Из Строка, ФиксированныйМассив Из Строка - имена реквизитов.
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '//  '),
+                (Token.Name.Variable, 'КонтактнаяИнформация'),
+                (Token.Punctuation, ' - '),
+                (Token.Keyword, 'см.'),
+                (Token.Comment.Single, ' '),
+                (Token.Name.Class, 'Документ.ЗаказПокупателя'),
+                (Token.Comment.Single, '// '),
+                (Token.Name.Variable, 'РеквизитыКомпонент'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Массив'),
+                (Token.Punctuation, ' '),
+                (Token.Keyword, 'из'),
+                (Token.Punctuation, ' '),
+                (Token.Keyword, 'см.'),
+                (Token.Comment.Single, ' '),
+                (Token.Name.Class, 'ВнешниеКомпоненты.РеквизитыКомпоненты'),
+                (Token.Comment.Single, '// '),
+                (Token.Punctuation, '- '),
+                (Token.Name.Class, 'Массив'),
+                (Token.Punctuation, ' '),
+                (Token.Keyword, 'Из'),
+                (Token.Punctuation, ' '),
+                (Token.Name.Class, 'Строка'),
+                (Token.Punctuation, ', '),
+                (Token.Name.Class, 'ФиксированныйМассив'),
+                (Token.Punctuation, ' '),
+                (Token.Keyword, 'Из'),
+                (Token.Punctuation, ' '),
+                (Token.Name.Class, 'Строка'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'имена реквизитов.'),
+            ],
+        )
+
+    def test_lexing_comments_around_procedure(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+//  комментарий до
+Процедура ИмяПроцедуры(
+// комментарий после
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '//  комментарий до'),
+                (Token.Keyword, 'Процедура'),
+                (Token.Name.Function, 'ИмяПроцедуры'),
+                (Token.Punctuation, '('),
+                (Token.Comment.Single, '// комментарий после'),
+            ],
+        )
+
+    def test_lexing_doc_comment_param_multiline_types(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+// Параметры:
+//   Реквизиты - Строка - имена реквизитов, перечисленные через запятую.
+//                        Например, "Код, Наименование, Родитель".
+//             - Структура, ФиксированнаяСтруктура - в качестве ключа передается
+//                        псевдоним поля для возвращаемой структуры с результатом,
+//                        а в качестве значения (опционально) фактическое имя поля в таблице.
+//                        Если значение не определено, то имя поля берется из ключа.
+//             - Массив Из Строка, ФиксированныйМассив Из Строка - имена реквизитов.
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Параметры'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//   '),
+                (Token.Name.Variable, 'Реквизиты'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Строка'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'имена реквизитов, перечисленные через запятую.'),
+                (Token.Comment.Single, '//                        Например, "Код, Наименование, Родитель".'),
+                (Token.Comment.Single, '//             '),
+                (Token.Punctuation, '- '),
+                (Token.Name.Class, 'Структура, ФиксированнаяСтруктура'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'в качестве ключа передается'),
+                (Token.Comment.Single, '//                        псевдоним поля для возвращаемой структуры с результатом,'),
+                (Token.Comment.Single, '//                        а в качестве значения (опционально) фактическое имя поля в таблице.'),
+                (Token.Comment.Single, '//                        Если значение не определено, то имя поля берется из ключа.'),
+                (Token.Comment.Single, '//             '),
+                (Token.Punctuation, '- '),
+                (Token.Name.Class, 'Массив'),
+                (Token.Punctuation, ' '),
+                (Token.Keyword, 'Из'),
+                (Token.Punctuation, ' '),
+                (Token.Name.Class, 'Строка'),
+                (Token.Punctuation, ', '),
+                (Token.Name.Class, 'ФиксированныйМассив'),
+                (Token.Punctuation, ' '),
+                (Token.Keyword, 'Из'),
+                (Token.Punctuation, ' '),
+                (Token.Name.Class, 'Строка'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'имена реквизитов.'),
+            ],
+        )
+
+    def test_lexing_doc_comment_return_type_list(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+// Возвращаемое значение:
+//  - СправочникСсылка.Пользователи
+//  - СправочникСсылка.ВнешниеПользователи
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Возвращаемое значение'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//  '),
+                (Token.Punctuation, '- '),
+                (Token.Name.Class, 'СправочникСсылка.Пользователи'),
+                (Token.Comment.Single, '//  '),
+                (Token.Punctuation, '- '),
+                (Token.Name.Class, 'СправочникСсылка.ВнешниеПользователи'),
+            ],
+        )
+
     def test_lexing_bom(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens('\ufeffПроцедура Тест()')
@@ -636,8 +1211,15 @@ class BslLexerTestCase(TestCase):
         filtered = filter_tokens(tokens)
 
         expected_prefix = [
-            (Token.Comment.Single, '// Параметры:'),
-            (Token.Comment.Single, '//   Входной - Структура - настройки (дополнительные свойства) отчета, хранящиеся в данных формы:'),
+            (Token.Comment.Single, '// '),
+            (Token.Keyword, 'Параметры'),
+            (Token.Punctuation, ':'),
+            (Token.Comment.Single, '//   '),
+            (Token.Name.Variable, 'Входной'),
+            (Token.Punctuation, ' - '),
+            (Token.Name.Class, 'Структура'),
+            (Token.Punctuation, ' - '),
+            (Token.Comment.Single, 'настройки (дополнительные свойства) отчета, хранящиеся в данных формы:'),
             (Token.Keyword, 'Процедура'),
             (Token.Name.Function, 'ПриСозданииНаСервере'),
             (Token.Punctuation, '('),
@@ -671,11 +1253,23 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Comment.Single, '// Инициализирует структуру параметров для взаимодействия с файловой системой.'),
                 (Token.Comment.Single, '//'),
-                (Token.Comment.Single, '// Параметры:'),
-                (Token.Comment.Single, '//  РежимДиалога - РежимДиалогаВыбораФайла - режим работы конструируемого диалога выбора файлов.'),
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Параметры'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//  '),
+                (Token.Name.Variable, 'РежимДиалога'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'РежимДиалогаВыбораФайла'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'режим работы конструируемого диалога выбора файлов.'),
                 (Token.Comment.Single, '//'),
-                (Token.Comment.Single, '// Возвращаемое значение:'),
-                (Token.Comment.Single, '//   см. ФайловаяСистемаКлиент.ПараметрыЗагрузкиФайла'),
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Возвращаемое значение'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//   '),
+                (Token.Keyword, 'см.'),
+                (Token.Comment.Single, ' '),
+                (Token.Name.Namespace, 'ФайловаяСистемаКлиент.ПараметрыЗагрузкиФайла'),
             ],
         )
 
@@ -1973,6 +2567,35 @@ class SdblLexerTestCase(TestCase):
         lexer = lexers.get_lexer_by_name('sdbl')
         self.assertEqual(lexer.name, SdblLexer.name)
 
+    def test_sdbl_semicolon_is_punctuation(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+ПОМЕСТИТЬ Классификатор
+ИЗ
+    &Классификатор КАК Параметр
+;
+
+////////////////////////////////////////////////////////////////////////////////
+ВЫБРАТЬ
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ПОМЕСТИТЬ'),
+                (Token.Name.Variable, 'Классификатор'),
+                (Token.Keyword.Declaration, 'ИЗ'),
+                (Token.Literal.String.Interpol, '&Классификатор'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'Параметр'),
+                (Token.Punctuation, ';'),
+                (Token.Comment.Single, '////////////////////////////////////////////////////////////////////////////////'),
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+            ],
+        )
+
     def test_sdbl_keyword_of(self):
         lexer = lexers.get_lexer_by_name('sdbl')
         tokens = lexer.get_tokens('FOR UPDATE OF')
@@ -2303,7 +2926,7 @@ Document.Doc.Table
             [
                 (Token.Keyword.Declaration, 'ВЫБОР'),
                 (Token.Keyword.Declaration, 'КОГДА'),
-                (Token.Keyword.Declaration, 'НЕ'),
+                (Token.Operator.Word, 'НЕ'),
                 (Token.Literal.Number, '0'),
                 (Token.Operator, '='),
                 (Token.Literal.Number, '0'),
@@ -2317,6 +2940,98 @@ Document.Doc.Table
                 (Token.Keyword.Declaration, 'КАК'),
                 (Token.Name.Variable, 'Условие'),
                 (Token.Punctuation, ','),
+            ],
+        )
+
+    def test_sdbl_choice_operator(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+ВЫБОР
+    КОГДА Поле = ИСТИНА ТОГДА "Это"
+    ИНАЧЕ "Не Задана"
+КОНЕЦ Цена
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ВЫБОР'),
+                (Token.Keyword.Declaration, 'КОГДА'),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Operator, '='),
+                (Token.Keyword.Constant, 'ИСТИНА'),
+                (Token.Keyword.Declaration, 'ТОГДА'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Это'),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'ИНАЧЕ'),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Не Задана'),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'КОНЕЦ'),
+                (Token.Name.Variable, 'Цена'),
+            ],
+        )
+
+    def test_sdbl_type_cast_operator(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+ВЫРАЗИТЬ(Поле КАК ЧИСЛО(10, 2)) КАК ЧислоПоля,
+ВЫРАЗИТЬ(Поле КАК СТРОКА(20)) КАК СтрокаПоля,
+ВЫРАЗИТЬ(Поле КАК БУЛЕВО) КАК БулевоПоля,
+ВЫРАЗИТЬ(Поле КАК ДАТА) КАК ДатаПоля
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Builtin, 'ВЫРАЗИТЬ'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Class, 'ЧИСЛО'),
+                (Token.Punctuation, '('),
+                (Token.Literal.Number, '10'),
+                (Token.Punctuation, ','),
+                (Token.Literal.Number, '2'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'ЧислоПоля'),
+                (Token.Punctuation, ','),
+                (Token.Name.Builtin, 'ВЫРАЗИТЬ'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Class, 'СТРОКА'),
+                (Token.Punctuation, '('),
+                (Token.Literal.Number, '20'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'СтрокаПоля'),
+                (Token.Punctuation, ','),
+                (Token.Name.Builtin, 'ВЫРАЗИТЬ'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Class, 'БУЛЕВО'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'БулевоПоля'),
+                (Token.Punctuation, ','),
+                (Token.Name.Builtin, 'ВЫРАЗИТЬ'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Class, 'ДАТА'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'ДатаПоля'),
             ],
         )
 
@@ -2350,7 +3065,7 @@ Document.Doc.Table
                 (Token.Punctuation, '('),
                 (Token.Literal.Number, '0'),
                 (Token.Keyword.Declaration, 'КАК'),
-                (Token.Keyword.Declaration, 'Число'),
+                (Token.Name.Class, 'Число'),
                 (Token.Punctuation, ')'),
                 (Token.Keyword.Declaration, 'КАК'),
                 (Token.Name.Variable, 'Выражение'),
@@ -2631,6 +3346,20 @@ INDEX BY SETS Table
             ],
         )
 
+    def test_sdbl_hash_table_name_is_error(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens('ВЫБРАТЬ * ИЗ #ИмяТаблицыПланаОбмена')
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Operator, '*'),
+                (Token.Keyword.Declaration, 'ИЗ'),
+                (Token.Generic.Error, '#ИмяТаблицыПланаОбмена'),
+            ],
+        )
+
     def test_sdbl_simple_catalog(self):
         lexer = lexers.get_lexer_by_name('sdbl')
         tokens = lexer.get_tokens('ВЫБРАТЬ * ИЗ Справочник.Номенклатура')
@@ -2759,30 +3488,30 @@ INDEX BY SETS Table
                 (Token.Name.Variable, 'Поле'),
                 (Token.Operator, '>'),
                 (Token.Literal.Number, '0'),
-                (Token.Keyword.Declaration, 'И'),
+                (Token.Operator.Word, 'И'),
                 (Token.Name.Variable, 'Поле'),
                 (Token.Operator, '<'),
                 (Token.Literal.Number, '10'),
-                (Token.Keyword.Declaration, 'И'),
+                (Token.Operator.Word, 'И'),
                 (Token.Name.Variable, 'Поле'),
-                (Token.Keyword.Declaration, 'МЕЖДУ'),
+                (Token.Operator.Word, 'МЕЖДУ'),
                 (Token.Literal.Number, '1'),
-                (Token.Keyword.Declaration, 'И'),
+                (Token.Operator.Word, 'И'),
                 (Token.Literal.Number, '5'),
-                (Token.Keyword.Declaration, 'И'),
+                (Token.Operator.Word, 'И'),
                 (Token.Name.Variable, 'Поле'),
-                (Token.Keyword.Declaration, 'ПОДОБНО'),
+                (Token.Operator.Word, 'ПОДОБНО'),
                 (Token.Literal.String, '"'),
                 (Token.Literal.String, '%стр%'),
                 (Token.Literal.String, '"'),
-                (Token.Keyword.Declaration, 'И'),
+                (Token.Operator.Word, 'И'),
                 (Token.Name.Variable, 'Поле'),
-                (Token.Keyword.Declaration, 'В'),
-                (Token.Keyword.Declaration, 'ИЕРАРХИИ'),
+                (Token.Operator.Word, 'В'),
+                (Token.Operator.Word, 'ИЕРАРХИИ'),
                 (Token.Name.Variable, 'ДругаяТаблица'),
-                (Token.Keyword.Declaration, 'И'),
+                (Token.Operator.Word, 'И'),
                 (Token.Name.Variable, 'Поле'),
-                (Token.Keyword.Declaration, 'В'),
+                (Token.Operator.Word, 'В'),
                 (Token.Punctuation, '('),
                 (Token.Literal.Number, '1'),
                 (Token.Punctuation, ','),
@@ -2790,17 +3519,17 @@ INDEX BY SETS Table
                 (Token.Punctuation, ','),
                 (Token.Literal.Number, '3'),
                 (Token.Punctuation, ')'),
-                (Token.Keyword.Declaration, 'И'),
+                (Token.Operator.Word, 'И'),
                 (Token.Name.Variable, 'Поле'),
                 (Token.Operator, '='),
                 (Token.Keyword.Constant, 'NULL'),
-                (Token.Keyword.Declaration, 'И'),
+                (Token.Operator.Word, 'И'),
                 (Token.Name.Variable, 'Поле'),
-                (Token.Keyword.Declaration, 'ЕСТЬ'),
+                (Token.Operator.Word, 'ЕСТЬ'),
                 (Token.Keyword.Constant, 'NULL'),
-                (Token.Keyword.Declaration, 'И'),
+                (Token.Operator.Word, 'И'),
                 (Token.Name.Variable, 'Поле'),
-                (Token.Keyword.Declaration, 'ССЫЛКА'),
+                (Token.Name.Variable, 'ССЫЛКА'),
                 (Token.Name.Namespace, 'Справочник'),
                 (Token.Operator, '.'),
                 (Token.Name.Class, 'Номенклатура'),
@@ -2925,7 +3654,7 @@ INDEX BY SETS Table
                 (Token.Punctuation, '('),
                 (Token.Name.Variable, 'Поле'),
                 (Token.Keyword.Declaration, 'КАК'),
-                (Token.Keyword.Declaration, 'ЧИСЛО'),
+                (Token.Name.Class, 'ЧИСЛО'),
                 (Token.Punctuation, '('),
                 (Token.Literal.Number, '10'),
                 (Token.Punctuation, ','),
@@ -2953,7 +3682,7 @@ INDEX BY SETS Table
                 (Token.Name.Variable, 'Номенклатура'),
                 (Token.Operator, '.'),
                 (Token.Name.Variable, 'Наименование'),
-                (Token.Keyword.Declaration, 'ПОДОБНО'),
+                (Token.Operator.Word, 'ПОДОБНО'),
                 (Token.Literal.String.Interpol, '&Шаблон'),
                 (Token.Keyword.Declaration, 'СПЕЦСИМВОЛ'),
                 (Token.Literal.String, '"'),
@@ -2986,5 +3715,96 @@ INDEX BY SETS Table
                 (Token.Name.Variable, 'Контрагент'),
                 (Token.Keyword.Declaration, 'КАК'),
                 (Token.Name.Variable, 'Контрагент'),
+            ],
+        )
+
+    def test_sdbl_pipe_comment_with_quotes(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+|// Закомметированная строка внутри запроса с кавычками ""ТЕКСТ""
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Generic.Error, '|'),
+                (Token.Comment.Single, '// Закомметированная строка внутри запроса с кавычками ""ТЕКСТ""'),
+            ],
+        )
+
+    def test_sdbl_query_string_pipe_comment_with_quotes(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+ТекстЗапроса =
+    "ВЫБРАТЬ
+    |// Закомметированная строка внутри запроса с кавычками ""ТЕКСТ""
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'ТекстЗапроса'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Literal.String, '|'),
+                (Token.Comment.Single, '// Закомметированная строка внутри запроса с кавычками ""ТЕКСТ""'),
+            ],
+        )
+
+    def test_sdbl_query_string_pipe_comment_with_autoselect(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+ТекстЗапроса =
+    "ВЫБРАТЬ
+ |//АВТОУПОРЯДОЧИВАНИЕ";
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'ТекстЗапроса'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Literal.String, '|'),
+                (Token.Comment.Single, '//АВТОУПОРЯДОЧИВАНИЕ'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_sdbl_query_string_double_slash_literal(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+ТекстЗапроса =
+"ВЫБРАТЬ
+| Поле
+//|//АВТОУПОРЯДОЧИВАНИЕ";
+|//АВТОУПОРЯДОЧИВАНИЕ";
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'ТекстЗапроса'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Literal.String, '|'),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Comment.Single, '//|//АВТОУПОРЯДОЧИВАНИЕ";'),
+                (Token.Literal.String, '|'),
+                (Token.Comment.Single, '//АВТОУПОРЯДОЧИВАНИЕ'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ';'),
             ],
         )

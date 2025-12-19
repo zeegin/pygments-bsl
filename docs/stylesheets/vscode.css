@@ -1,0 +1,33 @@
+:root > * {
+    --md-code-font-family: "JetBrains Mono", "Roboto Mono", SFMono-Regular, Consolas, Menlo, monospace
+}
+
+[data-md-color-scheme="default"] {
+    --md-code-hl-comment-color: #008000;
+    --md-code-hl-variable-color: #001080;
+    --md-code-hl-string-color: #a31515;
+    --md-code-hl-number-color: #098658;
+    --md-code-hl-constant-color: #0070c1;
+    --md-code-hl-function-color: #795e26;
+    --md-code-hl-keyword-color: #0000ff;
+    --md-code-hl-operator-color: #000000;
+    --md-code-hl-punctuation-color: #000000;
+    --md-code-hl-name-color: #267f99;
+    --md-code-hl-special-color: #af00db;
+    --md-code-hl-generic-color: #000000;
+}
+
+[data-md-color-scheme="slate"] {
+    --md-code-hl-comment-color: #6a9955;
+    --md-code-hl-variable-color: #9cdcfe;
+    --md-code-hl-string-color: #ce9178;
+    --md-code-hl-number-color: #b5cea8;
+    --md-code-hl-constant-color: #4fc1ff;
+    --md-code-hl-function-color: #dcdcaa;
+    --md-code-hl-keyword-color: #569cd6;
+    --md-code-hl-operator-color: #d4d4d4;
+    --md-code-hl-punctuation-color: #d4d4d4;
+    --md-code-hl-name-color: #4ec9b0;
+    --md-code-hl-special-color: #c586c0;
+    --md-code-hl-generic-color: #d4d4d4;
+}

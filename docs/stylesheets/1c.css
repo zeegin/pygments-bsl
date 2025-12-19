@@ -1,0 +1,139 @@
+:root > * {
+    --md-code-font-family: "JetBrains Mono", "Roboto Mono", SFMono-Regular, Consolas, Menlo, monospace
+}
+
+[data-md-color-scheme="default"] {
+    --md-code-bg-color: #ffffff;
+    --md-code-fg-color: #000000;
+    --md-code-hl-comment-color: rgb(0, 128, 0);
+    --md-code-hl-variable-color: rgb(0, 0, 255);
+    --md-code-hl-string-color: #000000;
+    --md-code-hl-number-color: #000000;
+    --md-code-hl-constant-color: #000000;
+    --md-code-hl-function-color: rgb(0, 0, 255);
+    --md-code-hl-keyword-color: rgb(255, 0, 0);
+    --md-code-hl-operator-color: rgb(255, 0, 0);
+    --md-code-hl-punctuation-color: rgb(255, 0, 0);
+    --md-code-hl-name-color: rgb(0, 0, 255);
+    --md-code-hl-special-color: rgb(150, 50, 0);
+    --md-code-hl-generic-color: #000000;
+}
+
+[data-md-color-scheme="slate"] {
+    --md-code-bg-color: #ffffff;
+    --md-code-fg-color: #000000;
+    --md-code-hl-comment-color: rgb(0, 128, 0);
+    --md-code-hl-variable-color: rgb(0, 0, 255);
+    --md-code-hl-string-color: #000000;
+    --md-code-hl-number-color: #000000;
+    --md-code-hl-constant-color: #000000;
+    --md-code-hl-function-color: rgb(0, 0, 255);
+    --md-code-hl-keyword-color: rgb(255, 0, 0);
+    --md-code-hl-operator-color: rgb(255, 0, 0);
+    --md-code-hl-punctuation-color: rgb(255, 0, 0);
+    --md-code-hl-name-color: rgb(0, 0, 255);
+    --md-code-hl-special-color: rgb(150, 50, 0);
+    --md-code-hl-generic-color: #000000;
+}
+
+[data-md-color-scheme="default"] .language-bsl .nd,
+[data-md-color-scheme="slate"] .language-bsl .nd,
+[data-md-color-scheme="default"] .language-bsl .cp,
+[data-md-color-scheme="slate"] .language-bsl .cp,
+[data-md-color-scheme="default"] .language-bsl .nl,
+[data-md-color-scheme="slate"] .language-bsl .nl {
+    color: rgb(150, 50, 0);
+}
+
+[data-md-color-scheme="default"] .highlight .gr,
+[data-md-color-scheme="slate"] .highlight .gr {
+    background-color: rgba(255, 0, 0, 0.2);
+    color: rgb(200, 0, 0);
+    text-decoration: underline wavy rgb(200, 0, 0);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+
+[data-md-color-scheme="default"] .language-sdbl .c1,
+[data-md-color-scheme="slate"] .language-sdbl .c1 {
+    color: rgb(0, 128, 0);
+}
+
+[data-md-color-scheme="default"] .language-sdbl .k,
+[data-md-color-scheme="default"] .language-sdbl .kd,
+[data-md-color-scheme="default"] .language-sdbl .kc,
+[data-md-color-scheme="slate"] .language-sdbl .k,
+[data-md-color-scheme="slate"] .language-sdbl .kd,
+[data-md-color-scheme="slate"] .language-sdbl .kc {
+    color: rgb(0, 0, 255);
+}
+
+[data-md-color-scheme="default"] .language-sdbl .kp,
+[data-md-color-scheme="slate"] .language-sdbl .kp {
+    color: rgb(150, 50, 0);
+}
+
+[data-md-color-scheme="default"] .language-sdbl .ow,
+[data-md-color-scheme="slate"] .language-sdbl .ow {
+    color: rgb(150, 50, 0);
+}
+
+[data-md-color-scheme="default"] .language-sdbl .kd,
+[data-md-color-scheme="slate"] .language-sdbl .kd {
+    color: rgb(0, 0, 255);
+}
+
+[data-md-color-scheme="default"] .language-sdbl .kc,
+[data-md-color-scheme="slate"] .language-sdbl .kc {
+    color: rgb(255, 0, 0);
+}
+
+[data-md-color-scheme="default"] .language-sdbl .si,
+[data-md-color-scheme="slate"] .language-sdbl .si,
+[data-md-color-scheme="default"] .language-bsl .si,
+[data-md-color-scheme="slate"] .language-bsl .si {
+    color: rgb(51, 129, 128);
+}
+
+[data-md-color-scheme="default"] .language-sdbl .n,
+[data-md-color-scheme="default"] .language-sdbl .nc,
+[data-md-color-scheme="default"] .language-sdbl .nf,
+[data-md-color-scheme="default"] .language-sdbl .nn,
+[data-md-color-scheme="default"] .language-sdbl .nv,
+[data-md-color-scheme="slate"] .language-sdbl .n,
+[data-md-color-scheme="slate"] .language-sdbl .nc,
+[data-md-color-scheme="slate"] .language-sdbl .nf,
+[data-md-color-scheme="slate"] .language-sdbl .nn,
+[data-md-color-scheme="slate"] .language-sdbl .nv {
+    color: rgb(0, 0, 0);
+}
+
+[data-md-color-scheme="default"] .language-bsl .nb,
+[data-md-color-scheme="slate"] .language-bsl .nb {
+    color: rgb(0, 0, 255);
+}
+
+[data-md-color-scheme="default"] .language-sdbl .nb,
+[data-md-color-scheme="slate"] .language-sdbl .nb {
+    color: rgb(150, 50, 0);
+}
+
+[data-md-color-scheme="default"] .language-sdbl .m,
+[data-md-color-scheme="slate"] .language-sdbl .m {
+    color: rgb(255, 0, 255);
+}
+
+[data-md-color-scheme="default"] .language-sdbl .p,
+[data-md-color-scheme="slate"] .language-sdbl .p {
+    color: rgb(0, 0, 255);
+}
+
+[data-md-color-scheme="default"] .language-sdbl .o,
+[data-md-color-scheme="slate"] .language-sdbl .o {
+    color: rgb(0, 0, 255);
+}
+
+[data-md-color-scheme="default"] .language-sdbl .s,
+[data-md-color-scheme="slate"] .language-sdbl .s {
+    color: rgb(255, 0, 0);
+}

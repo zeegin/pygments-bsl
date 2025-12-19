@@ -14,6 +14,7 @@ from .generated_data import (
 PREFIX_NO_DOT = r'(?<!\.)'
 SUFFIX_WORD = r'\b'
 SUFFIX_CALL = r'(?=(\s?[\(]))'
+IDENT = r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
 
 def words_no_dot(items, suffix):
     """Helper to reduce repeated prefixes."""
@@ -102,6 +103,51 @@ class BslLexer(RegexLexer):
         '=','<=','>=','<>','<','>','+','-','*','/','%','.'
     ))
 
+    METADATA_ROOT = r'(?:' + '|'.join([
+        'WebСервисы',
+        'WSСсылки',
+        'БизнесПроцессы',
+        'ГруппыКоманд',
+        'Документы',
+        'ЖурналыДокументов',
+        'Задачи',
+        'Интерфейсы',
+        'Константы',
+        'КритерииОтбора',
+        'НумераторыДокументов',
+        'Обработки',
+        'ОбщиеКартинки',
+        'ОбщиеКоманды',
+        'ОбщиеМакеты',
+        'ОбщиеМодули',
+        'ОбщиеФормы',
+        'Отчеты',
+        'ПакетыXDTO',
+        'ПараметрыСеанса',
+        'ПараметрыФункциональныхОпций',
+        'Перечисления',
+        'ПланыВидовРасчета',
+        'ПланыВидовХарактеристик',
+        'ПланыОбмена',
+        'ПланыСчетов',
+        'ПодпискиНаСобытия',
+        'Последовательности',
+        'РегистрыБухгалтерии',
+        'РегистрыНакопления',
+        'РегистрыРасчета',
+        'РегистрыСведений',
+        'РегламентныеЗадания',
+        'Роли',
+        'Справочники',
+        'Стили',
+        'ФункциональныеОпции',
+        'ХранилищаНастроек',
+        'ЭлементыСтиля',
+        'Языки',
+        # preserve existing english alias
+        'Catalogs',
+    ]) + r')'
+
     # see https://pygments.org/docs/tokens
     tokens = {
         'root': [
@@ -118,6 +164,7 @@ class BslLexer(RegexLexer):
             (r'(&[\wа-яё_][\wа-яё0-9_]*)\s*(\()', bygroups(Token.Name.Decorator, Token.Punctuation), 'decorator_params'),
             (r'(Новый|New)(\s+)(' + TYPE_NAME_PATTERN + r')\b',
              bygroups(Token.Keyword, Token.Text, Token.Name.Class)),
+            (rf'({METADATA_ROOT})(\.)({IDENT})(\.)', bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class, Token.Operator)),
             (r'[\[\]:(),;]', Token.Punctuation),
             (r'\&.*$', Token.Name.Decorator),
             (r'\b(Процедура|Функция|Procedure|Function)\b(\s+)([\wа-яё_][\wа-яё0-9_]*)\s*(\()',
@@ -319,6 +366,10 @@ class SdblLexer(RegexLexer):
         'НЕОПРЕДЕЛЕНО','UNDEFINED','Истина','True','Ложь','False','NULL'
     ), prefix='(?<!\.)', suffix=r'\b')
 
+    IDENT = r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+    METADATA_ROOT = r'(?:РегистрСведений|РегистрНакопления|Документ|ЖурналДокументов|ВнешнийИсточникДанных|Константа|Перечисление|ПланВидовРасчета|ПланВидовХарактеристик|ПланОбмена|ПланСчетов|БизнесПроцесс|БизнесПроцессы|КритерийОтбора|Справочник|Catalog|ExternalDataSource|Constant|Enum|ChartOfCalculationTypes|ChartOfCharacteristicTypes|ExchangePlan|ChartOfAccounts|BusinessProcess|BusinessProcesses)'
+    BAD_SEGMENT = r'[^\s\.,;\(\)]+'
+
     FUNCTION_CALL = words((
         'ГОД','YEAR',
         'ДАТАВРЕМЯ','DATETIME',
@@ -343,6 +394,12 @@ class SdblLexer(RegexLexer):
         'ЕСТЬNULL','ISNULL','СГРУППИРОВАНОПО','GROUPEDBY','РАЗМЕРХРАНИМЫХДАННЫХ','УНИКАЛЬНЫЙИДЕНТИФИКАТОР','UUID',
     ), prefix='(?<!\.)', suffix=r'(?=(\s?[\(]))')
 
+    NAME_CLASS = words(
+        tuple(dict.fromkeys(GLOBAL_PROPERTY_NAMES + ('РегистрСведений',))),
+        prefix='(?<!\.)',
+        suffix=r'\b'
+    )
+
     OPERATORS = r'(<=|>=|<>|=|<|>|\+|-|\*|\/|\.)'
 
     tokens = {
@@ -352,10 +409,31 @@ class SdblLexer(RegexLexer):
             (r'\/\/.*?(?=\n)', Token.Comment.Single),
             (r'\|', Token.Generic.Error),
             (r'(&[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)', Token.Name.Constant),
+            (r'(\.)([!#][^\s\.,;\(\)]+)', bygroups(Token.Operator, Token.Generic.Error)),
+            (rf'({METADATA_ROOT})(\.)(?!{IDENT})({BAD_SEGMENT})', bygroups(Token.Name.Namespace, Token.Operator, Token.Generic.Error)),
+            (rf'({METADATA_ROOT})(\.)({IDENT})(\.)(?!{IDENT})({BAD_SEGMENT})', bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class, Token.Operator, Token.Generic.Error)),
             (OPERATORS, Token.Operator),
-            (r'(?<=\.)[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*', Token.Name.Variable),
+            (rf'({METADATA_ROOT})(\.)({IDENT})(\.)({IDENT})(\.)({IDENT})(\.)({IDENT})(\.)({IDENT})',
+             bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class)),
+            (rf'({METADATA_ROOT})(\.)({IDENT})(\.)({IDENT})(\.)({IDENT})(\.)({IDENT})',
+             bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class)),
+            (rf'({METADATA_ROOT})(\.)({IDENT})(\.)({IDENT})(\.)({IDENT})',
+             bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class)),
+            (rf'(РегистрСведений)(\.)({IDENT})(\.)({IDENT})(?=\s*\(\s*[^\s\)])',
+             bygroups(Token.Name.Class, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Function)),
+            (rf'({METADATA_ROOT})(\.)({IDENT})(\.)({IDENT})(?=\s*\()',
+             bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Function)),
+            (rf'({METADATA_ROOT})(\.)({IDENT})(\.)({IDENT})(?!\s*\()',
+             bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class, Token.Operator, Token.Name.Class)),
+            (rf'({METADATA_ROOT})(\.)({IDENT})(?!\s*\()',
+             bygroups(Token.Name.Namespace, Token.Operator, Token.Name.Class)),
+            (r'(КАК)(\s+)(?!(?i:(?:ЧИСЛО|NUMBER|ИЗМЕНЕНИЯ|UPDATE))(?=\s|,|\(|\)|\n|$))([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)',
+             bygroups(Token.Keyword.Declaration, Token.Text, Token.Name.Variable)),
+            (rf'(?<=\.)(?:{IDENT})(?=\s*\()', Token.Name.Function),
+            (rf'(?<=\.)(?:{IDENT})', Token.Name.Variable),
             (r'[\[\]:(),;]', Token.Punctuation),
             (FUNCTION_CALL, Token.Name.Builtin),
+            (NAME_CLASS, Token.Name.Class),
             (r'(?-i:ССЫЛКА|REFS)\b', Token.Keyword.Declaration),
             (KEYWORD_DECLARATION, Token.Keyword.Declaration),
             (KEYWORD_CONSTANT, Token.Keyword.Constant),

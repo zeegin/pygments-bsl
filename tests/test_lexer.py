@@ -437,6 +437,84 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
             ],
         )
 
+    def test_method_description_example8_excerpt(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        source = '''
+// Параметры:
+//   Входной - Структура - настройки (дополнительные свойства) отчета, хранящиеся в данных формы:
+Процедура ПриСозданииНаСервере(Форма, Отказ, СтандартнаяОбработка) Экспорт
+    // Обработка события.
+КонецПроцедуры
+        '''
+
+        tokens = lexer.get_tokens(source)
+        filtered = filter_tokens(tokens)
+
+        expected_prefix = [
+            (Token.Comment.Single, '// Параметры:'),
+            (Token.Comment.Single, '//   Входной - Структура - настройки (дополнительные свойства) отчета, хранящиеся в данных формы:'),
+            (Token.Keyword, 'Процедура'),
+            (Token.Name.Function, 'ПриСозданииНаСервере'),
+            (Token.Punctuation, '('),
+            (Token.Name.Variable, 'Форма'),
+            (Token.Punctuation, ','),
+            (Token.Name.Variable, 'Отказ'),
+            (Token.Punctuation, ','),
+            (Token.Name.Variable, 'СтандартнаяОбработка'),
+            (Token.Punctuation, ')'),
+            (Token.Keyword, 'Экспорт'),
+            (Token.Comment.Single, '// Обработка события.'),
+            (Token.Keyword, 'КонецПроцедуры'),
+        ]
+
+        self.assertEqual(filtered[:len(expected_prefix)], expected_prefix)
+
+    def test_method_description_example2_comments(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        source = '''
+// Инициализирует структуру параметров для взаимодействия с файловой системой.
+//
+// Параметры:
+//  РежимДиалога - РежимДиалогаВыбораФайла - режим работы конструируемого диалога выбора файлов.
+//
+// Возвращаемое значение:
+//   см. ФайловаяСистемаКлиент.ПараметрыЗагрузкиФайла
+        '''
+        tokens = lexer.get_tokens(source)
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// Инициализирует структуру параметров для взаимодействия с файловой системой.'),
+                (Token.Comment.Single, '//'),
+                (Token.Comment.Single, '// Параметры:'),
+                (Token.Comment.Single, '//  РежимДиалога - РежимДиалогаВыбораФайла - режим работы конструируемого диалога выбора файлов.'),
+                (Token.Comment.Single, '//'),
+                (Token.Comment.Single, '// Возвращаемое значение:'),
+                (Token.Comment.Single, '//   см. ФайловаяСистемаКлиент.ПараметрыЗагрузкиФайла'),
+            ],
+        )
+
+    def test_method_description_example3_param_block(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        source = '''
+// В возвращаемом значении очищаются ссылки на несуществующий объект в базе данных, а именно
+// - возвращаемая ссылка заменяется на указанное значение по умолчанию;
+// - из данных типа Массив ссылки удаляются;
+// - у данных типа Структура и Соответствие ключ не меняется, а значение устанавливается Неопределено;
+// - анализ значений в данных типа Массив, Структура, Соответствие выполняется рекурсивно.
+        '''
+        tokens = lexer.get_tokens(source)
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Comment.Single, '// В возвращаемом значении очищаются ссылки на несуществующий объект в базе данных, а именно'),
+                (Token.Comment.Single, '// - возвращаемая ссылка заменяется на указанное значение по умолчанию;'),
+                (Token.Comment.Single, '// - из данных типа Массив ссылки удаляются;'),
+                (Token.Comment.Single, '// - у данных типа Структура и Соответствие ключ не меняется, а значение устанавливается Неопределено;'),
+                (Token.Comment.Single, '// - анализ значений в данных типа Массив, Структура, Соответствие выполняется рекурсивно.'),
+            ],
+        )
+
     def test_lexing_procedure_declaration_with_param(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
@@ -1042,9 +1120,9 @@ RECORDAUTONUMBER FOR UPDATE TOTALS BY INDEX BY GROUP BY JOIN ON ORDER BY REFPRES
         self.assertEqual(
             filter_tokens(tokens),
             [
-                (Token.Name.Class, 'Справочники'),
+                (Token.Name.Namespace, 'Справочники'),
                 (Token.Operator, '.'),
-                (Token.Name.Variable, 'ИмяСправочника'),
+                (Token.Name.Class, 'ИмяСправочника'),
                 (Token.Operator, '.'),
                 (Token.Name.Function, 'СоздатьЭлемент'),
                 (Token.Punctuation, '('),
@@ -1774,7 +1852,7 @@ INDEX BY SETS Table
                 (Token.Name.Variable, 'Сумма'),
                 (Token.Punctuation, ')'),
                 (Token.Keyword.Declaration, 'КАК'),
-                (Token.Keyword.Declaration, 'Сумма'),
+                (Token.Name.Variable, 'Сумма'),
                 (Token.Punctuation, ','),
                 (Token.Name.Builtin, 'СРЕДНЕЕ'),
                 (Token.Punctuation, '('),
@@ -1783,7 +1861,7 @@ INDEX BY SETS Table
                 (Token.Name.Variable, 'Сумма'),
                 (Token.Punctuation, ')'),
                 (Token.Keyword.Declaration, 'КАК'),
-                (Token.Keyword.Declaration, 'Среднее'),
+                (Token.Name.Variable, 'Среднее'),
                 (Token.Punctuation, ','),
                 (Token.Name.Builtin, 'МАКСИМУМ'),
                 (Token.Punctuation, '('),
@@ -1792,7 +1870,7 @@ INDEX BY SETS Table
                 (Token.Name.Variable, 'Сумма'),
                 (Token.Punctuation, ')'),
                 (Token.Keyword.Declaration, 'КАК'),
-                (Token.Keyword.Declaration, 'Максимум'),
+                (Token.Name.Variable, 'Максимум'),
                 (Token.Punctuation, ','),
                 (Token.Name.Builtin, 'МИНИМУМ'),
                 (Token.Punctuation, '('),
@@ -1801,7 +1879,7 @@ INDEX BY SETS Table
                 (Token.Name.Variable, 'Сумма'),
                 (Token.Punctuation, ')'),
                 (Token.Keyword.Declaration, 'КАК'),
-                (Token.Keyword.Declaration, 'Минимум'),
+                (Token.Name.Variable, 'Минимум'),
                 (Token.Punctuation, ','),
                 (Token.Name.Builtin, 'КОЛИЧЕСТВО'),
                 (Token.Punctuation, '('),
@@ -1829,11 +1907,11 @@ INDEX BY SETS Table
                 (Token.Keyword.Declaration, 'КАК'),
                 (Token.Name.Variable, 'КоличВсе'),
                 (Token.Keyword.Declaration, 'ИЗ'),
-                (Token.Name.Variable, 'Документ'),
+                (Token.Name.Namespace, 'Документ'),
                 (Token.Operator, '.'),
-                (Token.Name.Variable, 'РасходнаяНакладная'),
+                (Token.Name.Class, 'РасходнаяНакладная'),
                 (Token.Operator, '.'),
-                (Token.Name.Variable, 'Состав'),
+                (Token.Name.Class, 'Состав'),
                 (Token.Keyword.Declaration, 'КАК'),
                 (Token.Name.Variable, 'Накладная'),
                 (Token.Keyword.Declaration, 'СГРУППИРОВАТЬ ПО'),
@@ -1842,6 +1920,169 @@ INDEX BY SETS Table
                 (Token.Name.Variable, 'Номенклатура'),
                 (Token.Keyword.Declaration, 'ИТОГИ'),
                 (Token.Keyword.Declaration, 'ОБЩИЕ'),
+            ],
+        )
+
+    def test_sdbl_external_datasource_dimension_table(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+ВЫБРАТЬ * 
+ИЗ ВнешнийИсточникДанных.MyDS.Куб.MyCube.ТаблицаИзмерения.MyTable
+ИЗ ExternalDataSource.MyDS.Cube.MyCube.DimensionTable.MyTable
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Operator, '*'),
+                (Token.Keyword.Declaration, 'ИЗ'),
+                (Token.Name.Namespace, 'ВнешнийИсточникДанных'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'MyDS'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Куб'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'MyCube'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'ТаблицаИзмерения'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'MyTable'),
+                (Token.Keyword.Declaration, 'ИЗ'),
+                (Token.Name.Namespace, 'ExternalDataSource'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'MyDS'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Cube'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'MyCube'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'DimensionTable'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'MyTable'),
+            ],
+        )
+
+    def test_sdbl_external_datasource_invalid_segments(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+ВЫБРАТЬ * 
+ИЗ ВнешнийИсточникДанных.123.Куб.!bad.ТаблицаИзмерения.#badTable
+ИЗ ExternalDataSource.123.Cube.!bad.DimensionTable.#badTable
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Operator, '*'),
+                (Token.Keyword.Declaration, 'ИЗ'),
+                (Token.Name.Namespace, 'ВнешнийИсточникДанных'),
+                (Token.Operator, '.'),
+                (Token.Generic.Error, '123'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Куб'),
+                (Token.Operator, '.'),
+                (Token.Generic.Error, '!bad'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'ТаблицаИзмерения'),
+                (Token.Operator, '.'),
+                (Token.Generic.Error, '#badTable'),
+                (Token.Keyword.Declaration, 'ИЗ'),
+                (Token.Name.Namespace, 'ExternalDataSource'),
+                (Token.Operator, '.'),
+                (Token.Generic.Error, '123'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Cube'),
+                (Token.Operator, '.'),
+                (Token.Generic.Error, '!bad'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'DimensionTable'),
+                (Token.Operator, '.'),
+                (Token.Generic.Error, '#badTable'),
+            ],
+        )
+
+    def test_sdbl_simple_catalog(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens('ВЫБРАТЬ * ИЗ Справочник.Номенклатура')
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Operator, '*'),
+                (Token.Keyword.Declaration, 'ИЗ'),
+                (Token.Name.Namespace, 'Справочник'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Номенклатура'),
+            ],
+        )
+
+    def test_sdbl_register_slice_first(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+ВЫБРАТЬ * ИЗ РегистрСведений.КурсВал.СрезПервых(&ПараметрДата, 
+    Валюта = &ПараметрВалюта)
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Operator, '*'),
+                (Token.Keyword.Declaration, 'ИЗ'),
+                (Token.Name.Class, 'РегистрСведений'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'КурсВал'),
+                (Token.Operator, '.'),
+                (Token.Name.Function, 'СрезПервых'),
+                (Token.Punctuation, '('),
+                (Token.Name.Constant, '&ПараметрДата'),
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'Валюта'),
+                (Token.Operator, '='),
+                (Token.Name.Constant, '&ПараметрВалюта'),
+                (Token.Punctuation, ')'),
+            ],
+        )
+
+    def test_sdbl_accumulation_register_query(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+ВЫБРАТЬ * ИЗ РегистрНакопления.УчетНоменклатуры.ОстаткиИОбороты(&НачПериода, 
+    &КонПериода, , Склад = &ПараметрСклад)
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Operator, '*'),
+                (Token.Keyword.Declaration, 'ИЗ'),
+                (Token.Name.Namespace, 'РегистрНакопления'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'УчетНоменклатуры'),
+                (Token.Operator, '.'),
+                (Token.Name.Function, 'ОстаткиИОбороты'),
+                (Token.Punctuation, '('),
+                (Token.Name.Constant, '&НачПериода'),
+                (Token.Punctuation, ','),
+                (Token.Name.Constant, '&КонПериода'),
+                (Token.Punctuation, ','),
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'Склад'),
+                (Token.Operator, '='),
+                (Token.Name.Constant, '&ПараметрСклад'),
+                (Token.Punctuation, ')'),
             ],
         )
 
@@ -1936,9 +2177,79 @@ INDEX BY SETS Table
                 (Token.Keyword.Declaration, 'И'),
                 (Token.Name.Variable, 'Поле'),
                 (Token.Keyword.Declaration, 'ССЫЛКА'),
-                (Token.Name.Variable, 'Справочник'),
+                (Token.Name.Namespace, 'Справочник'),
                 (Token.Operator, '.'),
-                (Token.Name.Variable, 'Номенклатура'),
+                (Token.Name.Class, 'Номенклатура'),
+            ],
+        )
+
+    def test_sdbl_select03_sample(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens(
+            '''
+ВЫБРАТЬ
+    Изменения.ВидСогласования,
+    Изменения.КоличествоЧасовСогласования,
+    Изменения.КоличествоДнейСогласования,
+    ТИПЗНАЧЕНИЯ(Изменения.ПустаяСсылка) КАК ТипСсылки
+ПОМЕСТИТЬ ВТСрокиСогласования
+ИЗ
+    РегистрСведений.успСрокиСогласования КАК Изменения
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Keyword.Declaration, 'Изменения'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'ВидСогласования'),
+                (Token.Punctuation, ','),
+                (Token.Keyword.Declaration, 'Изменения'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'КоличествоЧасовСогласования'),
+                (Token.Punctuation, ','),
+                (Token.Keyword.Declaration, 'Изменения'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'КоличествоДнейСогласования'),
+                (Token.Punctuation, ','),
+                (Token.Name.Builtin, 'ТИПЗНАЧЕНИЯ'),
+                (Token.Punctuation, '('),
+                (Token.Keyword.Declaration, 'Изменения'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'ПустаяСсылка'),
+                (Token.Punctuation, ')'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Name.Variable, 'ТипСсылки'),
+                (Token.Keyword.Declaration, 'ПОМЕСТИТЬ'),
+                (Token.Name.Variable, 'ВТСрокиСогласования'),
+                (Token.Keyword.Declaration, 'ИЗ'),
+                (Token.Name.Namespace, 'РегистрСведений'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'успСрокиСогласования'),
+                (Token.Keyword.Declaration, 'КАК'),
+                (Token.Keyword.Declaration, 'Изменения'),
+            ],
+        )
+
+    def test_sdbl_class_name_is_class(self):
+        lexer = lexers.get_lexer_by_name('sdbl')
+        tokens = lexer.get_tokens('ВЫБРАТЬ * ИЗ РегистрСведений.КурсВал.СрезПервых()')
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Operator, '*'),
+                (Token.Keyword.Declaration, 'ИЗ'),
+                (Token.Name.Namespace, 'РегистрСведений'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'КурсВал'),
+                (Token.Operator, '.'),
+                (Token.Name.Function, 'СрезПервых'),
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
             ],
         )
 

@@ -1671,6 +1671,90 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Punctuation, '('),
                 (Token.Literal.String, '"'),
                 (Token.Generic.Error, "ru = Русский' en = 'English';"),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_nstr_locale_missing_quote_after_key(self):
+        self.assertTokens(
+            '''
+            НСтр("ru = Русский'" en = 'English';");
+            ''',
+            [
+                (Token.Name.Builtin, 'НСтр'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Generic.Error, "ru = Русский'"),
+                (Token.Literal.String, '"'),
+                (Token.Name.Variable, 'en'),
+                (Token.Operator, '='),
+                (Token.Literal.Date, "'English'"),
+                (Token.Punctuation, ';'),
+                (Token.Literal.String, '"'),
+                (Token.Generic.Error, ');'),
+            ],
+        )
+
+    def test_lexing_nstr_locale_multiline_many_locales(self):
+        self.assertTokens(
+            '''
+            НСтр("ru = 'Русский';
+                 |en = 'English';
+                 |de = 'Deutsch';
+                 |fr = 'Français';
+                 |es = 'Español'"
+            );
+            ''',
+            [
+                (Token.Name.Builtin, 'НСтр'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Name.Attribute, 'ru'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "Русский"),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Operator, ';'),
+                (Token.Literal.String, '|'),
+                (Token.Name.Attribute, 'en'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "English"),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Operator, ';'),
+                (Token.Literal.String, '|'),
+                (Token.Name.Attribute, 'de'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "Deutsch"),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Operator, ';'),
+                (Token.Literal.String, '|'),
+                (Token.Name.Attribute, 'fr'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "Français"),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Operator, ';'),
+                (Token.Literal.String, '|'),
+                (Token.Name.Attribute, 'es'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "Español"),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, '"'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
             ],
@@ -1681,6 +1765,7 @@ class BslLexerTestCase(LexerTestCase):
         tokens = lexer.get_tokens(
             '''
             НСтр("ru = 'Русский'" en = 'English';");
+            Ключ = Истина;
             '''
         )
 
@@ -1699,6 +1784,10 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Literal.String.Escape, "\'"),
                 (Token.Literal.String, '"'),
                 (Token.Generic.Error, " en = 'English';\");"),
+                (Token.Name.Variable, 'Ключ'),
+                (Token.Operator, '='),
+                (Token.Keyword.Constant, 'Истина'),
+                (Token.Punctuation, ';')
             ],
         )
 
@@ -1862,6 +1951,47 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Literal.String, '"'),
                 (Token.Literal.String, 'Some selected text'),
                 (Token.Literal.String, '"'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_unterminated_string_before_code(self):
+        self.assertTokens(
+            '''
+            Строка =
+                "Пример
+            Ключ = Истина;
+            ''',
+            [
+                (Token.Name.Variable, 'Строка'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"'),
+                (Token.Generic.Error, 'Пример'),
+                (Token.Name.Variable, 'Ключ'),
+                (Token.Operator, '='),
+                (Token.Keyword.Constant, 'Истина'),
+                (Token.Punctuation, ';')
+            ],
+        )
+
+    def test_lexing_unterminated_multiline_string_with_pipe_before_code(self):
+        self.assertTokens(
+            '''
+            Строка =
+                "Пример
+                |Не закрытая вторая строка
+            Ключ = Истина;
+            ''',
+            [
+                (Token.Name.Variable, 'Строка'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Пример'),
+                (Token.Literal.String, '|'),
+                (Token.Generic.Error, 'Не закрытая вторая строка'),
+                (Token.Name.Variable, 'Ключ'),
+                (Token.Operator, '='),
+                (Token.Keyword.Constant, 'Истина'),
                 (Token.Punctuation, ';'),
             ],
         )

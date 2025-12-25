@@ -176,11 +176,11 @@ def _locale_single_quote_callback(lexer, match):
         content = match.group(1)
         start = match.start(1)
         pos = 0
-        for item in re.finditer(r'%\d|%%|%[A-Za-zА-Яа-яЁё_]', content):
+        for item in re.finditer(r'""|%\d|%%|%[A-Za-zА-Яа-яЁё_]', content):
             if item.start() > pos:
                 yield start + pos, Token.String, content[pos:item.start()]
             token = Token.String.Interpol
-            if item.group(0) == '%%':
+            if item.group(0) in ('""', '%%'):
                 token = Token.String.Escape
             elif re.match(r'%[A-Za-zА-Яа-яЁё_]', item.group(0)):
                 token = Token.Generic.Error
@@ -395,7 +395,7 @@ class BslLexer(RegexLexer):
     )
     LOCALE_KEY_PATTERN = r'[a-z]{2,3}'
     _ODD_LOCALE_QUOTES_LOOKAHEAD = (
-        r'(?=(?:[^\n\']*\'[^\n\']*\')*[^\n\']*\'[^\n\']*(?=\n|"))'
+        r'(?=(?:[^\n\']*\'[^\n\']*\')*[^\n\']*\'[^\n\']*(?=\n|(?<!")"(?!")))'
     )
     _LOCALE_MISSING_SEMICOLON_PATTERN = (
         r'(?:(?<=\n)|^)(\b' + LOCALE_KEY_PATTERN + r'\b)(\s*)(=)(\s*)'
@@ -690,6 +690,7 @@ class BslLexer(RegexLexer):
              _locale_missing_open_quote_callback, '#pop'),
             (r'(?=[^\n]*\b' + LOCALE_KEY_PATTERN + r'\b\s*=)' +
              _ODD_LOCALE_QUOTES_LOOKAHEAD +
+             r'(?![^\n\']*\'[^\n\']*\')' +
              r'(?![^\n;]*\n[^\S\n]*\|)[^\n"]+(?=\n|")',
              Token.Generic.Error, 'string_locale_error'),
             (r'(?![^\n]*;)(?!' + _ODD_LOCALE_QUOTES_LOOKAHEAD + r')[^\n"]+(?=\n)',
@@ -727,6 +728,7 @@ class BslLexer(RegexLexer):
              _locale_missing_open_quote_callback, '#pop'),
             (r'(?<=\n)(?=[^\n]*\b' + LOCALE_KEY_PATTERN + r'\b\s*=)' +
              _ODD_LOCALE_QUOTES_LOOKAHEAD +
+             r'(?![^\n\']*\'[^\n\']*\')' +
              r'(?![^\n;]*\n[^\S\n]*\|)[^\n"]+(?=\n|")',
              Token.Generic.Error, 'string_locale_error'),
             (r'(?<=\n)(?![^\n]*;)(?!' + _ODD_LOCALE_QUOTES_LOOKAHEAD + r')(?![^\n]*\b' +

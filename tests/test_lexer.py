@@ -1760,6 +1760,36 @@ class BslLexerTestCase(LexerTestCase):
             ],
         )
 
+    def test_lexing_nstr_locale_multiline_interpolated(self):
+        self.assertTokens(
+            '''
+            НСтр("ru = 'Все и сразу %1 %% литров ""молока""';");
+            ''',
+            [
+                (Token.Name.Builtin, 'НСтр'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Name.Attribute, 'ru'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "Все и сразу "),
+                (Token.Literal.String.Interpol, '%1'),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, '%%'),
+                (Token.Literal.String, ' литров '),
+                (Token.Literal.String.Escape, '""'),
+                (Token.Literal.String, 'молока'),
+                (Token.Literal.String.Escape, '""'),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Operator, ';'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
     def test_lexing_nstr_locale_missing_quote_before_next(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(

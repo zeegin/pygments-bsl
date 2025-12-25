@@ -528,6 +528,27 @@ class BslLexerTestCase(LexerTestCase):
             ],
         )
 
+    def test_doc_comment_return_fixed_structure_type(self):
+        self.assertTokens(
+            '''
+// Возвращаемое значение:
+//   ФиксированнаяСтруктура:
+//     * Отправитель
+            ''',
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Возвращаемое значение'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//   '),
+                (Token.Name.Class, 'ФиксированнаяСтруктура'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//     '),
+                (Token.Punctuation, '*'),
+                (Token.Comment.Single, ' '),
+                (Token.Comment.Single, 'Отправитель'),
+            ],
+        )
+
     def test_doc_comment_structure_bullet_type(self):
         self.assertTokens(
             '''
@@ -604,6 +625,21 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Punctuation, '('),
                 (Token.Comment.Single, 'Парам1, Значение'),
                 (Token.Punctuation, ')'),
+            ],
+        )
+
+    def test_lexing_doc_comment_deprecate_with_description(self):
+        self.assertTokens(
+            '''
+// Устарела. Описание что делать
+// 
+            ''',
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Устарела'),
+                (Token.Punctuation, '.'),
+                (Token.Comment.Single, ' Описание что делать'),
+                (Token.Comment.Single, '// '),
             ],
         )
 

@@ -2735,7 +2735,106 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Punctuation, ';'),
             ],
         )
-        
+
+
+class BslSdblIntegrationTestCase(LexerTestCase):
+
+    maxDiff = None # if characters too more at assertEqual
+    lexer_name = 'bsl'
+
+    def test_sdbl_query_string_pipe_comment_with_quotes(self):
+        self.assertTokens(
+            '''
+ТекстЗапроса =
+    "ВЫБРАТЬ
+    |// Закомметированная строка внутри запроса с кавычками ""ТЕКСТ""
+            ''',
+            [
+                (Token.Name.Variable, 'ТекстЗапроса'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Literal.String, '|'),
+                (Token.Comment.Single, '// Закомметированная строка внутри запроса с кавычками ""ТЕКСТ""'),
+            ],
+        )
+
+    def test_sdbl_query_string_pipe_comment_with_autoselect(self):
+        self.assertTokens(
+            '''
+ТекстЗапроса =
+    "ВЫБРАТЬ
+ |//АВТОУПОРЯДОЧИВАНИЕ";
+            ''',
+            [
+                (Token.Name.Variable, 'ТекстЗапроса'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Literal.String, '|'),
+                (Token.Comment.Single, '//АВТОУПОРЯДОЧИВАНИЕ'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_sdbl_query_string_double_slash_literal(self):
+        self.assertTokens(
+            '''
+ТекстЗапроса =
+"ВЫБРАТЬ
+| Поле
+//|//АВТОУПОРЯДОЧИВАНИЕ";
+|//АВТОУПОРЯДОЧИВАНИЕ";
+            ''',
+            [
+                (Token.Name.Variable, 'ТекстЗапроса'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Literal.String, '|'),
+                (Token.Name.Variable, 'Поле'),
+                (Token.Comment.Single, '//|//АВТОУПОРЯДОЧИВАНИЕ";'),
+                (Token.Literal.String, '|'),
+                (Token.Comment.Single, '//АВТОУПОРЯДОЧИВАНИЕ'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_constraint_logic_string(self):
+        self.assertTokens(
+            '''
+Ограничение.Текст =
+"РазрешитьЧтениеИзменение
+|ГДЕ
+| ЗначениеРазрешено(Организация)
+|И ЗначениеРазрешено(Контрагент)";
+            ''',
+            [
+                (Token.Name.Variable, 'Ограничение'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'Текст'),
+                (Token.Operator, '='),
+                (Token.Literal.String, '"'),
+                (Token.Keyword.Declaration, 'РазрешитьЧтениеИзменение'),
+                (Token.Literal.String, '|'),
+                (Token.Keyword.Declaration, 'ГДЕ'),
+                (Token.Literal.String, '|'),
+                (Token.Name.Builtin, 'ЗначениеРазрешено'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Организация'),
+                (Token.Punctuation, ')'),
+                (Token.Literal.String, '|'),
+                (Token.Operator.Word, 'И'),
+                (Token.Name.Builtin, 'ЗначениеРазрешено'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Контрагент'),
+                (Token.Punctuation, ')'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ';'),
+            ],
+        )
 
 
 class SdblLexerTestCase(LexerTestCase):
@@ -3894,119 +3993,5 @@ INDEX BY SETS Table
             [
                 (Token.Generic.Error, '|'),
                 (Token.Comment.Single, '// Закомметированная строка внутри запроса с кавычками ""ТЕКСТ""'),
-            ],
-        )
-
-    def test_sdbl_query_string_pipe_comment_with_quotes(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
-            '''
-ТекстЗапроса =
-    "ВЫБРАТЬ
-    |// Закомметированная строка внутри запроса с кавычками ""ТЕКСТ""
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
-            [
-                (Token.Name.Variable, 'ТекстЗапроса'),
-                (Token.Operator, '='),
-                (Token.Literal.String, '"'),
-                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
-                (Token.Literal.String, '|'),
-                (Token.Comment.Single, '// Закомметированная строка внутри запроса с кавычками ""ТЕКСТ""'),
-            ],
-        )
-
-    def test_sdbl_query_string_pipe_comment_with_autoselect(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
-            '''
-ТекстЗапроса =
-    "ВЫБРАТЬ
- |//АВТОУПОРЯДОЧИВАНИЕ";
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
-            [
-                (Token.Name.Variable, 'ТекстЗапроса'),
-                (Token.Operator, '='),
-                (Token.Literal.String, '"'),
-                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
-                (Token.Literal.String, '|'),
-                (Token.Comment.Single, '//АВТОУПОРЯДОЧИВАНИЕ'),
-                (Token.Literal.String, '"'),
-                (Token.Punctuation, ';'),
-            ],
-        )
-
-    def test_sdbl_query_string_double_slash_literal(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
-            '''
-ТекстЗапроса =
-"ВЫБРАТЬ
-| Поле
-//|//АВТОУПОРЯДОЧИВАНИЕ";
-|//АВТОУПОРЯДОЧИВАНИЕ";
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
-            [
-                (Token.Name.Variable, 'ТекстЗапроса'),
-                (Token.Operator, '='),
-                (Token.Literal.String, '"'),
-                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
-                (Token.Literal.String, '|'),
-                (Token.Name.Variable, 'Поле'),
-                (Token.Comment.Single, '//|//АВТОУПОРЯДОЧИВАНИЕ";'),
-                (Token.Literal.String, '|'),
-                (Token.Comment.Single, '//АВТОУПОРЯДОЧИВАНИЕ'),
-                (Token.Literal.String, '"'),
-                (Token.Punctuation, ';'),
-            ],
-        )
-
-    def test_constraint_logic_string(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
-            '''
-Ограничение.Текст =
-"РазрешитьЧтениеИзменение
-|ГДЕ
-| ЗначениеРазрешено(Организация)
-|И ЗначениеРазрешено(Контрагент)";
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
-            [
-                (Token.Name.Variable, 'Ограничение'),
-                (Token.Operator, '.'),
-                (Token.Name.Variable, 'Текст'),
-                (Token.Operator, '='),
-                (Token.Literal.String, '"'),
-                (Token.Keyword.Declaration, 'РазрешитьЧтениеИзменение'),
-                (Token.Literal.String, '|'),
-                (Token.Keyword.Declaration, 'ГДЕ'),
-                (Token.Literal.String, '|'),
-                (Token.Name.Builtin, 'ЗначениеРазрешено'),
-                (Token.Punctuation, '('),
-                (Token.Name.Variable, 'Организация'),
-                (Token.Punctuation, ')'),
-                (Token.Literal.String, '|'),
-                (Token.Operator.Word, 'И'),
-                (Token.Name.Builtin, 'ЗначениеРазрешено'),
-                (Token.Punctuation, '('),
-                (Token.Name.Variable, 'Контрагент'),
-                (Token.Punctuation, ')'),
-                (Token.Literal.String, '"'),
-                (Token.Punctuation, ';'),
             ],
         )

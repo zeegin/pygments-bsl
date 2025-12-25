@@ -726,7 +726,7 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Name.Class, 'Массив'),
                 (Token.Punctuation, ', '),
                 (Token.Name.Class, 'СписокЗначений'),
-                (Token.Punctuation, ', '),
+                (Token.Punctuation, ' – '),
                 (Token.Comment.Single, 'коллекция для сравнения.'),
                 (Token.Comment.Single, '// '),
                 (Token.Name.Variable, 'ФормируемыйОтчет'),
@@ -2736,6 +2736,63 @@ class BslLexerTestCase(LexerTestCase):
             ],
         )
 
+    def test_lexing_raise_exception_multiline(self):
+        self.assertTokens(
+            '''
+            ВызватьИсключение(
+                "Документ не может быть проведен",
+                КатегорияОшибки.ОшибкаКонфигурации,
+                "ERR.DOCS.0001",
+                "Клиенту запрещена отгрузка"
+            );
+            ''',
+            [
+                (Token.Name.Exception, 'ВызватьИсключение'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Документ не может быть проведен'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'КатегорияОшибки'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'ОшибкаКонфигурации'),
+                (Token.Punctuation, ','),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'ERR.DOCS.0001'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ','),
+                (Token.Literal.String, '"'),
+                (Token.Literal.String, 'Клиенту запрещена отгрузка'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_delete_insert_in_code(self):
+        self.assertTokens(
+            '''
+            #Удаление
+            Если СтароеУсловие Тогда
+            #КонецУдаления
+            #Вставка
+            НовоеУсловие = Выражение;
+            #КонецВставки
+            ''',
+            [
+                (Token.Comment.Preproc, '#Удаление'),
+                (Token.Keyword, 'Если'),
+                (Token.Name.Variable, 'СтароеУсловие'),
+                (Token.Keyword, 'Тогда'),
+                (Token.Comment.Preproc, '#КонецУдаления'),
+                (Token.Comment.Preproc, '#Вставка'),
+                (Token.Name.Variable, 'НовоеУсловие'),
+                (Token.Operator, '='),
+                (Token.Name.Variable, 'Выражение'),
+                (Token.Punctuation, ';'),
+                (Token.Comment.Preproc, '#КонецВставки'),
+            ],
+        )
 
 class BslSdblIntegrationTestCase(LexerTestCase):
 
@@ -3088,63 +3145,6 @@ Document.Doc.Table
             ],
         )
 
-    def test_lexing_raise_exception_multiline(self):
-        self.assertTokens(
-            '''
-            ВызватьИсключение(
-                "Документ не может быть проведен",
-                КатегорияОшибки.ОшибкаКонфигурации,
-                "ERR.DOCS.0001",
-                "Клиенту запрещена отгрузка"
-            );
-            ''',
-            [
-                (Token.Name.Exception, 'ВызватьИсключение'),
-                (Token.Punctuation, '('),
-                (Token.Literal.String, '"'),
-                (Token.Literal.String, 'Документ не может быть проведен'),
-                (Token.Literal.String, '"'),
-                (Token.Punctuation, ','),
-                (Token.Name.Variable, 'КатегорияОшибки'),
-                (Token.Operator, '.'),
-                (Token.Name.Variable, 'ОшибкаКонфигурации'),
-                (Token.Punctuation, ','),
-                (Token.Literal.String, '"'),
-                (Token.Literal.String, 'ERR.DOCS.0001'),
-                (Token.Literal.String, '"'),
-                (Token.Punctuation, ','),
-                (Token.Literal.String, '"'),
-                (Token.Literal.String, 'Клиенту запрещена отгрузка'),
-                (Token.Literal.String, '"'),
-                (Token.Punctuation, ')'),
-                (Token.Punctuation, ';'),
-            ],
-        )
-
-    def test_lexing_delete_insert_in_code(self):
-        self.assertTokens(
-            '''
-            #Удаление
-            Если СтароеУсловие Тогда
-            #КонецУдаления
-            #Вставка
-            НовоеУсловие = Выражение;
-            #КонецВставки
-            ''',
-            [
-                (Token.Comment.Preproc, '#Удаление'),
-                (Token.Keyword, 'Если'),
-                (Token.Name.Variable, 'СтароеУсловие'),
-                (Token.Keyword, 'Тогда'),
-                (Token.Comment.Preproc, '#КонецУдаления'),
-                (Token.Comment.Preproc, '#Вставка'),
-                (Token.Name.Variable, 'НовоеУсловие'),
-                (Token.Operator, '='),
-                (Token.Name.Variable, 'Выражение'),
-                (Token.Punctuation, ';'),
-                (Token.Comment.Preproc, '#КонецВставки'),
-            ],
-        )
     def test_lexing_multiline_string_with_comment(self):
         lexer = lexers.get_lexer_by_name('sdbl')
         tokens = lexer.get_tokens(

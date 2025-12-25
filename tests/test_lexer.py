@@ -335,6 +335,28 @@ class BslLexerTestCase(LexerTestCase):
             ],
         )
 
+    def test_comment_markers(self):
+        self.assertTokens(
+            '''
+            // TODO: проверить границы
+            // {{MRG[ <-> ]
+            // }}MRG[ <-> ]
+            ''',
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'TODO:'),
+                (Token.Comment.Single, ' проверить границы'),
+                (Token.Comment.Single, '// '),
+                (Token.Punctuation, '{{'),
+                (Token.Keyword, 'MRG'),
+                (Token.Punctuation, '[ <-> ]'),
+                (Token.Comment.Single, '// '),
+                (Token.Punctuation, '}}'),
+                (Token.Keyword, 'MRG'),
+                (Token.Punctuation, '[ <-> ]'),
+            ],
+        )
+
     def test_lexing_preprocessor(self):
         self.assertTokens(
             '''
@@ -1569,7 +1591,7 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Literal.String, "Русский"),
                 (Token.Literal.String.Escape, "\'"),
                 (Token.Generic.Error, " en = 'English'"),
-                (Token.Generic.String, '"'),
+                (Token.Literal.String, '"'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
             ],
@@ -1594,6 +1616,40 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Generic.Error, "ru = 'Русский;"),
                 (Token.Literal.String, '|'),
                 (Token.Generic.Error, "en = 'English'"),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_nstr_locale_multiline_with_semicolons(self):
+        self.assertTokens(
+            '''
+            НСтр("ru = 'Русский';
+                 |en = 'English';"
+            );
+            ''',
+            [
+                (Token.Name.Builtin, 'НСтр'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Name.Attribute, 'ru'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "Русский"),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Operator, ';'),
+                (Token.Literal.String, '|'),
+                (Token.Name.Attribute, 'en'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "English"),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Operator, ';'),
                 (Token.Literal.String, '"'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),

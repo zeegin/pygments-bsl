@@ -596,6 +596,10 @@ class BslLexer(RegexLexer):
              bygroups(Token.Comment.Single, Token.Punctuation, Token.Name.Class)),
             (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(.*)',
              bygroups(Token.Comment.Single, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
+            (r'(\/\/\s*)(TODO:)(.*)',
+             bygroups(Token.Comment.Single, Token.Keyword, Token.Comment.Single)),
+            (r'(\/\/\s*)(\{\{|\}\})(MRG)(\[[^\]]*\])(.*)',
+             bygroups(Token.Comment.Single, Token.Punctuation, Token.Keyword, Token.Punctuation, Token.Comment.Single)),
             (r'\/\/.*?(?=\n|$)', Token.Comment.Single),
             (r'\#(Использовать|Use)\b', Token.Comment.Preproc, 'preproc_use'),
             (r'\#(native)\b.*', Token.Comment.Preproc),
@@ -670,7 +674,9 @@ class BslLexer(RegexLexer):
              _locale_missing_semicolon_pipe_callback, 'string_locale_error_pipe_pop'),
             (_LOCALE_MISSING_SEMICOLON_FIRST_PATTERN, _locale_missing_semicolon_callback, 'string_locale_error_missing_semicolon'),
             (_LOCALE_EXTRA_QUOTE_FIRST_PATTERN, _locale_extra_quote_callback, 'string_locale_error_pipe_strict'),
-            (r'[^\n"]+(?=\n[^\S\n]*\|\s*' + LOCALE_KEY_PATTERN + r'\b\s*=)',
+            (r'(?![^\n]*;)[^\n"]+(?=\n[^\S\n]*\|\s*' + LOCALE_KEY_PATTERN + r'\b\s*=)',
+             Token.Generic.Error, 'string_locale_error_pipe_pop'),
+            (r'(?<=\n)[^\n"]+(?=\n[^\S\n]*\|\s*' + LOCALE_KEY_PATTERN + r'\b\s*=)',
              Token.Generic.Error, 'string_locale_error_pipe_pop'),
             (r'(?=[^\n]*\b' + LOCALE_KEY_PATTERN + r'\b\s*=)' +
              _ODD_LOCALE_QUOTES_LOOKAHEAD +
@@ -707,7 +713,7 @@ class BslLexer(RegexLexer):
              _locale_missing_semicolon_pipe_callback, 'string_locale_error_pipe_pop'),
             (r'(?<=\n)' + _LOCALE_MISSING_SEMICOLON_PATTERN, _locale_missing_semicolon_callback, 'string_locale_error_missing_semicolon'),
             (r'(?<=\n)' + _LOCALE_EXTRA_QUOTE_PATTERN, _locale_extra_quote_callback, 'string_locale_error_pipe_strict'),
-            (r'(?<=\n)[^\n"]+(?=\n[^\S\n]*\|\s*' + LOCALE_KEY_PATTERN + r'\b\s*=)',
+            (r'(?<=\n)(?![^\n]*;)[^\n"]+(?=\n[^\S\n]*\|\s*' + LOCALE_KEY_PATTERN + r'\b\s*=)',
              Token.Generic.Error, 'string_locale_error_pipe_pop'),
             (r'(?<=\n)(?=[^\n]*\b' + LOCALE_KEY_PATTERN + r'\b\s*=)' +
              _ODD_LOCALE_QUOTES_LOOKAHEAD +
@@ -760,13 +766,14 @@ class BslLexer(RegexLexer):
         ],
         'string_locale_error': [
             (r'\"\"', Token.Generic.Error),
-            (r'"', Token.Text, '#pop:2'),
+            (r'"', Token.String, '#pop:2'),
+            (r'\n[^\S\n]*\|[^\n"]*', _locale_error_pipe_line_callback),
             (r'\r\n?|\n', Token.Generic.Error),
             (r'[^\"\n]+', Token.Generic.Error),
         ],
         'string_locale_error_missing_semicolon': [
             (r'\"\"', Token.Generic.Error),
-            (r'"', Token.Generic.String, '#pop:2'),
+            (r'"', Token.String, '#pop:2'),
             (r'\r\n?|\n', Token.Generic.Error),
             (r'[^\"\n]+', Token.Generic.Error),
         ],

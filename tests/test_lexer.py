@@ -20,7 +20,31 @@ def filter_tokens(tokens):
     ]
 
 
-class BslLexerTestCase(TestCase):
+class LexerTestCase(TestCase):
+    lexer_name = None
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        if cls.lexer_name is None:
+            raise ValueError("lexer_name must be set on test class")
+        cls.lexer = lexers.get_lexer_by_name(cls.lexer_name)
+
+    def lex_filtered(self, source):
+        return filter_tokens(self.lexer.get_tokens(source))
+
+    def assertTokens(self, source, expected):
+        self.assertEqual(self.lex_filtered(source), expected)
+
+    def assertTokensPrefix(self, source, expected_prefix):
+        filtered = self.lex_filtered(source)
+        self.assertEqual(filtered[:len(expected_prefix)], expected_prefix)
+        return filtered
+
+
+class BslLexerTestCase(LexerTestCase):
+
+    lexer_name = 'bsl'
 
     maxDiff = None # if characters too more at assertEqual
 
@@ -43,17 +67,12 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(lexer.name, BslLexer.name)
 
     def test_lexing_region(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
             #Область ИмяОбласти
             // это комментарий
             #КонецОбласти
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Preproc, '#Область ИмяОбласти'),
                 (Token.Comment.Single, '// это комментарий'),
@@ -62,18 +81,13 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_preproc_if_chain(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 #Если Сервер Тогда
 #ИначеЕсли Клиент Тогда
 #Иначе
 #КонецЕсли
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Preproc, '#Если'),
                 (Token.Keyword.Constant, 'Сервер'),
@@ -87,16 +101,11 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_preproc_if_complex_expression(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 #Если Сервер Или ТолстыйКлиентОбычноеПриложение И НЕ ВнешнееСоединение Тогда
 #КонецЕсли
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Preproc, '#Если'),
                 (Token.Keyword.Constant, 'Сервер'),
@@ -111,51 +120,57 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_preproc_if_nested(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 #Если (Клиент Или (НЕ Клиент)) И НЕ Клиент Тогда
 #ИначеЕсли ((((Не (ВебКлиент))) И ((НЕ МобильныйКлиент)))) Тогда
 #КонецЕсли
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Preproc, '#Если'),
-                (Token.Comment.Preproc, '(Клиент'),
-                (Token.Comment.Preproc, 'Или'),
-                (Token.Comment.Preproc, '(НЕ'),
+                (Token.Comment.Punctuation, '('),
                 (Token.Keyword.Constant, 'Клиент'),
-                (Token.Comment.Preproc, '))'),
+                (Token.Comment.Preproc, 'Или'),
+                (Token.Comment.Punctuation, '('),
+                (Token.Comment.Preproc, 'НЕ'),
+                (Token.Keyword.Constant, 'Клиент'),
+                (Token.Comment.Punctuation, ')'),
+                (Token.Comment.Punctuation, ')'),
                 (Token.Comment.Preproc, 'И'),
                 (Token.Comment.Preproc, 'НЕ'),
                 (Token.Keyword.Constant, 'Клиент'),
                 (Token.Comment.Preproc, 'Тогда'),
                 (Token.Comment.Preproc, '#ИначеЕсли'),
-                (Token.Comment.Preproc, '((((Не'),
-                (Token.Comment.Preproc, '(ВебКлиент)))'),
+                (Token.Comment.Punctuation, '('),
+                (Token.Comment.Punctuation, '('),
+                (Token.Comment.Punctuation, '('),
+                (Token.Comment.Punctuation, '('),
+                (Token.Comment.Preproc, 'Не'),
+                (Token.Comment.Punctuation, '('),
+                (Token.Keyword.Constant, 'ВебКлиент'),
+                (Token.Comment.Punctuation, ')'),
+                (Token.Comment.Punctuation, ')'),
+                (Token.Comment.Punctuation, ')'),
                 (Token.Comment.Preproc, 'И'),
-                (Token.Comment.Preproc, '((НЕ'),
+                (Token.Comment.Punctuation, '('),
+                (Token.Comment.Punctuation, '('),
+                (Token.Comment.Preproc, 'НЕ'),
                 (Token.Keyword.Constant, 'МобильныйКлиент'),
-                (Token.Comment.Preproc, '))))'),
+                (Token.Comment.Punctuation, ')'),
+                (Token.Comment.Punctuation, ')'),
+                (Token.Comment.Punctuation, ')'),
+                (Token.Comment.Punctuation, ')'),
                 (Token.Comment.Preproc, 'Тогда'),
                 (Token.Comment.Preproc, '#КонецЕсли'),
             ],
         )
 
     def test_lexing_preproc_if_platforms(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 #Если MacOS Или Linux Тогда
 #КонецЕсли
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Preproc, '#Если'),
                 (Token.Keyword.Constant, 'MacOS'),
@@ -167,38 +182,27 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_shebang(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens('#! /usr/bin/bsl')
-
-        self.assertEqual(
-            filter_tokens(tokens),
+        self.assertTokens(
+            '#! /usr/bin/bsl',
             [
                 (Token.Comment.Preproc, '#! /usr/bin/bsl'),
             ],
         )
 
     def test_lexing_preproc_native(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens('#native')
-
-        self.assertEqual(
-            filter_tokens(tokens),
+        self.assertTokens(
+            '#native',
             [
                 (Token.Comment.Preproc, '#native'),
             ],
         )
 
     def test_lexing_preproc_unknown_symbol(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 #Если Нечто Тогда
 #КонецЕсли
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Preproc, '#Если'),
                 (Token.Comment.Preproc, 'Нечто'),
@@ -208,19 +212,14 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_multiline_string_with_preproc_delete(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 "выбрать
 #Удаление
 |часть строки
 #КонецУдаления
 |конец строки"
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.String, '"'),
                 (Token.String, 'выбрать'),
@@ -235,8 +234,7 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_preproc_insert_and_delete_blocks(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 #Вставка
 Процедура ДобавитьКод() КонецПроцедуры
@@ -244,11 +242,7 @@ class BslLexerTestCase(TestCase):
 #Удаление
 Функция Устаревшая() КонецФункции
 #КонецУдаления
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Preproc, '#Вставка'),
                 (Token.Keyword, 'Процедура'),
@@ -268,7 +262,6 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_variable_declarations(self):
-        lexer = lexers.get_lexer_by_name('bsl')
         cases = [
             (
                 'Перем А Экспорт;',
@@ -327,19 +320,13 @@ class BslLexerTestCase(TestCase):
 
         for source, expected in cases:
             with self.subTest(source=source):
-                tokens = lexer.get_tokens(source)
-                self.assertEqual(filter_tokens(tokens), expected)
+                self.assertTokens(source, expected)
 
     def test_lexing_inline_comment(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
             Перем ДиалогРаботыСКаталогом;     // Диалог работы с каталогом
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Keyword.Declaration, 'Перем'),
                 (Token.Name.Variable, 'ДиалогРаботыСКаталогом'),
@@ -349,17 +336,12 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_preprocessor(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
             #Если Сервер Тогда
             // это комментарий
             #КонецЕсли
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Preproc, '#Если'),
                 (Token.Keyword.Constant, 'Сервер'),
@@ -370,8 +352,7 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_doc_comments(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 // Параметры:
 //   Форма - ФормаКлиентскогоПриложения - форма, из которой вызвана процедура
@@ -395,11 +376,7 @@ class BslLexerTestCase(TestCase):
 // Пример:
 //   * Первый пункт
 //   ** Вложенный пункт
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '// '),
                 (Token.Keyword, 'Параметры'),
@@ -508,17 +485,12 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_doc_comment_structure_type(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 // Возвращаемое значение:
 //  Структура:
 //     * Дата - Дата
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '// '),
                 (Token.Keyword, 'Возвращаемое значение'),
@@ -535,17 +507,12 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_doc_comment_structure_bullet_type(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 // Параметры:
 //  СведенияОбОбновлении - Структура:
 //     * КодАдресногоОбъекта - Структура:
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '// '),
                 (Token.Keyword, 'Параметры'),
@@ -565,8 +532,7 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_doc_comment_sections_and_links(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 // Parameters:
 // Returns:
@@ -577,11 +543,7 @@ class BslLexerTestCase(TestCase):
 // Deprecate:
 // СМ. ОбщийМодуль.Метод()
 // SEE CommonModule.Method(Парам1, Значение)
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '// '),
                 (Token.Keyword, 'Parameters'),
@@ -624,8 +586,7 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_doc_comment_bullets_unbounded(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 // Возвращаемое значение:
 //   Структура - настройки типового варианта:
@@ -634,11 +595,7 @@ class BslLexerTestCase(TestCase):
 //     *** Заголовок - Строка - позволяет переопределить название.
 //     **** Пояснение - Строка - позволяет переопределить текст.
 //     ***** Отбор - см. ОписаниеДополнительнойРегистрацииВариантаВыгрузки
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '// '),
                 (Token.Keyword, 'Возвращаемое значение'),
@@ -686,17 +643,12 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_doc_comment_param_array_type(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 // Параметры:
 //   ЗапросыРазрешений - Массив из УникальныйИдентификатор - коллекция запросов разрешений.
 //   Объект - КонстантаМенеджерЗначения - менеджер значения объекта данных.
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '// '),
                 (Token.Keyword, 'Параметры'),
@@ -721,16 +673,11 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_doc_comment_hyphen_without_spaces_is_plain(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 // Процедура-обработчик команды "Рассчитать"
 // Обычная строка
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '// Процедура-обработчик команды "Рассчитать"'),
                 (Token.Comment.Single, '// Обычная строка'),
@@ -738,17 +685,12 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_doc_comment_param_type_with_dots(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 // Параметры:
 //  Адреса - Строка - строка, содержащая электронные адреса
 //  ЗадачаИсполнителя - ЗадачаСсылка.ЗадачаИсполнителя – проверяемая задача
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '// '),
                 (Token.Keyword, 'Параметры'),
@@ -769,23 +711,22 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_doc_comment_param_type_list(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 // КоллекцияСтрок – ТаблицаЗначений, Массив, СписокЗначений – коллекция для сравнения.
 // ФормируемыйОтчет – ОбъектМетаданныхОтчет
 // ПрисоединенныйФайлОбъект - ОпределяемыйТип.ПрисоединенныйФайлОбъект - элемент справочника файлов.
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '// '),
                 (Token.Name.Variable, 'КоллекцияСтрок'),
                 (Token.Punctuation, ' – '),
-                (Token.Name.Class, 'ТаблицаЗначений, Массив, СписокЗначений'),
-                (Token.Punctuation, ' – '),
+                (Token.Name.Class, 'ТаблицаЗначений'),
+                (Token.Punctuation, ', '),
+                (Token.Name.Class, 'Массив'),
+                (Token.Punctuation, ', '),
+                (Token.Name.Class, 'СписокЗначений'),
+                (Token.Punctuation, ', '),
                 (Token.Comment.Single, 'коллекция для сравнения.'),
                 (Token.Comment.Single, '// '),
                 (Token.Name.Variable, 'ФормируемыйОтчет'),
@@ -801,15 +742,10 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_doc_comment_param_type_with_colon_see(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 // СведенияОРегионе – СтрокаТаблицыЗначений: см. РегистрыСведений.АдресныеОбъекты.КлассификаторСубъектовРФ
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '// '),
                 (Token.Name.Variable, 'СведенияОРегионе'),
@@ -823,17 +759,12 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_doc_comment_param_type_and_desc_colon(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 // КоллекцияСтрок - КоллекцияЗначений – коллекция для сравнения;
 // ФормируемыйОтчет - ОбъектМетаданных: Отчет
 // ПрисоединенныйФайлОбъект - элемент справочника файлов.
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '// '),
                 (Token.Name.Variable, 'КоллекцияСтрок'),
@@ -855,17 +786,12 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_doc_comment_sm_and_iz_consistency(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 //  КонтактнаяИнформация - см. Документ.ЗаказПокупателя
 // РеквизитыКомпонент - Массив из см. ВнешниеКомпоненты.РеквизитыКомпоненты
 // - Массив Из Строка, ФиксированныйМассив Из Строка - имена реквизитов.
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '//  '),
                 (Token.Name.Variable, 'КонтактнаяИнформация'),
@@ -902,17 +828,12 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_comments_around_procedure(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 //  комментарий до
 Процедура ИмяПроцедуры(
 // комментарий после
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '//  комментарий до'),
                 (Token.Keyword, 'Процедура'),
@@ -923,8 +844,7 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_doc_comment_param_multiline_types(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 // Параметры:
 //   Реквизиты - Строка - имена реквизитов, перечисленные через запятую.
@@ -934,11 +854,7 @@ class BslLexerTestCase(TestCase):
 //                        а в качестве значения (опционально) фактическое имя поля в таблице.
 //                        Если значение не определено, то имя поля берется из ключа.
 //             - Массив Из Строка, ФиксированныйМассив Из Строка - имена реквизитов.
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '// '),
                 (Token.Keyword, 'Параметры'),
@@ -952,7 +868,9 @@ class BslLexerTestCase(TestCase):
                 (Token.Comment.Single, '//                        Например, "Код, Наименование, Родитель".'),
                 (Token.Comment.Single, '//             '),
                 (Token.Punctuation, '- '),
-                (Token.Name.Class, 'Структура, ФиксированнаяСтруктура'),
+                (Token.Name.Class, 'Структура'),
+                (Token.Punctuation, ', '),
+                (Token.Name.Class, 'ФиксированнаяСтруктура'),
                 (Token.Punctuation, ' - '),
                 (Token.Comment.Single, 'в качестве ключа передается'),
                 (Token.Comment.Single, '//                        псевдоним поля для возвращаемой структуры с результатом,'),
@@ -977,17 +895,12 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_doc_comment_return_type_list(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 // Возвращаемое значение:
 //  - СправочникСсылка.Пользователи
 //  - СправочникСсылка.ВнешниеПользователи
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Single, '// '),
                 (Token.Keyword, 'Возвращаемое значение'),
@@ -1002,11 +915,8 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_bom(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens('\ufeffПроцедура Тест()')
-
-        self.assertEqual(
-            filter_tokens(tokens),
+        self.assertTokens(
+            '\ufeffПроцедура Тест()',
             [
                 (Token.Keyword, 'Процедура'),
                 (Token.Name.Function, 'Тест'),
@@ -1016,7 +926,6 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_preproc_use(self):
-        lexer = lexers.get_lexer_by_name('bsl')
         cases = [
             ('#Использовать lib', [(Token.Comment.Preproc, '#Использовать'), (Token.Name.Variable, 'lib')]),
             ('#Использовать "lib"', [(Token.Comment.Preproc, '#Использовать'), (Token.Literal.String, '"lib"')]),
@@ -1026,15 +935,11 @@ class BslLexerTestCase(TestCase):
 
         for source, expected in cases:
             with self.subTest(source=source):
-                tokens = lexer.get_tokens(source)
-                self.assertEqual(filter_tokens(tokens), expected)
+                self.assertTokens(source, expected)
 
     def test_preproc_region_comment(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens('#КонецОбласти // Концевой комментарий')
-
-        self.assertEqual(
-            filter_tokens(tokens),
+        self.assertTokens(
+            '#КонецОбласти // Концевой комментарий',
             [
                 (Token.Comment.Preproc, '#КонецОбласти // Концевой комментарий'),
             ],
@@ -1112,8 +1017,6 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_decorator_split_name_inside(self):
-        """Desired display: '&Перед' as Token.Name.Decorator, parentheses as punctuation,
-        and the inner name as Token.Name.Function (no quotes)"""
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens('&Перед("НазваниеМетода");')
 
@@ -1122,7 +1025,9 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Decorator, '&Перед'),
                 (Token.Punctuation, '('),
+                (Token.String.Single, '"'),
                 (Token.Name.Function, 'НазваниеМетода'),
+                (Token.String.Single, '"'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
             ],
@@ -1244,7 +1149,9 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Decorator, '&Перед'),
                 (Token.Punctuation, '('),
+                (Token.String.Single, '"'),
                 (Token.Name.Function, 'ПередЗаписью'),
+                (Token.String.Single, '"'),
                 (Token.Punctuation, ')'),
                 (Token.Keyword, 'Процедура'),
                 (Token.Name.Function, 'Расш1_ПередЗаписью'),
@@ -1255,7 +1162,6 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_method_description_example8_excerpt(self):
-        lexer = lexers.get_lexer_by_name('bsl')
         source = '''
 // Параметры:
 //   Входной - Структура - настройки (дополнительные свойства) отчета, хранящиеся в данных формы:
@@ -1264,8 +1170,7 @@ class BslLexerTestCase(TestCase):
 КонецПроцедуры
         '''
 
-        tokens = lexer.get_tokens(source)
-        filtered = filter_tokens(tokens)
+        filtered = self.lex_filtered(source)
 
         expected_prefix = [
             (Token.Comment.Single, '// '),
@@ -1294,7 +1199,6 @@ class BslLexerTestCase(TestCase):
         self.assertEqual(filtered[:len(expected_prefix)], expected_prefix)
 
     def test_method_description_example2_comments(self):
-        lexer = lexers.get_lexer_by_name('bsl')
         source = '''
 // Инициализирует структуру параметров для взаимодействия с файловой системой.
 //
@@ -1304,9 +1208,8 @@ class BslLexerTestCase(TestCase):
 // Возвращаемое значение:
 //   см. ФайловаяСистемаКлиент.ПараметрыЗагрузкиФайла
         '''
-        tokens = lexer.get_tokens(source)
         self.assertEqual(
-            filter_tokens(tokens),
+            self.lex_filtered(source),
             [
                 (Token.Comment.Single, '// Инициализирует структуру параметров для взаимодействия с файловой системой.'),
                 (Token.Comment.Single, '//'),
@@ -1331,7 +1234,6 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_method_description_example3_param_block(self):
-        lexer = lexers.get_lexer_by_name('bsl')
         source = '''
 // В возвращаемом значении очищаются ссылки на несуществующий объект в базе данных, а именно
 // - возвращаемая ссылка заменяется на указанное значение по умолчанию;
@@ -1339,9 +1241,8 @@ class BslLexerTestCase(TestCase):
 // - у данных типа Структура и Соответствие ключ не меняется, а значение устанавливается Неопределено;
 // - анализ значений в данных типа Массив, Структура, Соответствие выполняется рекурсивно.
         '''
-        tokens = lexer.get_tokens(source)
         self.assertEqual(
-            filter_tokens(tokens),
+            self.lex_filtered(source),
             [
                 (Token.Comment.Single, '// В возвращаемом значении очищаются ссылки на несуществующий объект в базе данных, а именно'),
                 (Token.Comment.Single, '// - возвращаемая ссылка заменяется на указанное значение по умолчанию;'),
@@ -1378,11 +1279,11 @@ class BslLexerTestCase(TestCase):
                 (Token.Punctuation, ','),
                 (Token.Name.Variable, 'ПараметрСНекорректнымЗначением'),
                 (Token.Operator, '='),
-                (Token.Generic.Error, 'Нелегальщина'), # Token.Generic.Error
+                (Token.Generic.Error, 'Нелегальщина'),
                 (Token.Punctuation, ','),
                 (Token.Name.Variable, 'ПараметрСНекорректнымЗначением'),
                 (Token.Operator, '='),
-                (Token.Generic.Error, 'НелегальщинаБезПробела'), # Token.Generic.Error
+                (Token.Generic.Error, 'НелегальщинаБезПробела'),
                 (Token.Punctuation, ','),
                 (Token.Name.Variable, 'ПараметрСДефолтнымЧисловымЗначением'),
                 (Token.Operator, '='),
@@ -1513,7 +1414,6 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_text_interpol_edge_cases(self):
-        lexer = lexers.get_lexer_by_name('bsl')
         cases = [
             (
                 'ПростоСтрока = "Без интерполяции %% параметра.";',
@@ -1529,7 +1429,7 @@ class BslLexerTestCase(TestCase):
                 ],
             ),
             (
-                "СтрШаблон(НСтр(\"ru = \\\'Проверка %1 внутри НСтр\\\'\"));",
+                "СтрШаблон(НСтр(\"ru = \'Проверка %1 внутри НСтр\'\"));",
                 [
                     (Token.Name.Builtin, 'СтрШаблон'),
                     (Token.Punctuation, '('),
@@ -1540,11 +1440,11 @@ class BslLexerTestCase(TestCase):
                     (Token.Literal.String, ' '),
                     (Token.Operator, '='),
                     (Token.Literal.String, ' '),
-                    (Token.Literal.String.Escape, "\\\'"),
+                    (Token.Literal.String.Escape, "\'"),
                     (Token.Literal.String, "Проверка "),
                     (Token.Literal.String.Interpol, '%1'),
                     (Token.Literal.String, " внутри НСтр"),
-                    (Token.Literal.String.Escape, "\\\'"),
+                    (Token.Literal.String.Escape, "\'"),
                     (Token.Literal.String, '"'),
                     (Token.Punctuation, ')'),
                     (Token.Punctuation, ')'),
@@ -1581,8 +1481,7 @@ class BslLexerTestCase(TestCase):
 
         for source, expected in cases:
             with self.subTest(source=source):
-                tokens = lexer.get_tokens(source)
-                self.assertEqual(filter_tokens(tokens), expected)
+                self.assertTokens(source, expected)
 
     def test_lexing_nstr_with_single_quotes(self):
         lexer = lexers.get_lexer_by_name('bsl')
@@ -1601,7 +1500,10 @@ class BslLexerTestCase(TestCase):
                 (Token.Name.Attribute, 'ru'),
                 (Token.Literal.String, ' '),
                 (Token.Operator, '='),
-                (Token.Literal.String, " 'Проверка'"),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "Проверка"),
+                (Token.Literal.String.Escape, "\'"),
                 (Token.Literal.String, '"'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
@@ -1625,13 +1527,19 @@ class BslLexerTestCase(TestCase):
                 (Token.Name.Attribute, 'ru'),
                 (Token.Literal.String, ' '),
                 (Token.Operator, '='),
-                (Token.Literal.String, " 'Русский'"),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "Русский"),
+                (Token.Literal.String.Escape, "\'"),
                 (Token.Operator, ';'),
                 (Token.Literal.String, ' '),
                 (Token.Name.Attribute, 'en'),
                 (Token.Literal.String, ' '),
                 (Token.Operator, '='),
-                (Token.Literal.String, " 'English'"),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "English"),
+                (Token.Literal.String.Escape, "\'"),
                 (Token.Literal.String, '"'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
@@ -1656,9 +1564,12 @@ class BslLexerTestCase(TestCase):
                 (Token.Name.Attribute, 'ru'),
                 (Token.Literal.String, ' '),
                 (Token.Operator, '='),
-                (Token.Literal.String, " 'Русский'"),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "Русский"),
+                (Token.Literal.String.Escape, "\'"),
                 (Token.Generic.Error, " en = 'English'"),
-                (Token.Generic.Error, '"'),
+                (Token.Generic.String, '"'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
             ],
@@ -1681,9 +1592,9 @@ class BslLexerTestCase(TestCase):
                 (Token.Punctuation, '('),
                 (Token.Literal.String, '"'),
                 (Token.Generic.Error, "ru = 'Русский;"),
-                (Token.Generic.Error, '\n'),
-                (Token.Generic.Error, "                 |en = 'English'"),
-                (Token.Generic.Error, '"'),
+                (Token.Literal.String, '|'),
+                (Token.Generic.Error, "en = 'English'"),
+                (Token.Literal.String, '"'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
             ],
@@ -1693,7 +1604,7 @@ class BslLexerTestCase(TestCase):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
             '''
-            НСтр("ru = Русский'" en = 'English';");
+            НСтр("ru = Русский' en = 'English';");
             '''
         )
 
@@ -1703,14 +1614,9 @@ class BslLexerTestCase(TestCase):
                 (Token.Name.Builtin, 'НСтр'),
                 (Token.Punctuation, '('),
                 (Token.Literal.String, '"'),
-                (Token.Generic.Error, "ru = Русский'"),
-                (Token.Generic.Error, '"'),
-                (Token.Name.Variable, 'en'),
-                (Token.Operator, '='),
-                (Token.Literal.Date, "'English'"),
+                (Token.Generic.Error, "ru = Русский' en = 'English';"),
+                (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
-                (Token.Literal.String, '"'),
-                (Token.Literal.String, ');'),
             ],
         )
 
@@ -1731,14 +1637,12 @@ class BslLexerTestCase(TestCase):
                 (Token.Name.Attribute, 'ru'),
                 (Token.Literal.String, ' '),
                 (Token.Operator, '='),
-                (Token.Literal.String, " 'Русский'"),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "Русский"),
+                (Token.Literal.String.Escape, "\'"),
                 (Token.Literal.String, '"'),
-                (Token.Name.Variable, 'en'),
-                (Token.Operator, '='),
-                (Token.Literal.Date, "'English'"),
-                (Token.Punctuation, ';'),
-                (Token.Literal.String, '"'),
-                (Token.Literal.String, ');'),
+                (Token.Generic.Error, " en = 'English';\");"),
             ],
         )
 
@@ -1761,11 +1665,50 @@ class BslLexerTestCase(TestCase):
                 (Token.Name.Attribute, 'ru'),
                 (Token.Literal.String, ' '),
                 (Token.Operator, '='),
-                (Token.Literal.String, " 'Русский'"),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "Русский"),
+                (Token.Literal.String.Escape, "\'"),
                 (Token.Generic.Error, "';"),
-                (Token.Generic.Error, '\n'),
-                (Token.Generic.Error, "                 |en = 'English';"),
+                (Token.Literal.String, '|'),
+                (Token.Generic.Error, "en = 'English';"),
                 (Token.Generic.Error, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_nstr_multiline_value_with_pipe(self):
+        lexer = lexers.get_lexer_by_name('bsl')
+        tokens = lexer.get_tokens(
+            '''
+            СтрокаСообщения = НСтр("ru = 'Составной тип данных для значений по умолчанию не поддерживается.
+                    |Реквизит ""%1"".'");
+            '''
+        )
+
+        self.assertEqual(
+            filter_tokens(tokens),
+            [
+                (Token.Name.Variable, 'СтрокаСообщения'),
+                (Token.Operator, '='),
+                (Token.Name.Builtin, 'НСтр'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Name.Attribute, 'ru'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "Составной тип данных для значений по умолчанию не поддерживается."),
+                (Token.Literal.String, '|'),
+                (Token.Literal.String, 'Реквизит '),
+                (Token.Literal.String.Escape, '""'),
+                (Token.Literal.String.Interpol, '%1'),
+                (Token.Literal.String.Escape, '""'),
+                (Token.Literal.String, "."),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, '"'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
             ],
@@ -1832,10 +1775,16 @@ class BslLexerTestCase(TestCase):
                 (Token.Name.Builtin, 'НСтр'),
                 (Token.Punctuation, '('),
                 (Token.Literal.String, '"'),
-                (Token.Generic.Error, "ru = 'Русский'"),
-                (Token.Generic.Error, '\n'),
-                (Token.Generic.Error, "                 |en = 'English'"),
-                (Token.Generic.Error, '"'),
+                (Token.Name.Attribute, 'ru'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "Русский"),
+                (Token.Literal.String.Escape, "\'"),
+                (Token.Literal.String, "|"),
+                (Token.Generic.Error, "en = 'English'"),
+                (Token.Literal.String, '"'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
             ],
@@ -1873,7 +1822,7 @@ class BslLexerTestCase(TestCase):
                 (Token.Literal.String, '"'),
                 (Token.Literal.String, 'Пример'),
                 (Token.Literal.String, '"'),
-                (Token.Name.Variable, 'нелегальщина'),
+                (Token.Generic.Error, ' нелегальщина'),
             ],
         )
 
@@ -1924,78 +1873,49 @@ class BslLexerTestCase(TestCase):
         )
 
 
-    def test_lexing_date(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
-            '''
-            Дата = '00010101000000';
-            '''
-        )
+    def test_lexing_date_literals(self):
+        cases = [
+            (
+                "Дата = '00010101000000';",
+                [
+                    (Token.Name.Variable, 'Дата'),
+                    (Token.Operator, '='),
+                    (Token.Literal.Date, "'00010101000000'"),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+            (
+                "КороткаяДата = '00010101';",
+                [
+                    (Token.Name.Variable, 'КороткаяДата'),
+                    (Token.Operator, '='),
+                    (Token.Literal.Date, "'00010101'"),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+            (
+                "ДатаСРазделителями = '0001-01-01T00:00:00';",
+                [
+                    (Token.Name.Variable, 'ДатаСРазделителями'),
+                    (Token.Operator, '='),
+                    (Token.Literal.Date, "'0001-01-01T00:00:00'"),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+            (
+                "КороткаяДатаСРазделителями = '0001/01/01';",
+                [
+                    (Token.Name.Variable, 'КороткаяДатаСРазделителями'),
+                    (Token.Operator, '='),
+                    (Token.Literal.Date, "'0001/01/01'"),
+                    (Token.Punctuation, ';'),
+                ],
+            ),
+        ]
 
-        self.assertEqual(
-            filter_tokens(tokens),
-            [
-                (Token.Name.Variable, 'Дата'),
-                (Token.Operator, '='),
-                (Token.Literal.Date, "'00010101000000'"),
-                (Token.Punctuation, ';'),
-            ],
-        )
-
-
-    def test_lexing_date_short(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
-            '''
-            КороткаяДата = '00010101';
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
-            [
-                (Token.Name.Variable, 'КороткаяДата'),
-                (Token.Operator, '='),
-                (Token.Literal.Date, "'00010101'"),
-                (Token.Punctuation, ';'),
-            ],
-        )
-
-    def test_lexing_date_with_separators(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
-            '''
-            ДатаСРазделителями = '0001-01-01T00:00:00';
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
-            [
-                (Token.Name.Variable, 'ДатаСРазделителями'),
-                (Token.Operator, '='),
-                (Token.Literal.Date, "'0001-01-01T00:00:00'"),
-                (Token.Punctuation, ';'),
-            ],
-        )
-
-    def test_lexing_date_short_with_separators(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
-            '''
-            КороткаяДатаСРазделителями = '0001/01/01';
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
-            [
-                (Token.Name.Variable, 'КороткаяДатаСРазделителями'),
-                (Token.Operator, '='),
-                (Token.Literal.Date, "'0001/01/01'"),
-                (Token.Punctuation, ';'),
-            ],
-        )
+        for source, expected in cases:
+            with self.subTest(source=source):
+                self.assertTokens(source, expected)
 
 
     def test_lexing_date_in_string(self):
@@ -2037,8 +1957,8 @@ class BslLexerTestCase(TestCase):
                 (Token.Name.Variable, 'А'),
                 (Token.Operator, '='),
                 (Token.Literal.Number, '0'),
-                (Token.Keyword, 'И'), # <- Error? Token.Operator.Word
-                (Token.Keyword, 'НЕ'), # <- Error? Token.Operator.Word
+                (Token.Keyword, 'И'),
+                (Token.Keyword, 'НЕ'),
                 (Token.Name.Variable, 'Число'),
                 (Token.Operator, '<='),
                 (Token.Literal.Number, '0'),
@@ -2142,7 +2062,6 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_call_builtin_function(self):
-        lexer = lexers.get_lexer_by_name('bsl')
         cases = [
             'СтрДлина();',
             'СтрДлина ();',
@@ -2156,11 +2075,9 @@ class BslLexerTestCase(TestCase):
 
         for source in cases:
             with self.subTest(source=source):
-                tokens = lexer.get_tokens(source)
-                self.assertEqual(filter_tokens(tokens), expected)
+                self.assertTokens(source, expected)
 
     def test_call_only_builtins_priority(self):
-        lexer = lexers.get_lexer_by_name('bsl')
         cases = [
             (
                 'Булево(); Дата();',
@@ -2192,8 +2109,7 @@ class BslLexerTestCase(TestCase):
 
         for source, expected in cases:
             with self.subTest(source=source):
-                tokens = lexer.get_tokens(source)
-                self.assertEqual(filter_tokens(tokens), expected)
+                self.assertTokens(source, expected)
 
     def test_lexing_call_new(self):
         lexer = lexers.get_lexer_by_name('bsl')
@@ -2230,7 +2146,7 @@ class BslLexerTestCase(TestCase):
                 (Token.Name.Builtin, 'Новый'),
                 (Token.Punctuation, '('),
                 (Token.Literal.String, '"'),
-                (Token.Literal.String, 'ТаблицаЗначений'),
+                (Token.Name.Class, 'ТаблицаЗначений'),
                 (Token.Literal.String, '"'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
@@ -2402,11 +2318,11 @@ class BslLexerTestCase(TestCase):
             [
                 (Token.Name.Variable, 'ПараметрСНекорректнымЗначением'),
                 (Token.Operator, '='),
-                (Token.Name.Variable, 'Нелегальщина'), # Token.Generic.Error
+                (Token.Name.Variable, 'Нелегальщина'),
                 (Token.Punctuation, ','),
                 (Token.Name.Variable, 'ПараметрСНекорректнымЗначением'),
                 (Token.Operator, '='),
-                (Token.Name.Variable, 'НелегальщинаБезПробела'), # Token.Generic.Error
+                (Token.Name.Variable, 'НелегальщинаБезПробела'),
                 (Token.Punctuation, ',')
             ],
         )
@@ -2772,17 +2688,12 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_raise_exception_in_if(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
             Если Сумма <= 0 Тогда
                 ВызватьИсключение "Сумма должна быть больше 0";
             КонецЕсли;
-            '''
-        )
-    def test_lexing_raise_exception_function_call(self):
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Keyword, 'Если'),
                 (Token.Name.Variable, 'Сумма'),
@@ -2800,11 +2711,8 @@ class BslLexerTestCase(TestCase):
         )
 
     def test_lexing_raise_exception_function_call(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens('ВызватьИсключение("Ошибка на клиенте с категорией", КатегорияОшибки.ОшибкаКонфигурации, "error.client.config", "error.client.config additional info");')
-
-        self.assertEqual(
-            filter_tokens(tokens),
+        self.assertTokens(
+            'ВызватьИсключение("Ошибка на клиенте с категорией", КатегорияОшибки.ОшибкаКонфигурации, "error.client.config", "error.client.config additional info");',
             [
                 (Token.Name.Exception, 'ВызватьИсключение'),
                 (Token.Punctuation, '('),
@@ -2830,9 +2738,10 @@ class BslLexerTestCase(TestCase):
         
 
 
-class SdblLexerTestCase(TestCase):
+class SdblLexerTestCase(LexerTestCase):
 
     maxDiff = None # if characters too more at assertEqual
+    lexer_name = 'sdbl'
 
     def test_guess_lexer_for_filename(self):
         with open(os.path.join(CURRENT_DIR, 'examplefiles', 'sdbl', 'samples.sdbl'), 'r', encoding='utf-8') as fh:
@@ -2845,8 +2754,7 @@ class SdblLexerTestCase(TestCase):
         self.assertEqual(lexer.name, SdblLexer.name)
 
     def test_sdbl_semicolon_is_punctuation(self):
-        lexer = lexers.get_lexer_by_name('sdbl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 ПОМЕСТИТЬ Классификатор
 ИЗ
@@ -2855,11 +2763,7 @@ class SdblLexerTestCase(TestCase):
 
 ////////////////////////////////////////////////////////////////////////////////
 ВЫБРАТЬ
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Keyword.Declaration, 'ПОМЕСТИТЬ'),
                 (Token.Name.Variable, 'Классификатор'),
@@ -2874,11 +2778,8 @@ class SdblLexerTestCase(TestCase):
         )
 
     def test_sdbl_keyword_of(self):
-        lexer = lexers.get_lexer_by_name('sdbl')
-        tokens = lexer.get_tokens('FOR UPDATE OF')
-
-        self.assertEqual(
-            filter_tokens(tokens),
+        self.assertTokens(
+            'FOR UPDATE OF',
             [
                 (Token.Keyword.Declaration, 'FOR UPDATE'),
                 (Token.Keyword.Declaration, 'OF'),
@@ -2886,18 +2787,13 @@ class SdblLexerTestCase(TestCase):
         )
 
     def test_sdbl_english_function_aliases(self):
-        lexer = lexers.get_lexer_by_name('sdbl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
 LOWER("a") UPPER("b") STRINGLENGTH("c")
 TRIMALL("d") TRIML("e") TRIMR("f")
 STRFIND("a", "b") STRREPLACE("a", "b", "c")
 ROUND(1.2) INT(3.4)
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Name.Builtin, 'LOWER'),
                 (Token.Punctuation, '('),
@@ -3094,8 +2990,7 @@ Document.Doc.Table
         )
 
     def test_lexing_raise_exception_multiline(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
             ВызватьИсключение(
                 "Документ не может быть проведен",
@@ -3103,11 +2998,7 @@ Document.Doc.Table
                 "ERR.DOCS.0001",
                 "Клиенту запрещена отгрузка"
             );
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Name.Exception, 'ВызватьИсключение'),
                 (Token.Punctuation, '('),
@@ -3132,8 +3023,7 @@ Document.Doc.Table
         )
 
     def test_lexing_delete_insert_in_code(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        tokens = lexer.get_tokens(
+        self.assertTokens(
             '''
             #Удаление
             Если СтароеУсловие Тогда
@@ -3141,11 +3031,7 @@ Document.Doc.Table
             #Вставка
             НовоеУсловие = Выражение;
             #КонецВставки
-            '''
-        )
-
-        self.assertEqual(
-            filter_tokens(tokens),
+            ''',
             [
                 (Token.Comment.Preproc, '#Удаление'),
                 (Token.Keyword, 'Если'),

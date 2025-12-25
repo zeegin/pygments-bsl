@@ -1,4 +1,4 @@
-from pygments.lexer import RegexLexer, words, bygroups, using
+from pygments.lexer import RegexLexer, words, bygroups, using, default
 from pygments.token import Token
 
 from functools import lru_cache
@@ -194,6 +194,18 @@ def _locale_extra_quote_callback(lexer, match):
     if error:
         yield match.start(6), Token.Generic.Error, error
 
+def _locale_missing_semicolon_pipe_callback(lexer, match):
+    yield match.start(1), Token.Name.Attribute, match.group(1)
+    if match.group(2):
+        yield match.start(2), Token.String, match.group(2)
+    yield match.start(3), Token.Operator, match.group(3)
+    value = f"{match.group(4)}'{match.group(5)}'"
+    if value:
+        yield match.start(4), Token.String, value
+    error = match.group(6)
+    if error:
+        yield match.start(6), Token.Generic.Error, error
+
 def _doc_type_list_with_iz_callback(lexer, match):
     yield match.start(1), Token.Comment.Single, match.group(1)
     yield match.start(2), Token.Punctuation, match.group(2)
@@ -320,6 +332,14 @@ class BslLexer(RegexLexer):
         r'(\b' + LOCALE_KEY_PATTERN + r'\b)(\s*)(=)(\s*)'
         r'\'([^\n\']*)\'(\')([^\n"]*)'
         r'(?=\n|")'
+    )
+    _LOCALE_MISSING_SEMICOLON_PIPE_FIRST_PATTERN = (
+        r'(\b' + LOCALE_KEY_PATTERN + r'\b)(\s*)(=)(\s*)'
+        r'\'([^\n\']*)\'(\n[^\S\n]*\|[^\n"]*)'
+    )
+    _LOCALE_MISSING_SEMICOLON_PIPE_PATTERN = (
+        r'(?<=\n)(\b' + LOCALE_KEY_PATTERN + r'\b)(\s*)(=)(\s*)'
+        r'\'([^\n\']*)\'(\n[^\S\n]*\|[^\n"]*)'
     )
 
     TYPE_NAME_PATTERN = r'(?:' + '|'.join(re.escape(n) for n in TYPE_NAMES) + r')'
@@ -511,6 +531,7 @@ class BslLexer(RegexLexer):
             (r'\&.*$', Token.Name.Decorator),
             (r'\b(Процедура|Функция|Procedure|Function)\b(\s+)([\wа-яё_][\wа-яё0-9_]*)\s*(\()',
              bygroups(Token.Keyword, Token.Text, Token.Name.Function, Token.Punctuation), 'params'),
+            (r'=', Token.Operator, 'after_assign'),
             (OPERATORS, Token.Operator),
             (r'\#.*$', Token.Comment.Preproc),
             # match forbidden-constant calls like Неопределено(....) as a single error token
@@ -557,13 +578,18 @@ class BslLexer(RegexLexer):
             (r'(?:\\(?!\')|%(?![%\dA-Za-zА-Яа-яЁё_])|[^\"\|\n%\\])+', Token.String),
         ],
         'string_locale_first_line': [
-            ('\"(?![\"])', Token.String, '#pop'),
+            ('\"(?![\"])(?=[^\S\n]*(?:\\)|,|;|$))', Token.String, '#pop'),
+            ('\"(?![\"])', Token.String, ('#pop', 'string_trailing_error')),
+            (_LOCALE_MISSING_SEMICOLON_PIPE_FIRST_PATTERN,
+             _locale_missing_semicolon_pipe_callback, 'string_locale_error'),
             (_LOCALE_MISSING_SEMICOLON_FIRST_PATTERN, _locale_missing_semicolon_callback, 'string_locale_error'),
             (_LOCALE_EXTRA_QUOTE_FIRST_PATTERN, _locale_extra_quote_callback, 'string_locale_error'),
             (r'(?=[^\n]*\b' + LOCALE_KEY_PATTERN + r'\b\s*=)' +
              _ODD_LOCALE_QUOTES_LOOKAHEAD +
-             r'[^\n"]+(?=\n|")', Token.Generic.Error, 'string_locale_error'),
-            (r'(?![^\n]*;)[^\n"]+(?=\n)', Token.Generic.Error, 'string_locale_error'),
+             r'(?![^\n;]*\n[^\S\n]*\|)[^\n"]+(?=\n|")',
+             Token.Generic.Error, 'string_locale_error'),
+            (r'(?![^\n]*;)(?!' + _ODD_LOCALE_QUOTES_LOOKAHEAD + r')[^\n"]+(?=\n)',
+             Token.Generic.Error, 'string_locale_error'),
             (r'\r\n?|\n', Token.Text, ('#pop', 'string_locale')),
             (r'(?<=\n)[^\S\n]+', Token.Text),
             (r'(?<=[^\S\n])\/\/.*?(?=\n)', Token.Comment.Single),
@@ -579,15 +605,21 @@ class BslLexer(RegexLexer):
             (r'(?:(?!\b' + LOCALE_KEY_PATTERN + r'\b\s*=)(?:\\(?!\')|%(?![%\dA-Za-zА-Яа-яЁё_])|[^\"\|\n%\\;]))+', Token.String),
         ],
         'string_locale': [
-            ('\"(?![\"])', Token.String, '#pop'),
+            ('\"(?![\"])(?=[^\S\n]*(?:\\)|,|;|$))', Token.String, '#pop'),
+            ('\"(?![\"])', Token.String, ('#pop', 'string_trailing_error')),
             (r'\r\n?|\n', Token.Text),
+            (_LOCALE_MISSING_SEMICOLON_PIPE_PATTERN,
+             _locale_missing_semicolon_pipe_callback, 'string_locale_error'),
             (r'(?<=\n)' + _LOCALE_MISSING_SEMICOLON_PATTERN, _locale_missing_semicolon_callback, 'string_locale_error'),
             (r'(?<=\n)' + _LOCALE_EXTRA_QUOTE_PATTERN, _locale_extra_quote_callback, 'string_locale_error'),
             (r'(?<=\n)(?=[^\n]*\b' + LOCALE_KEY_PATTERN + r'\b\s*=)' +
              _ODD_LOCALE_QUOTES_LOOKAHEAD +
-             r'[^\n"]+(?=\n|")', Token.Generic.Error, 'string_locale_error'),
-            (r'(?<=\n)(?![^\n]*;)[^\n"]+(?=\n)', Token.Generic.Error, 'string_locale_error'),
-            (r'(?<=\n)(?![^\n]*;)[^\n"]+(?=")', Token.Generic.Error, 'string_locale_error'),
+             r'(?![^\n;]*\n[^\S\n]*\|)[^\n"]+(?=\n|")',
+             Token.Generic.Error, 'string_locale_error'),
+            (r'(?<=\n)(?![^\n]*;)(?!' + _ODD_LOCALE_QUOTES_LOOKAHEAD + r')[^\n"]+(?=\n)',
+             Token.Generic.Error, 'string_locale_error'),
+            (r'(?<=\n)(?![^\n]*;)(?!' + _ODD_LOCALE_QUOTES_LOOKAHEAD + r')[^\n"]+(?=")',
+             Token.Generic.Error, 'string_locale_error'),
             (r'(?<=\n)[^\S\n]+', Token.Text),
             (r'(?<=[^\S\n])\/\/.*?(?=\n)', Token.Comment.Single),
             (r'(?<=^)\/\/.*?(?=\n)', Token.Comment.Single),
@@ -601,11 +633,40 @@ class BslLexer(RegexLexer):
             (r';', Token.Operator),
             (r'(?:(?!\b' + LOCALE_KEY_PATTERN + r'\b\s*=)(?:\\(?!\')|%(?![%\dA-Za-zА-Яа-яЁё_])|[^\"\|\n%\\;]))+', Token.String),
         ],
+        'string_after_assign': [
+            ('\"(?![\"])(?=[^\S\n]*(?:;|\\+|,|\\)|$|\\b(?:Тогда|Then|И|ИЛИ|НЕ|Иначе|Else|ИначеЕсли|ElsIf)\\b))',
+             Token.String, '#pop'),
+            ('\"(?![\"])', Token.String, ('#pop', 'string_trailing_error')),
+            (r'\r\n?|\n', Token.Text),
+            (r'(?<=\n)[^\S\n]+', Token.Text),
+            (r'(?<=[^\S\n])\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'\#(Удаление|Delete|КонецУдаления|EndDelete)\b.*', Token.Comment.Preproc),
+            (r'(?<=^)\/\/.*?(?=\n)', Token.Comment.Single),
+            (r'\|', Token.String),
+            (r'\"\"', Token.String.Escape),
+            (r"\\'", Token.String.Escape),
+            (r'%\d', Token.String.Interpol),
+            (r'%%', Token.String.Escape),
+            (r'%[A-Za-zА-Яа-яЁё_]', Token.Generic.Error),
+            (r'(?:\\(?!\')|%(?![%\dA-Za-zА-Яа-яЁё_])|[^\"\|\n%\\])+', Token.String),
+        ],
+        'string_trailing_error': [
+            (r'[^\n]+', Token.Generic.Error),
+            (r'\r\n?|\n', Token.Text, '#pop'),
+        ],
         'string_locale_error': [
             (r'\"\"', Token.Generic.Error),
             (r'"', Token.Generic.Error, '#pop:2'),
             (r'\r\n?|\n', Token.Generic.Error),
             (r'[^\"\n]+', Token.Generic.Error),
+        ],
+        'after_assign': [
+            (r'\r\n?|\n', Token.Text, '#pop'),
+            (r'[^\S\n]+', Token.Text),
+            (QUERY_STRING_START, Token.Literal.String, ('#pop', 'query_string')),
+            (r'"(?=(?:[^"]|"")*\b' + LOCALE_KEY_PATTERN + r'\b\s*=)', Token.String, ('#pop', 'string_locale_first_line')),
+            (r'"', Token.String, ('#pop', 'string_after_assign')),
+            default('#pop'),
         ],
         'query_string': [
             (r'[^\S\n]+', Token.Text),

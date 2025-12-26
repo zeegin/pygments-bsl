@@ -313,6 +313,23 @@ def _doc_type_list_bullet_callback(lexer, match):
     yield match.start(4), Token.Punctuation, match.group(4)
     yield match.start(5), Token.Comment.Single, match.group(5)
 
+def _doc_type_list_bullet_with_iz_colon_callback(lexer, match):
+    yield match.start(1), Token.Comment.Single, match.group(1)
+    yield match.start(2), Token.Punctuation, match.group(2)
+    yield match.start(3), Token.Name.Variable, match.group(3)
+    yield match.start(4), Token.Punctuation, match.group(4)
+    type_list = match.group(5)
+    type_list_start = match.start(5)
+    for item in re.finditer(
+        r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
+        r'|\b[Ии]з\b',
+        type_list,
+    ):
+        value = item.group(0)
+        token = Token.Keyword if value.lower() == 'из' else Token.Name.Class
+        yield type_list_start + item.start(), token, value
+    yield match.start(6), Token.Punctuation, match.group(6)
+
 CALL_ONLY_BUILTINS = {
     'Булево','Boolean','Число','Number','Строка','String','Дата','Date',
 }
@@ -436,36 +453,36 @@ class BslLexer(RegexLexer):
     DOC_TYPE_LIST_PATTERN = (
         r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'(?:\s+[Ии]з\s+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'(?:[^\S\n]+[Ии]з[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)?'
-        r'(?:\s*,\s*[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'(?:[^\S\n]*,[^\S\n]*[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'(?:\s+[Ии]з\s+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'(?:[^\S\n]+[Ии]з[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)?)*'
     )
     DOC_TYPE_LIST_WITH_COMMA_PATTERN = (
         r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'(?:\s+[Ии]з\s+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'(?:[^\S\n]+[Ии]з[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)?'
-        r'(?:\s*,\s*[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'(?:[^\S\n]*,[^\S\n]*[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'(?:\s+[Ии]з\s+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'(?:[^\S\n]+[Ии]з[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)?)+'
     )
     DOC_TYPE_LIST_WITH_IZ_PATTERN = (
         r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'\s+[Ии]з\s+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'[^\S\n]+[Ии]з[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'(?:\s*,\s*[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'(?:[^\S\n]*,[^\S\n]*[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'\s+[Ии]з\s+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'[^\S\n]+[Ии]з[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)*'
     )
 
     OPERATORS = words((
-        '=','<=','>=','<>','<','>','+','-','*','/','%','.'
+        '=','<=','>=','<>','<','>','+','-','*','/','%','?','.'
     ))
 
     METADATA_ROOT = r'(?:' + '|'.join([
@@ -599,23 +616,33 @@ class BslLexer(RegexLexer):
              bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Name.Class, Token.Punctuation, Token.Keyword, Token.Punctuation, Token.Keyword, Token.Comment.Single, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
             (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')(\s+)([Ии]з)(\s+)(см\.)(\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)(?=\s*$)',
              bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Name.Class, Token.Punctuation, Token.Keyword, Token.Punctuation, Token.Keyword, Token.Comment.Single, Token.Name.Class)),
-            (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')(\s+)([Ии]з)(\s+)([^-\n]*?)(\s+(?:-|–)\s+)(.*)',
+            (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')([^\S\n]+)([Ии]з)(?=\s*$)',
+             bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Name.Class, Token.Punctuation, Token.Keyword)),
+            (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')([^\S\n]+)([Ии]з)([^\S\n]+)([^-\n]*?)(\s+(?:-|–)\s+)(.*)',
              bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Name.Class, Token.Punctuation, Token.Keyword, Token.Punctuation, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
-            (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')(\s+)([Ии]з)(\s+)([^-\n]*?)(?=\s*$)',
+            (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')([^\S\n]+)([Ии]з)([^\S\n]+)([^-\n]*?)(?=\s*$)',
              bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Name.Class, Token.Punctuation, Token.Keyword, Token.Punctuation, Token.Name.Class)),
             (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')(\s+(?:-|–)\s+)(.*)',
              _doc_type_list_after_name_callback),
+            (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_PATTERN + r')(?=\s*$)',
+             bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Name.Class)),
+            (r'(\/\/\s*)(' + DOC_TYPE_PATTERN + r')(\s+(?:-|–)\s+)((?-i:[a-zа-яё]).*)',
+             bygroups(Token.Comment.Single, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
+            (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)((?-i:[a-zа-яё]).*)',
+             bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Comment.Single)),
+            (r'(\/\/\s*)(' + DOC_TYPE_LIST_PATTERN + r')(\s+(?:-|–)\s+)(.*)',
+             bygroups(Token.Comment.Single, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
             (r'(\/\/\s*)(' + DOC_TYPE_LIST_WITH_COMMA_PATTERN + r')(\s+(?:-|–)\s+)(.*)',
              bygroups(Token.Comment.Single, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
             (r'(\/\/\s*)(' + DOC_TYPE_PATTERN + r')(\s+(?:-|–)\s+)(.*)',
              bygroups(Token.Comment.Single, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
-            (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)((?-i:[a-zа-яё]).*)',
-             bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Comment.Single)),
-            (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_PATTERN + r'|' + DOC_TYPE_LIST_PATTERN + r')(?=\s*$)',
-             bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Name.Class)),
+            (r'(\/\/\s*)(\*+\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_WITH_IZ_PATTERN + r')(\s*:)',
+             _doc_type_list_bullet_with_iz_colon_callback),
             (r'(\/\/\s*)(\*+\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')(\s*:)',
              bygroups(Token.Comment.Single, Token.Punctuation, Token.Name.Variable, Token.Punctuation, Token.Name.Class, Token.Punctuation)),
-            (r'(\/\/\s*)(\*+\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')(\s+)([Ии]з)(\s+)([^-\n]*?)(\s+(?:-|–)\s+)(.*)',
+            (r'(\/\/\s*)(\*+\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')([^\S\n]+)([Ии]з)(?=\s*$)',
+             bygroups(Token.Comment.Single, Token.Punctuation, Token.Name.Variable, Token.Punctuation, Token.Name.Class, Token.Punctuation, Token.Keyword)),
+            (r'(\/\/\s*)(\*+\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')([^\S\n]+)([Ии]з)([^\S\n]+)([^-\n]*?)(\s+(?:-|–)\s+)(.*)',
              bygroups(Token.Comment.Single, Token.Punctuation, Token.Name.Variable, Token.Punctuation, Token.Name.Class, Token.Punctuation, Token.Keyword, Token.Punctuation, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
             (r'(\/\/\s*)(\*+\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(см\.)(\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)(.*)',
              bygroups(Token.Comment.Single, Token.Punctuation, Token.Name.Variable, Token.Punctuation, Token.Keyword, Token.Comment.Single, Token.Name.Class, Token.Comment.Single)),

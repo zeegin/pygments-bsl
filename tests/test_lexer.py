@@ -730,6 +730,44 @@ class BslLexerTestCase(LexerTestCase):
             ],
         )
 
+    def test_lexing_doc_comment_param_array_type_multiline(self):
+        self.assertTokens(
+            '''
+//      * Свойство - Массив из
+//  ПеречислениеСсылка.Переч1 - Описание
+            ''',
+            [
+                (Token.Comment.Single, '//      '),
+                (Token.Punctuation, '* '),
+                (Token.Name.Variable, 'Свойство'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Массив'),
+                (Token.Punctuation, ' '),
+                (Token.Keyword, 'из'),
+                (Token.Comment.Single, '//  '),
+                (Token.Name.Class, 'ПеречислениеСсылка.Переч1'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'Описание'),
+            ],
+        )
+
+    def test_lexing_doc_comment_bullet_mapping_type(self):
+        self.assertTokens(
+            '''
+//      * Свойство - Соответствие из КлючИЗначение:
+            ''',
+            [
+                (Token.Comment.Single, '//      '),
+                (Token.Punctuation, '* '),
+                (Token.Name.Variable, 'Свойство'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Соответствие'),
+                (Token.Keyword, 'из'),
+                (Token.Name.Class, 'КлючИЗначение'),
+                (Token.Punctuation, ':'),
+            ],
+        )
+
     def test_lexing_doc_comment_hyphen_without_spaces_is_plain(self):
         self.assertTokens(
             '''
@@ -787,9 +825,9 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Punctuation, ' – '),
                 (Token.Comment.Single, 'коллекция для сравнения.'),
                 (Token.Comment.Single, '// '),
-                (Token.Name.Variable, 'ФормируемыйОтчет'),
+                (Token.Name.Class, 'ФормируемыйОтчет'),
                 (Token.Punctuation, ' – '),
-                (Token.Name.Class, 'ОбъектМетаданныхОтчет'),
+                (Token.Comment.Single, 'ОбъектМетаданныхОтчет'),
                 (Token.Comment.Single, '// '),
                 (Token.Name.Variable, 'ПрисоединенныйФайлОбъект'),
                 (Token.Punctuation, ' - '),
@@ -980,6 +1018,24 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Name.Function, 'Тест'),
                 (Token.Punctuation, '('),
                 (Token.Punctuation, ')'),
+            ],
+        )
+
+    def test_lexing_ternary_operator(self):
+        self.assertTokens(
+            'Результат = ?(Условие, ЕслиИстина, ЕслиЛожь);',
+            [
+                (Token.Name.Variable, 'Результат'),
+                (Token.Operator, '='),
+                (Token.Operator, '?'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'Условие'),
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'ЕслиИстина'),
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'ЕслиЛожь'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
             ],
         )
 

@@ -806,6 +806,19 @@ class BslLexerTestCase(LexerTestCase):
             ],
         )
 
+    def test_lexing_doc_comment_param_type_with_dots_no_desc(self):
+        self.assertTokens(
+            '''
+//  ЗадачаИсполнителя - ЗадачаСсылка.ЗадачаИсполнителя
+            ''',
+            [
+                (Token.Comment.Single, '//  '),
+                (Token.Name.Class, 'ЗадачаИсполнителя'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'ЗадачаСсылка.ЗадачаИсполнителя'),
+            ],
+        )
+
     def test_lexing_doc_comment_param_type_list(self):
         self.assertTokens(
             '''
@@ -827,7 +840,7 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Comment.Single, '// '),
                 (Token.Name.Class, 'ФормируемыйОтчет'),
                 (Token.Punctuation, ' – '),
-                (Token.Comment.Single, 'ОбъектМетаданныхОтчет'),
+                (Token.Name.Class, 'ОбъектМетаданныхОтчет'),
                 (Token.Comment.Single, '// '),
                 (Token.Name.Variable, 'ПрисоединенныйФайлОбъект'),
                 (Token.Punctuation, ' - '),

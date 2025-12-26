@@ -298,6 +298,19 @@ def _emit_doc_type_list(type_list, type_list_start):
             token = Token.Name.Class
         yield type_list_start + item.start(), token, value
 
+def _doc_type_list_or_desc_callback(lexer, match):
+    yield match.start(1), Token.Comment.Single, match.group(1)
+    yield match.start(2), Token.Name.Class, match.group(2)
+    yield match.start(3), Token.Punctuation, match.group(3)
+    rest = match.group(4)
+    if '.' not in match.group(2) and re.match(
+        r'^[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*\s*$',
+        rest,
+    ):
+        yield from _emit_doc_type_list(rest, match.start(4))
+    else:
+        yield match.start(4), Token.Comment.Single, rest
+
 def _doc_type_list_after_name_callback(lexer, match):
     yield match.start(1), Token.Comment.Single, match.group(1)
     yield match.start(2), Token.Name.Variable, match.group(2)
@@ -635,7 +648,7 @@ class BslLexer(RegexLexer):
             (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)((?-i:[a-zа-яё]).*)',
              bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Comment.Single)),
             (r'(\/\/\s*)(' + DOC_TYPE_LIST_PATTERN + r')(\s+(?:-|–)\s+)(.*)',
-             bygroups(Token.Comment.Single, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
+             _doc_type_list_or_desc_callback),
             (r'(\/\/\s*)(' + DOC_TYPE_LIST_WITH_COMMA_PATTERN + r')(\s+(?:-|–)\s+)(.*)',
              bygroups(Token.Comment.Single, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
             (r'(\/\/\s*)(' + DOC_TYPE_PATTERN + r')(\s+(?:-|–)\s+)(.*)',

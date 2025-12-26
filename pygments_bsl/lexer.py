@@ -303,13 +303,31 @@ def _doc_type_list_or_desc_callback(lexer, match):
     yield match.start(2), Token.Name.Class, match.group(2)
     yield match.start(3), Token.Punctuation, match.group(3)
     rest = match.group(4)
-    if '.' not in match.group(2) and re.match(
-        r'^[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*\s*$',
-        rest,
+    if (
+        '.' not in match.group(2)
+        and match.group(2) in lexer._bsl_name_class
+        and re.match(
+            r'^[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*\s*$',
+            rest,
+        )
     ):
         yield from _emit_doc_type_list(rest, match.start(4))
     else:
         yield match.start(4), Token.Comment.Single, rest
+
+def _doc_param_name_type_list_eol_callback(lexer, match):
+    yield match.start(1), Token.Comment.Single, match.group(1)
+    left = match.group(2)
+    left_cf = left.casefold()
+    if left_cf in lexer._bsl_name_class or left_cf in lexer._bsl_call_only_builtins:
+        yield match.start(2), Token.Name.Class, left
+        yield match.start(3), Token.Punctuation, match.group(3)
+        yield match.start(4), Token.Comment.Single, match.group(4)
+        return
+    right = match.group(4)
+    yield match.start(2), Token.Name.Variable, left
+    yield match.start(3), Token.Punctuation, match.group(3)
+    yield from _emit_doc_type_list(right, match.start(4))
 
 def _doc_type_list_after_name_callback(lexer, match):
     yield match.start(1), Token.Comment.Single, match.group(1)
@@ -643,6 +661,8 @@ class BslLexer(RegexLexer):
              _doc_type_list_after_name_callback),
             (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_PATTERN + r')(?=\s*$)',
              bygroups(Token.Comment.Single, Token.Name.Variable, Token.Punctuation, Token.Name.Class)),
+            (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)(' + DOC_TYPE_LIST_PATTERN + r')(?=\s*$)',
+             _doc_param_name_type_list_eol_callback),
             (r'(\/\/\s*)(' + DOC_TYPE_PATTERN + r')(\s+(?:-|–)\s+)((?-i:[a-zа-яё]).*)',
              bygroups(Token.Comment.Single, Token.Name.Class, Token.Punctuation, Token.Comment.Single)),
             (r'(\/\/\s*)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)(\s+(?:-|–)\s+)((?-i:[a-zа-яё]).*)',

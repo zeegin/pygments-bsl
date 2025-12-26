@@ -786,6 +786,7 @@ class BslLexerTestCase(LexerTestCase):
 // Параметры:
 //  Адреса - Строка - строка, содержащая электронные адреса
 //  ЗадачаИсполнителя - ЗадачаСсылка.ЗадачаИсполнителя – проверяемая задача
+//  ЗадачаИсполнителя - ЗадачаСсылка.ЗадачаИсполнителя
             ''',
             [
                 (Token.Comment.Single, '// '),
@@ -803,6 +804,10 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Name.Class, 'ЗадачаСсылка.ЗадачаИсполнителя'),
                 (Token.Punctuation, ' – '),
                 (Token.Comment.Single, 'проверяемая задача'),
+                (Token.Comment.Single, '//  '),
+                (Token.Name.Variable, 'ЗадачаИсполнителя'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'ЗадачаСсылка.ЗадачаИсполнителя'),
             ],
         )
 
@@ -813,7 +818,7 @@ class BslLexerTestCase(LexerTestCase):
             ''',
             [
                 (Token.Comment.Single, '//  '),
-                (Token.Name.Class, 'ЗадачаИсполнителя'),
+                (Token.Name.Variable, 'ЗадачаИсполнителя'),
                 (Token.Punctuation, ' - '),
                 (Token.Name.Class, 'ЗадачаСсылка.ЗадачаИсполнителя'),
             ],
@@ -838,7 +843,7 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Punctuation, ' – '),
                 (Token.Comment.Single, 'коллекция для сравнения.'),
                 (Token.Comment.Single, '// '),
-                (Token.Name.Class, 'ФормируемыйОтчет'),
+                (Token.Name.Variable, 'ФормируемыйОтчет'),
                 (Token.Punctuation, ' – '),
                 (Token.Name.Class, 'ОбъектМетаданныхОтчет'),
                 (Token.Comment.Single, '// '),

@@ -617,6 +617,16 @@ class BslLexer(RegexLexer):
     _bsl_keyword_constant_pattern = words(CONSTANT_NAMES, prefix=PREFIX_NO_DOT, suffix=SUFFIX_WORD)
 
     tokens = {
+        'preproc_root': [
+            (r'\#(Использовать|Use)\b', Token.Comment.Preproc, 'preproc_use'),
+            (r'\#(native)\b.*', Token.Comment.Preproc),
+            (r'\#(Если|If)\b', Token.Comment.Preproc, 'preproc_if'),
+            (r'\#(ИначеЕсли|ElsIf)\b', Token.Comment.Preproc, 'preproc_if'),
+            (r'\#(Иначе|Else|КонецЕсли|EndIf|Область|Region|КонецОбласти|EndRegion|Вставка|Insert|КонецВставки|EndInsert|Удаление|Delete|КонецУдаления|EndDelete)\b.*', Token.Comment.Preproc),
+        ],
+        'string_locale_start': [
+            (r'"(?=(?:[^"]|"")*\b' + LOCALE_KEY_PATTERN + r'\b\s*=)', Token.String, 'string_locale_first_line'),
+        ],
         'doc_comment': [
             (r'(\/\/\s*)(СМ\.|SEE)(\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)(\s*)(\()(.*?)(\))',
              bygroups(Token.Comment.Single, Token.Keyword, Token.Comment.Single, Token.Name.Namespace, Token.Comment.Single, Token.Punctuation, Token.Comment.Single, Token.Punctuation)),
@@ -709,11 +719,7 @@ class BslLexer(RegexLexer):
             (r'\|.*?(?=\n|$)', Token.Generic.Error),
             (r'\#\!.*?(?=\n|$)', Token.Comment.Preproc),
             include('doc_comment'),
-            (r'\#(Использовать|Use)\b', Token.Comment.Preproc, 'preproc_use'),
-            (r'\#(native)\b.*', Token.Comment.Preproc),
-            (r'\#(Если|If)\b', Token.Comment.Preproc, 'preproc_if'),
-            (r'\#(ИначеЕсли|ElsIf)\b', Token.Comment.Preproc, 'preproc_if'),
-            (r'\#(Иначе|Else|КонецЕсли|EndIf|Область|Region|КонецОбласти|EndRegion|Вставка|Insert|КонецВставки|EndInsert|Удаление|Delete|КонецУдаления|EndDelete)\b.*', Token.Comment.Preproc),
+            include('preproc_root'),
             # decorator with quoted name: split into decorator, punctuation and inner name
             (r'(&[\wа-яё_][\wа-яё0-9_]*)\s*(\()\s*(")([^"]*)(")\s*(\))',
              bygroups(Token.Name.Decorator, Token.Punctuation, Token.String.Single, Token.Name.Function, Token.String.Single, Token.Punctuation)),
@@ -740,7 +746,7 @@ class BslLexer(RegexLexer):
             (r'\b\d+\.?\d*\b', Token.Literal.Number),
             (CONSTRAINT_STRING_START, Token.Literal.String, 'constraint_string'),
             (QUERY_STRING_START, Token.Literal.String, 'query_string'),
-            (r'"(?=(?:[^"]|"")*\b' + LOCALE_KEY_PATTERN + r'\b\s*=)', Token.String, 'string_locale_first_line'),
+            include('string_locale_start'),
             ('\"', Token.String, 'string'),
             (r'\'.*?\'', Token.Literal.Date),
             (r'~.*?(?=[:;])', Token.Name.Label),

@@ -1,4 +1,4 @@
-from pygments.lexer import RegexLexer, words, bygroups, using, default
+from pygments.lexer import RegexLexer, words, bygroups, using, default, include
 from pygments.token import Token
 
 from functools import lru_cache
@@ -617,12 +617,7 @@ class BslLexer(RegexLexer):
     _bsl_keyword_constant_pattern = words(CONSTANT_NAMES, prefix=PREFIX_NO_DOT, suffix=SUFFIX_WORD)
 
     tokens = {
-        'root': [
-            (r'\ufeff', Token.Text),
-            (r'\r\n?|\n', Token.Text),
-            (r'[^\S\n]+', Token.Text),
-            (r'\|.*?(?=\n|$)', Token.Generic.Error),
-            (r'\#\!.*?(?=\n|$)', Token.Comment.Preproc),
+        'doc_comment': [
             (r'(\/\/\s*)(СМ\.|SEE)(\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)(\s*)(\()(.*?)(\))',
              bygroups(Token.Comment.Single, Token.Keyword, Token.Comment.Single, Token.Name.Namespace, Token.Comment.Single, Token.Punctuation, Token.Comment.Single, Token.Punctuation)),
             (r'(\/\/\s*)(СМ\.|SEE)(\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)',
@@ -706,6 +701,14 @@ class BslLexer(RegexLexer):
             (r'(\/\/\s*)(\{\{|\}\})(MRG)(\[[^\]]*\])(.*)',
              bygroups(Token.Comment.Single, Token.Punctuation, Token.Keyword, Token.Punctuation, Token.Comment.Single)),
             (r'\/\/.*?(?=\n|$)', Token.Comment.Single),
+        ],
+        'root': [
+            (r'\ufeff', Token.Text),
+            (r'\r\n?|\n', Token.Text),
+            (r'[^\S\n]+', Token.Text),
+            (r'\|.*?(?=\n|$)', Token.Generic.Error),
+            (r'\#\!.*?(?=\n|$)', Token.Comment.Preproc),
+            include('doc_comment'),
             (r'\#(Использовать|Use)\b', Token.Comment.Preproc, 'preproc_use'),
             (r'\#(native)\b.*', Token.Comment.Preproc),
             (r'\#(Если|If)\b', Token.Comment.Preproc, 'preproc_if'),

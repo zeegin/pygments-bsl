@@ -1039,6 +1039,62 @@ class BslLexerTestCase(LexerTestCase):
             ],
         )
 
+    def test_lexing_remove_handler(self):
+        self.assertTokens(
+            'УдалитьОбработчик Накладная.ПриЗаписи, Обработка.ПриЗаписиДокумента;',
+            [
+                (Token.Name.Builtin, 'УдалитьОбработчик'),
+                (Token.Name.Variable, 'Накладная'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'ПриЗаписи'),
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'Обработка'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'ПриЗаписиДокумента'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_add_handler_with_metadata(self):
+        self.assertTokens(
+            '''
+Обработка = Обработки.КонтрольДокумента.Создать();
+Накладная = Документы.Накладная.СоздатьДокумент();
+ДобавитьОбработчик Накладная.ПриЗаписи, Обработка.ПриЗаписиДокумента;
+            ''',
+            [
+                (Token.Name.Variable, 'Обработка'),
+                (Token.Operator, '='),
+                (Token.Name.Namespace, 'Обработки'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'КонтрольДокумента'),
+                (Token.Operator, '.'),
+                (Token.Name.Function, 'Создать'),
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+                (Token.Name.Variable, 'Накладная'),
+                (Token.Operator, '='),
+                (Token.Name.Namespace, 'Документы'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'Накладная'),
+                (Token.Operator, '.'),
+                (Token.Name.Function, 'СоздатьДокумент'),
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+                (Token.Name.Builtin, 'ДобавитьОбработчик'),
+                (Token.Name.Variable, 'Накладная'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'ПриЗаписи'),
+                (Token.Punctuation, ','),
+                (Token.Name.Variable, 'Обработка'),
+                (Token.Operator, '.'),
+                (Token.Name.Variable, 'ПриЗаписиДокумента'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
     def test_lexing_preproc_use(self):
         cases = [
             ('#Использовать lib', [(Token.Comment.Preproc, '#Использовать'), (Token.Name.Variable, 'lib')]),

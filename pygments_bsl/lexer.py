@@ -376,10 +376,14 @@ class BslLexer(RegexLexer):
         if name not in CALL_ONLY_BUILTINS and name not in CONSTANT_NAMES
     )
 
+    _NAME_BUILTIN_EXTRA = (
+        'ДобавитьОбработчик', 'AddHandler',
+        'УдалитьОбработчик', 'RemoveHandler',
+    )
     _NAME_BUILTIN_WORDS = tuple(
         name for name in dict.fromkeys(GLOBAL_METHOD_NAMES)
         if name not in CALL_ONLY_BUILTINS
-    )
+    ) + _NAME_BUILTIN_EXTRA
 
     _KEYWORD_CONSTANT_WORDS = CONSTANT_NAMES
 
@@ -707,7 +711,7 @@ class BslLexer(RegexLexer):
         ],
         'preproc_if': [
             (r'\r\n?|\n', Token.Text, '#pop'),
-            (r'\b(Сервер|НаСервере|Клиент|НаКлиенте|ТонкийКлиент|МобильныйКлиент|ВебКлиент|ВнешнееСоединение|ТолстыйКлиентУправляемоеПриложение|ТолстыйКлиентОбычноеПриложение|МобильныйАвтономныйСервер|МобильноеПриложениеКлиент|МобильноеПриложениеСервер|Windows|Linux|MacOS)\b', Token.Keyword.Constant),
+            (r'\b(Сервер|НаСервере|Клиент|НаКлиенте|ТонкийКлиент|МобильныйКлиент|ВебКлиент|ВнешнееСоединение|ТолстыйКлиентУправляемоеПриложение|ТолстыйКлиентОбычноеПриложение|МобильныйАвтономныйСервер|МобильноеПриложениеКлиент|МобильноеПриложениеСервер|Server|AtServer|Client|AtClient|ThinClient|WebClient|ExternalConnection|MobileClient|MobileStandaloneServer|MobileAppClient|MobileAppServer|ThickClientOrdinaryApplication|ThickClientManagedApplication|Windows|Linux|MacOS)\b', Token.Keyword.Constant),
             (r'\b(И|Или|НЕ|Then|Тогда|And|Or|Not)\b', Token.Comment.Preproc),
             (r'\#', Token.Comment.Preproc),
             (r'[()]', Token.Comment.Punctuation),

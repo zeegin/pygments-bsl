@@ -17,6 +17,7 @@ SUFFIX_WORD = r'\b'
 SUFFIX_CALL = r'(?=(\s?[\(]))'
 IDENT = r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
 IDENT_RE = re.compile(r'^' + IDENT + r'$', re.IGNORECASE)
+IZ_OF_KEYWORD = r'(?:[Ии]з|Of)'  # Matches Russian "из" and English "Of"
 
 @lru_cache(maxsize=4096)
 def _casefold(text):
@@ -270,11 +271,11 @@ def _doc_type_list_with_iz_callback(lexer, match):
     type_list_start = match.start(3)
     for item in re.finditer(
         r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'|\b[Ии]з\b|,\s*|\s+',
+        r'|\b(?:[Ии]з|Of)\b|,\s*|\s+',
         type_list,
     ):
         value = item.group(0)
-        if value.lower() == 'из':
+        if value.lower() in ('из', 'of'):
             token = Token.Keyword
         elif value.startswith(',') or value.isspace():
             token = Token.Punctuation
@@ -294,6 +295,8 @@ def _emit_doc_type_list(type_list, type_list_start):
         value = item.group(0)
         if value.startswith(',') or value.isspace():
             token = Token.Punctuation
+        elif value.lower() in ('из', 'of'):
+            token = Token.Keyword
         else:
             token = Token.Name.Class
         yield type_list_start + item.start(), token, value
@@ -353,11 +356,11 @@ def _doc_type_list_bullet_with_iz_colon_callback(lexer, match):
     type_list_start = match.start(5)
     for item in re.finditer(
         r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'|\b[Ии]з\b',
+        r'|\b(?:[Ии]з|Of)\b',
         type_list,
     ):
         value = item.group(0)
-        token = Token.Keyword if value.lower() == 'из' else Token.Name.Class
+        token = Token.Keyword if value.lower() in ('из', 'of') else Token.Name.Class
         yield type_list_start + item.start(), token, value
     yield match.start(6), Token.Punctuation, match.group(6)
 
@@ -488,31 +491,31 @@ class BslLexer(RegexLexer):
     DOC_TYPE_LIST_PATTERN = (
         r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'(?:[^\S\n]+[Ии]з[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'(?:[^\S\n]+(?:[Ии]з|Of)[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)?'
         r'(?:[^\S\n]*,[^\S\n]*[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'(?:[^\S\n]+[Ии]з[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'(?:[^\S\n]+(?:[Ии]з|Of)[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)?)*'
     )
     DOC_TYPE_LIST_WITH_COMMA_PATTERN = (
         r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'(?:[^\S\n]+[Ии]з[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'(?:[^\S\n]+(?:[Ии]з|Of)[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)?'
         r'(?:[^\S\n]*,[^\S\n]*[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'(?:[^\S\n]+[Ии]з[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'(?:[^\S\n]+(?:[Ии]з|Of)[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)?)+'
     )
     DOC_TYPE_LIST_WITH_IZ_PATTERN = (
         r'[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'[^\S\n]+[Ии]з[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'[^\S\n]+(?:[Ии]з|Of)[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
         r'(?:[^\S\n]*,[^\S\n]*[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*'
-        r'[^\S\n]+[Ии]з[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
+        r'[^\S\n]+(?:[Ии]з|Of)[^\S\n]+[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*'
         r'(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)*'
     )
 

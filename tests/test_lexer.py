@@ -768,6 +768,52 @@ class BslLexerTestCase(LexerTestCase):
             ],
         )
 
+    def test_lexing_doc_comment_param_array_type_english_of(self):
+        self.assertTokens(
+            '''
+// Parameters:
+//   Requests - Array Of String - collection of requests.
+            ''',
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Keyword, 'Parameters'),
+                (Token.Punctuation, ':'),
+                (Token.Comment.Single, '//   '),
+                (Token.Name.Variable, 'Requests'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Array'),
+                (Token.Punctuation, ' '),
+                (Token.Keyword, 'Of'),
+                (Token.Punctuation, ' '),
+                (Token.Name.Class, 'String'),
+                (Token.Punctuation, ' - '),
+                (Token.Comment.Single, 'collection of requests.'),
+            ],
+        )
+
+    def test_lexing_doc_comment_param_array_of_multiple_types(self):
+        self.assertTokens(
+            '''
+// Parameter - Array Of String, FixedArray Of Number
+            ''',
+            [
+                (Token.Comment.Single, '// '),
+                (Token.Name.Variable, 'Parameter'),
+                (Token.Punctuation, ' - '),
+                (Token.Name.Class, 'Array'),
+                (Token.Punctuation, ' '),
+                (Token.Keyword, 'Of'),
+                (Token.Punctuation, ' '),
+                (Token.Name.Class, 'String'),
+                (Token.Punctuation, ', '),
+                (Token.Name.Class, 'FixedArray'),
+                (Token.Punctuation, ' '),
+                (Token.Keyword, 'Of'),
+                (Token.Punctuation, ' '),
+                (Token.Name.Class, 'Number'),
+            ],
+        )
+
     def test_lexing_doc_comment_hyphen_without_spaces_is_plain(self):
         self.assertTokens(
             '''

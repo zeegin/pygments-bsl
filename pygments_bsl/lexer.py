@@ -635,7 +635,7 @@ class BslLexer(RegexLexer):
              bygroups(Token.Comment.Single, Token.Keyword, Token.Comment.Single, Token.Name.Namespace, Token.Comment.Single, Token.Punctuation, Token.Comment.Single, Token.Punctuation)),
             (r'(\/\/\s*)(СМ\.|SEE)(\s+)([A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*(?:\.[A-Za-zА-Яа-яЁё_][\wа-яё0-9_]*)*)',
              bygroups(Token.Comment.Single, Token.Keyword, Token.Comment.Single, Token.Name.Namespace)),
-            (r'(\/\/\s*)(Устарела|Deprecate)([.:])?(.*)',
+            (r'(\/\/\s*)(Устарела|Deprecated)([.:])?(.*)',
              bygroups(Token.Comment.Single, Token.Keyword, Token.Punctuation, Token.Comment.Single)),
             (r'(\/\/\s*)(Параметры|Parameters|Возвращаемое\s+значение|Returns|Пример(?:ы)?|Example(?:s)?|Варианты\s+вызова|Call\s+options)(:)',
              bygroups(Token.Comment.Single, Token.Keyword, Token.Punctuation)),

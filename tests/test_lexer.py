@@ -583,7 +583,7 @@ class BslLexerTestCase(LexerTestCase):
 // Example:
 // Call options:
 // Устарела.
-// Deprecate:
+// Deprecated:
 // СМ. ОбщийМодуль.Метод()
 // SEE CommonModule.Method(Парам1, Значение)
             ''',
@@ -610,7 +610,7 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Keyword, 'Устарела'),
                 (Token.Punctuation, '.'),
                 (Token.Comment.Single, '// '),
-                (Token.Keyword, 'Deprecate'),
+                (Token.Keyword, 'Deprecated'),
                 (Token.Punctuation, ':'),
                 (Token.Comment.Single, '// '),
                 (Token.Keyword, 'СМ.'),

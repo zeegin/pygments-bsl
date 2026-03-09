@@ -5,7 +5,7 @@ from unittest import TestCase
 from pygments import lexers
 from pygments.token import Token
 
-# from pygments_bsl import lexer as lexer_mod
+from pygments_bsl import lexer as lexer_mod
 from pygments_bsl.lexer import BslLexer, SdblLexer
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -18,6 +18,18 @@ def filter_tokens(tokens):
         tok for tok in tokens
         if not (tok[0] is Token.Text and SPACE_RE.match(tok[1])) and tok[1] != ''
     ]
+
+
+class FakeMatch:
+    def __init__(self, groups, starts):
+        self._groups = groups
+        self._starts = starts
+
+    def group(self, index=0):
+        return self._groups[index]
+
+    def start(self, index=0):
+        return self._starts[index]
 
 
 class LexerTestCase(TestCase):
@@ -2002,6 +2014,30 @@ class BslLexerTestCase(LexerTestCase):
             ],
         )
 
+    def test_lexing_nstr_locale_named_placeholder_is_error(self):
+        self.assertTokens(
+            '''
+            НСтр("ru = 'Ошибка %A';");
+            ''',
+            [
+                (Token.Name.Builtin, 'НСтр'),
+                (Token.Punctuation, '('),
+                (Token.Literal.String, '"'),
+                (Token.Name.Attribute, 'ru'),
+                (Token.Literal.String, ' '),
+                (Token.Operator, '='),
+                (Token.Literal.String, ' '),
+                (Token.Literal.String.Escape, "'"),
+                (Token.Literal.String, 'Ошибка '),
+                (Token.Generic.Error, '%A'),
+                (Token.Literal.String.Escape, "'"),
+                (Token.Operator, ';'),
+                (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
     def test_lexing_nstr_locale_missing_quote_before_next(self):
         lexer = lexers.get_lexer_by_name('bsl')
         tokens = lexer.get_tokens(
@@ -2576,6 +2612,22 @@ class BslLexerTestCase(LexerTestCase):
                 (Token.Literal.String, '"'),
                 (Token.Name.Class, 'ТаблицаЗначений'),
                 (Token.Literal.String, '"'),
+                (Token.Punctuation, ')'),
+                (Token.Punctuation, ';'),
+            ],
+        )
+
+    def test_lexing_call_new_with_parenthesized_argument(self):
+        self.assertTokens(
+            '''
+            Результат = Новый(ТипЗначения);
+            ''',
+            [
+                (Token.Name.Variable, 'Результат'),
+                (Token.Operator, '='),
+                (Token.Name.Builtin, 'Новый'),
+                (Token.Punctuation, '('),
+                (Token.Name.Variable, 'ТипЗначения'),
                 (Token.Punctuation, ')'),
                 (Token.Punctuation, ';'),
             ],
@@ -4296,6 +4348,31 @@ INDEX BY SETS Table
             ],
         )
 
+    def test_sdbl_root_class_name_is_class(self):
+        self.assertTokens(
+            'РегистрСведений',
+            [
+                (Token.Name.Class, 'РегистрСведений'),
+            ],
+        )
+
+    def test_sdbl_metadata_call_without_args_skips_inner_spaces(self):
+        self.assertTokens(
+            'ВЫБРАТЬ * ИЗ РегистрСведений.КурсВал.СрезПервых( )',
+            [
+                (Token.Keyword.Declaration, 'ВЫБРАТЬ'),
+                (Token.Operator, '*'),
+                (Token.Keyword.Declaration, 'ИЗ'),
+                (Token.Name.Namespace, 'РегистрСведений'),
+                (Token.Operator, '.'),
+                (Token.Name.Class, 'КурсВал'),
+                (Token.Operator, '.'),
+                (Token.Name.Function, 'СрезПервых'),
+                (Token.Punctuation, '('),
+                (Token.Punctuation, ')'),
+            ],
+        )
+
     def test_sdbl_case_expression_and_cast(self):
         lexer = lexers.get_lexer_by_name('sdbl')
         tokens = lexer.get_tokens(
@@ -4421,5 +4498,95 @@ INDEX BY SETS Table
             [
                 (Token.Generic.Error, '|'),
                 (Token.Comment.Single, '// Закомметированная строка внутри запроса с кавычками ""ТЕКСТ""'),
+            ],
+        )
+
+
+class ConstraintLogicLexerTestCase(TestCase):
+
+    def setUp(self):
+        self.lexer = lexer_mod.ConstraintLogicLexer()
+
+    def assertTokens(self, source, expected):
+        self.assertEqual(filter_tokens(self.lexer.get_tokens(source)), expected)
+
+    def test_constraint_logic_constant_is_constant(self):
+        self.assertTokens(
+            'Истина',
+            [
+                (Token.Keyword.Constant, 'Истина'),
+            ],
+        )
+
+    def test_constraint_logic_class_name_is_class(self):
+        self.assertTokens(
+            'РегистрСведений',
+            [
+                (Token.Name.Class, 'РегистрСведений'),
+            ],
+        )
+
+
+class LexerHelpersTestCase(TestCase):
+
+    def test_locale_error_pipe_line_callback_falls_back_to_generic_error(self):
+        match = re.match(r'.+', 'broken')
+
+        self.assertEqual(
+            list(lexer_mod._locale_error_pipe_line_callback(None, match)),
+            [
+                (0, Token.Generic.Error, 'broken'),
+            ],
+        )
+
+    def test_locale_missing_semicolon_pipe_callback_falls_back_to_generic_error(self):
+        match = FakeMatch(
+            {
+                1: 'ru',
+                2: ' ',
+                3: '=',
+                4: ' ',
+                5: 'Русский',
+                6: 'broken',
+            },
+            {
+                1: 0,
+                2: 2,
+                3: 3,
+                4: 4,
+                5: 6,
+                6: 14,
+            },
+        )
+
+        self.assertEqual(
+            list(lexer_mod._locale_missing_semicolon_pipe_callback(None, match))[-1],
+            (14, Token.Generic.Error, 'broken'),
+        )
+
+    def test_doc_type_list_or_desc_callback_emits_type_list_branch(self):
+        lexer = type('LexerStub', (), {'_bsl_name_class': {'ТаблицаЗначений', 'таблицазначений'}})()
+        match = FakeMatch(
+            {
+                1: '// ',
+                2: 'ТаблицаЗначений',
+                3: ' - ',
+                4: 'Массив',
+            },
+            {
+                1: 0,
+                2: 3,
+                3: 19,
+                4: 22,
+            },
+        )
+
+        self.assertEqual(
+            list(lexer_mod._doc_type_list_or_desc_callback(lexer, match)),
+            [
+                (0, Token.Comment.Single, '// '),
+                (3, Token.Name.Class, 'ТаблицаЗначений'),
+                (19, Token.Punctuation, ' - '),
+                (22, Token.Name.Class, 'Массив'),
             ],
         )

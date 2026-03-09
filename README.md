@@ -25,13 +25,14 @@ $ pip install pygments-bsl
 Install local
 --------
 ```bash
-pip install .
+python -m pip install -e .
 ```
 
 Build
 ------
 
 ```bash
+python -m pip install --upgrade build
 python -m build
 ```
 
@@ -39,8 +40,19 @@ Test
 ------
 
 ```bash
+python -m pip install --upgrade pytest
 pytest
 
+```
+
+Validate release artifacts
+------
+
+```bash
+python -m pip install --upgrade build twine
+python -m build
+python -m twine check dist/*
+python tools/check_dist.py
 ```
 
 Docs
@@ -55,7 +67,7 @@ pip install "zensical==0.0.24"
 zensical serve
 ```
 
-Any Python 3.10+ should work, but the command above uses Python 3.12 because that's the tested docs environment. The docs environment is separate from the package's main runtime.
+Python 3.10+ is required. The command above uses Python 3.12 because that's the tested docs environment. The docs environment is separate from the package's main runtime.
 
 Generate lexer data from JSON (after updating files in `3rd_party/`)
 ------

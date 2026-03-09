@@ -790,7 +790,7 @@ class BslLexer(RegexLexer):
             (r'(?:\\(?!\')|%(?![%\dA-Za-zА-Яа-яЁё_])|[^\"\|\n%\\])+', Token.String),
         ],
         'string_locale_first_line': [
-            ('\"(?![\"])(?=[^\S\n]*(?:\\)|,|;|$))', Token.String, '#pop'),
+            (r'"(?!["])(?=[^\S\n]*(?:\)|,|;|$))', Token.String, '#pop'),
             ('\"(?![\"])', Token.String, ('#pop', 'string_trailing_error')),
             (_LOCALE_MISSING_SEMICOLON_PIPE_FIRST_PATTERN,
              _locale_missing_semicolon_pipe_callback, 'string_locale_error_pipe_pop'),
@@ -829,7 +829,7 @@ class BslLexer(RegexLexer):
             (r'(?:(?!\b' + LOCALE_KEY_PATTERN + r'\b\s*=)(?:\\(?!\')|%(?![%\dA-Za-zА-Яа-яЁё_])|[^\"\|\n%\\;]))+', Token.String),
         ],
         'string_locale': [
-            ('\"(?![\"])(?=[^\S\n]*(?:\\)|,|;|$))', Token.String, '#pop'),
+            (r'"(?!["])(?=[^\S\n]*(?:\)|,|;|$))', Token.String, '#pop'),
             ('\"(?![\"])', Token.String, ('#pop', 'string_trailing_error')),
             (r'\r\n?|\n', Token.Text),
             (_LOCALE_MISSING_SEMICOLON_PIPE_PATTERN,
@@ -870,7 +870,7 @@ class BslLexer(RegexLexer):
             (r'(?:(?!\b' + LOCALE_KEY_PATTERN + r'\b\s*=)(?:\\(?!\')|%(?![%\dA-Za-zА-Яа-яЁё_])|[^\"\|\n%\\;]))+', Token.String),
         ],
         'string_after_assign': [
-            ('\"(?![\"])(?=[^\S\n]*(?:;|\\+|,|\\)|$|\\b(?:Тогда|Then|И|ИЛИ|НЕ|Иначе|Else|ИначеЕсли|ElsIf)\\b))',
+            (r'"(?!["])(?=[^\S\n]*(?:;|\+|,|\)|$|\b(?:Тогда|Then|И|ИЛИ|НЕ|Иначе|Else|ИначеЕсли|ElsIf)\b))',
              Token.String, '#pop'),
             ('\"(?![\"])', Token.String, ('#pop', 'string_trailing_error')),
             (r'(?![^\S\n]*\|)[^"\n]+(?=\n(?![^\S\n]*(?:\||//|\#)))', Token.Generic.Error, '#pop'),

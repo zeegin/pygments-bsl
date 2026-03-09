@@ -1,0 +1,86 @@
+[project]
+site_name = "pygments-bsl"
+site_url = "https://zeegin.github.io/pygments-bsl"
+site_author = "Igor Apresov"
+site_description = """
+Подсветка синтаксиса 1С:Предприятие для pygments.
+Чтобы созданная документация в zensical выглядела потрясающе.
+"""
+repo_name = "zeegin/pygments-bsl"
+repo_url = "https://github.com/zeegin/pygments-bsl"
+edit_uri = "edit/master/docs"
+copyright = """
+Copyright &copy; 2019 - 2026 Igor Apresov
+"""
+extra_css = ["stylesheets/monokai.css"]
+nav = ["index.md", "big.md", "tokens.md"]
+
+[project.theme]
+variant = "classic"
+language = "ru"
+logo = "assets/images/logo.png"
+favicon = "assets/images/logo.png"
+features = [
+  "announce.dismiss",
+  "content.action.edit",
+  "content.action.view",
+  "content.code.annotate",
+  "content.code.copy",
+  "content.tooltips",
+  "navigation.sections",
+  "search.highlight",
+  "toc.follow",
+]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "white"
+accent = "indigo"
+
+[project.theme.palette.toggle]
+icon = "material/lightbulb-outline"
+name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "black"
+accent = "light blue"
+
+[project.theme.palette.toggle]
+icon = "material/lightbulb"
+name = "Switch to light mode"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/zeegin/pygments-bsl"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/python"
+link = "https://pypi.org/project/pygments-bsl/"
+
+[project.markdown_extensions]
+admonition = {}
+attr_list = {}
+
+[project.markdown_extensions.pymdownx.details]
+
+[project.markdown_extensions.pymdownx.highlight]
+use_pygments = true
+pygments_lang_class = true
+linenums = true
+anchor_linenums = true
+default_lang = "bsl"
+
+[project.markdown_extensions.pymdownx.inlinehilite]
+
+[project.markdown_extensions.pymdownx.snippets]
+check_paths = false
+base_path = ["docs", "."]
+
+[project.markdown_extensions.pymdownx.superfences]
+
+[project.markdown_extensions.pymdownx.emoji]
+emoji_index = "zensical.extensions.emoji.twemoji"
+emoji_generator = "zensical.extensions.emoji.to_svg"

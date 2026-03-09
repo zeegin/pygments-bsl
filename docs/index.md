@@ -3,8 +3,12 @@
 # Как собрать эту страницу?
 
 ```bash
-pip install mkdocs mkdocs-material pygments-bsl
-mkdocs serve
+python3.12 -m venv .venv-docs
+source .venv-docs/bin/activate
+pip install --upgrade pip
+pip install -e .
+pip install "zensical==0.0.24"
+zensical serve
 ```
 
-Заметка: при запуске `mkdocs serve` из корня репозитория используется локальная версия `pygments_bsl` (см. `docs/mkdocs_hooks.py`), так что изменения лексера видны сразу без публикации пакета.
+Подойдет любой Python 3.10+, но команда выше зафиксирована на Python 3.12 как на проверенной версии. Установка `pip install -e .` нужна, чтобы `zensical` видел локальный `pygments_bsl` и подсветку `bsl` / `sdbl` без публикации пакета.

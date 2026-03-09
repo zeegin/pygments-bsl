@@ -60,15 +60,19 @@ pytest
 # Build package
 python -m build
 
-# Local docs (uses local lexer immediately via mkdocs_hooks.py)
-pip install mkdocs mkdocs-material
-mkdocs serve
+# Local docs (Python 3.10+; install package editable so zensical sees local lexers)
+python3.12 -m venv .venv-docs
+source .venv-docs/bin/activate
+pip install --upgrade pip
+pip install -e .
+pip install "zensical==0.0.24"
+zensical serve
 ```
 
 ### CI/CD Workflow
 - **test.yml**: Runs `pytest` on push/PR to master
 - **publish.yml**: Builds and pushes to PyPI on release creation
-- **gh-pages.yml**: (implied) Publishes MkDocs site
+- **gh-pages.yml**: Publishes the Zensical site
 
 ## Testing Strategy
 
@@ -115,8 +119,7 @@ Test changes by:
   - `examplefiles/`: Real code samples (bsl/, sdbl/)
 - **`3rd_party/`**: Source data (JSON)
   - `types.json`, `global-methods.json`, `global-properties.json`, `enums.json`
-- **`docs/`**: MkDocs documentation
-  - Uses local lexer via `mkdocs_hooks.py` during `mkdocs serve`
+- **`docs/`**: Zensical documentation
 
 ## 1C Language Specifics
 

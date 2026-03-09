@@ -1,10 +1,10 @@
 # Pygments tokens usage
 
-This document explains how BSL/SDBL lexers map code to Pygments tokens and how those tokens become CSS classes in Material for MkDocs. It is meant to help you build custom themes with predictable syntax colors.
+This document explains how BSL/SDBL lexers map code to Pygments tokens and how those tokens become CSS classes in the Zensical classic theme. It is meant to help you build custom themes with predictable syntax colors.
 
 ## How to read this file
 
-Each token becomes a CSS class in the rendered HTML. Material for MkDocs then maps those classes to CSS variables like `--md-code-hl-keyword-color`. If a token has an empty flag, it means the lexer does not emit it.
+Each token becomes a CSS class in the rendered HTML. Zensical's classic theme then maps those classes to CSS variables like `--md-code-hl-keyword-color`. If a token has an empty flag, it means the lexer does not emit it.
 
 ## Theming quick start
 
@@ -25,8 +25,7 @@ Then refine:
 - `--md-code-hl-constant-color` (builtins, constants)
 - `--md-code-hl-generic-color` (errors, generic output)
 
-For full customization details, see the Material for MkDocs guide:
-[Material for MkDocs: Custom syntax theme](https://squidfunk.github.io/mkdocs-material/reference/code-blocks/#custom-syntax-theme)
+For a concrete example of palette overrides, see [`docs/stylesheets/monokai.css`](stylesheets/monokai.css).
 
 ## BSL-focused examples
 
@@ -86,7 +85,7 @@ Expected tokens:
 
 ## Full token list
 
-Below is the list of standard Pygments tokens and whether they are used by the BSL or SDBL lexers in this project. Columns show usage flags, the Material for MkDocs CSS class, and the palette variable most closely matching the token category.
+Below is the list of standard Pygments tokens and whether they are used by the BSL or SDBL lexers in this project. Columns show usage flags, the rendered CSS class, and the palette variable most closely matching the token category.
 
 
 | Token | BSL | SDBL | CSS class | Color var |

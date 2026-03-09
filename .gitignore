@@ -7,5 +7,6 @@ build
 .tox
 .pytest_cache
 .venv
+.venv-docs
 .DS_Store
 site/

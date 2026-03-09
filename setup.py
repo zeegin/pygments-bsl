@@ -9,7 +9,7 @@ setup(
     name='pygments-bsl',
     version='1.0.1',
     packages=find_packages(exclude=[".github/*", ".vscode/*", "tests/*"]),
-    author='Ingvar Vilkman',
+    author='Igor Apresov',
     author_email='zeegin@zeegin.com',
     url='https://github.com/zeegin/pygments-bsl',
     license='MIT License',

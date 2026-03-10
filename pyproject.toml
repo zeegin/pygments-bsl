@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pygments-bsl"
-version = "1.0.1"
+version = "1.1.0"
 description = "Pygments 1C (BSL, SDBL) lexer"
 readme = "README.md"
 requires-python = ">=3.10"

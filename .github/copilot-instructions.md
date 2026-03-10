@@ -142,4 +142,4 @@ Test changes by:
 ---
 
 **Last Updated**: 2025-01-20  
-**Maintainer**: See package metadata in setup.py
+**Maintainer**: See package metadata in pyproject.toml

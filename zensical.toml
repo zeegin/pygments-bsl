@@ -12,11 +12,16 @@ edit_uri = "edit/master/docs"
 copyright = """
 Copyright &copy; 2019 - 2026 Igor Apresov
 """
-extra_css = ["stylesheets/monokai.css"]
+extra_css = [
+  "stylesheets/monokai.css",
+  "stylesheets/code-theme-switcher.css",
+]
+extra_javascript = ["javascripts/code-theme-switcher.js"]
 nav = ["index.md", "big.md", "tokens.md"]
 
 [project.theme]
 variant = "classic"
+custom_dir = "overrides"
 language = "ru"
 logo = "assets/images/logo.png"
 favicon = "assets/images/logo.png"

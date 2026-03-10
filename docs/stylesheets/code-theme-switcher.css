@@ -1,0 +1,46 @@
+.md-header__button.md-code-theme-toggle {
+  align-items: center;
+  display: inline-flex;
+  flex-direction: row;
+  gap: 0.45rem;
+  justify-content: center;
+  max-width: none;
+  padding: 0.4rem 0.65rem;
+  white-space: nowrap;
+  width: auto;
+}
+
+.md-code-theme-toggle svg {
+  flex: none;
+}
+
+.md-code-theme-toggle__label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+html[data-code-theme="1c"] .md-code-theme-toggle {
+  color: #0057b8;
+}
+
+html[data-code-theme="monokai"] .md-code-theme-toggle {
+  color: #d26b00;
+}
+
+html[data-code-theme="vscode"] .md-code-theme-toggle {
+  color: #007acc;
+}
+
+@media screen and (max-width: 59.9375em) {
+  .md-header__button.md-code-theme-toggle {
+    padding: 0.4rem;
+    width: 2rem;
+  }
+
+  .md-code-theme-toggle__label {
+    display: none;
+  }
+}

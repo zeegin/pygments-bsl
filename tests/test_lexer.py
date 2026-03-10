@@ -2,7 +2,7 @@ import os
 import re
 from unittest import TestCase
 
-from pygments import lexers
+from pygments import lexers as pygments_lexers
 from pygments.token import Token
 
 from pygments_bsl import lexer as lexer_mod
@@ -10,6 +10,11 @@ from pygments_bsl.lexer import BslLexer, SdblLexer
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 SPACE_RE = re.compile(r'^[ \n\r\uFEFF]+$')
+LOCAL_LEXER_FACTORIES = {
+    'bsl': BslLexer,
+    'os': BslLexer,
+    'sdbl': SdblLexer,
+}
 
 
 def filter_tokens(tokens):
@@ -32,51 +37,78 @@ class FakeMatch:
         return self._starts[index]
 
 
+class LocalLexersProxy:
+    """Return local lexer classes for unit tests instead of installed entry points."""
+
+    @staticmethod
+    def get_lexer_by_name(name, **options):
+        try:
+            return LOCAL_LEXER_FACTORIES[name](**options)
+        except KeyError:
+            return pygments_lexers.get_lexer_by_name(name, **options)
+
+
+lexers = LocalLexersProxy()
+
+
 class LexerTestCase(TestCase):
-    lexer_name = None
+    lexer_cls = None
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        if cls.lexer_name is None:
-            raise ValueError("lexer_name must be set on test class")
-        cls.lexer = lexers.get_lexer_by_name(cls.lexer_name)
+        if cls.lexer_cls is None:
+            raise ValueError("lexer_cls must be set on test class")
+
+    def make_lexer(self):
+        return self.lexer_cls()
 
     def lex_filtered(self, source):
-        return filter_tokens(self.lexer.get_tokens(source))
+        return filter_tokens(self.make_lexer().get_tokens(source))
 
     def assertTokens(self, source, expected):
         self.assertEqual(self.lex_filtered(source), expected)
 
-    def assertTokensPrefix(self, source, expected_prefix):
-        filtered = self.lex_filtered(source)
-        self.assertEqual(filtered[:len(expected_prefix)], expected_prefix)
-        return filtered
+
+class PygmentsEntryPointIntegrationTestCase(TestCase):
+
+    def test_bsl_aliases_are_registered(self):
+        for alias in ('bsl', 'os'):
+            with self.subTest(alias=alias):
+                lexer = pygments_lexers.get_lexer_by_name(alias)
+                self.assertEqual(lexer.name, BslLexer.name)
+
+    def test_sdbl_alias_is_registered(self):
+        lexer = pygments_lexers.get_lexer_by_name('sdbl')
+        self.assertEqual(lexer.name, SdblLexer.name)
+
+    def test_bsl_filenames_are_detected(self):
+        samples = [
+            ('samples.bsl', os.path.join(CURRENT_DIR, 'examplefiles', 'bsl', 'samples.bsl')),
+            ('samples.os', os.path.join(CURRENT_DIR, 'examplefiles', 'bsl', 'samples.os')),
+        ]
+
+        for filename, sample_path in samples:
+            with self.subTest(filename=filename):
+                with open(sample_path, 'r', encoding='utf-8') as fh:
+                    text = fh.read()
+                guessed_lexer = pygments_lexers.guess_lexer_for_filename(filename, text)
+                self.assertEqual(guessed_lexer.name, BslLexer.name)
+
+    def test_sdbl_filename_is_detected(self):
+        sample_path = os.path.join(CURRENT_DIR, 'examplefiles', 'sdbl', 'samples.sdbl')
+        with open(sample_path, 'r', encoding='utf-8') as fh:
+            text = fh.read()
+
+        guessed_lexer = pygments_lexers.guess_lexer_for_filename('samples.sdbl', text)
+        self.assertEqual(guessed_lexer.name, SdblLexer.name)
 
 
 class BslLexerTestCase(LexerTestCase):
 
-    lexer_name = 'bsl'
+    lexer_cls = BslLexer
 
     maxDiff = None # if characters too more at assertEqual
-
-    def test_guess_lexer_for_filename(self):
-        with open(os.path.join(CURRENT_DIR, 'examplefiles', 'bsl', 'samples.bsl'), 'r', encoding='utf-8') as fh:
-            text_bsl = fh.read()
-            guessed_lexer = lexers.guess_lexer_for_filename('samples.bsl', text_bsl)
-            self.assertEqual(guessed_lexer.name, BslLexer.name)
-
-        with open(os.path.join(CURRENT_DIR, 'examplefiles', 'bsl', 'samples.os'), 'r', encoding='utf-8') as fh:
-            text_os = fh.read()
-            guessed_lexer = lexers.guess_lexer_for_filename('samples.os', text_os)
-            self.assertEqual(guessed_lexer.name, BslLexer.name)
-
-    def test_get_lexer_by_name(self):
-        lexer = lexers.get_lexer_by_name('bsl')
-        self.assertEqual(lexer.name, BslLexer.name)
-
-        lexer = lexers.get_lexer_by_name('os')
-        self.assertEqual(lexer.name, BslLexer.name)
 
     def test_lexing_region(self):
         self.assertTokens(
@@ -3277,7 +3309,7 @@ class BslLexerTestCase(LexerTestCase):
 class BslSdblIntegrationTestCase(LexerTestCase):
 
     maxDiff = None # if characters too more at assertEqual
-    lexer_name = 'bsl'
+    lexer_cls = BslLexer
 
     def test_sdbl_query_string_pipe_comment_with_quotes(self):
         self.assertTokens(
@@ -3377,17 +3409,7 @@ class BslSdblIntegrationTestCase(LexerTestCase):
 class SdblLexerTestCase(LexerTestCase):
 
     maxDiff = None # if characters too more at assertEqual
-    lexer_name = 'sdbl'
-
-    def test_guess_lexer_for_filename(self):
-        with open(os.path.join(CURRENT_DIR, 'examplefiles', 'sdbl', 'samples.sdbl'), 'r', encoding='utf-8') as fh:
-            text_sdbl = fh.read()
-            guessed_lexer = lexers.guess_lexer_for_filename('samples.sdbl', text_sdbl)
-            self.assertEqual(guessed_lexer.name, SdblLexer.name)
-
-    def test_get_lexer_by_name(self):
-        lexer = lexers.get_lexer_by_name('sdbl')
-        self.assertEqual(lexer.name, SdblLexer.name)
+    lexer_cls = SdblLexer
 
     def test_sdbl_semicolon_is_punctuation(self):
         self.assertTokens(
@@ -4527,7 +4549,8 @@ class ConstraintLogicLexerTestCase(TestCase):
         )
 
 
-class LexerHelpersTestCase(TestCase):
+class LexerInternalCoverageTestCase(TestCase):
+    """Cover fallback/helper branches that are awkward to trigger end-to-end."""
 
     def test_locale_error_pipe_line_callback_falls_back_to_generic_error(self):
         match = re.match(r'.+', 'broken')
